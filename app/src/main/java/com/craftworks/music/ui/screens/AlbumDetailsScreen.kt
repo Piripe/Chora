@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -256,9 +258,8 @@ fun AlbumDetails(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(24.dp)
                                     ) {
-                                        Button(
+                                        DropdownMenuItem(
                                             onClick = {
                                                 showBottomSheet = false
                                                 coroutineScope.launch {
@@ -267,16 +268,14 @@ fun AlbumDetails(
                                                     )
                                                 }
                                             },
-                                            modifier = Modifier.focusRequester(requester)
-                                        ) {
-                                            Row (verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.height(24.dp)
-                                            ) {
-                                                Icon(ImageVector.vectorResource(R.drawable.outline_queue_add_24), stringResource(R.string.action_add_to_queue))
-                                                Text(stringResource(R.string.action_add_to_queue), maxLines = 1)
-                                            }
-                                        }
-                                        Button(
+                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).focusRequester(requester),
+                                            leadingIcon = {Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.outline_queue_add_24),
+                                                contentDescription = stringResource(R.string.action_add_to_queue)
+                                            )},
+                                            text = {Text(stringResource(R.string.action_add_to_queue))}
+                                        )
+                                        DropdownMenuItem(
                                             onClick = {
                                                 showBottomSheet = false
                                                 coroutineScope.launch {
@@ -287,15 +286,13 @@ fun AlbumDetails(
                                                     )
                                                 }
                                             },
-                                            modifier = Modifier.focusRequester(requester)
-                                        ) {
-                                            Row (verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier.height(24.dp)
-                                            ) {
-                                                Icon(ImageVector.vectorResource(R.drawable.play_next_24px), stringResource(R.string.action_play_next))
-                                                Text(stringResource(R.string.action_play_next), maxLines = 1)
-                                            }
-                                        }
+                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).focusRequester(requester),
+                                            leadingIcon = {Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.play_next_24px),
+                                                contentDescription = stringResource(R.string.action_play_next)
+                                            )},
+                                            text = {Text(stringResource(R.string.action_play_next))}
+                                        )
                                     }
                                 }
                             }
@@ -418,59 +415,6 @@ fun AlbumDetails(
                     }
                 }
             }
-
-            // Play and shuffle buttons
-            /*item {
-                Row (modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .padding(
-                        horizontal = 12.dp
-                    ),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically) {
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                SongHelper.play(
-                                    currentAlbum.subList(1, currentAlbum.size),
-                                    0,
-                                    mediaController
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .widthIn(min = 128.dp, max = 320.dp)
-                            .focusRequester(requester)
-                    ) {
-                        Row (verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.height(24.dp)
-                        ) {
-                            Icon(Icons.Rounded.PlayArrow, "Play Album")
-                            Text(stringResource(R.string.action_play), maxLines = 1)
-                        }
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            mediaController?.shuffleModeEnabled = true
-                            coroutineScope.launch {
-                                val random = currentAlbum.subList(1, currentAlbum.size).indices.random()
-                                SongHelper.play(
-                                    currentAlbum.subList(1, currentAlbum.size),
-                                    random,
-                                    mediaController
-                                )
-                            }
-                        },
-                        modifier = Modifier.widthIn(min = 128.dp, max = 320.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(24.dp)) {
-                            Icon(ImageVector.vectorResource(R.drawable.round_shuffle_28), "Shuffle Album")
-                            Text(stringResource(R.string.action_shuffle), maxLines = 1)
-                        }
-                    }
-                }
-            }*/
 
             // Album Songs
             val groupedAlbums = currentAlbum.subList(1, currentAlbum.size).groupBy { song ->
