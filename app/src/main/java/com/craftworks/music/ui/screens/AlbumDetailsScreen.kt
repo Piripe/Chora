@@ -293,6 +293,49 @@ fun AlbumDetails(
                                             )},
                                             text = {Text(stringResource(R.string.action_play_next))}
                                         )
+                                        if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.any(
+                                                ProviderFeatures.FAVORITES +
+                                                        ProviderFeatures.DOWNLOADS +
+                                                        ProviderFeatures.PLAYLIST
+                                        )?:false) { HorizontalDivider() }
+                                        if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.FAVORITES)?:false) {
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        if (isStarred)
+                                                            currentAlbum[0].mediaMetadata.id?.let {
+                                                                viewModel.unstarAlbum(it)
+                                                            }
+                                                        else
+                                                            currentAlbum[0].mediaMetadata.id?.let {
+                                                                viewModel.starAlbum(it)
+                                                            }
+                                                        viewModel.loadAlbumDetails(selectedAlbumId)
+                                                        isStarred = !isStarred
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .padding(horizontal = 12.dp).fillMaxWidth(),
+                                                leadingIcon = {
+                                                    Crossfade(
+                                                        targetState = isStarred
+                                                    ) {
+                                                        if (it) Icon(
+                                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
+                                                        )
+                                                        else
+                                                            Icon(
+                                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                                                contentDescription = stringResource(R.string.action_add_to_favorites)
+                                                            )
+                                                    }
+                                                },
+                                                text = {Text(if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(R.string.action_add_to_favorites))}
+                                            )
+                                        }
+
+                                        // TODO : Add Download, Add to Playlist and Share buttons
                                     }
                                 }
                             }
@@ -368,7 +411,7 @@ fun AlbumDetails(
                             ) {
                                 if (it) Icon(
                                     imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.action_remove_from_favorites),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier
                                         .height(28.dp)
@@ -377,7 +420,7 @@ fun AlbumDetails(
                                 else
                                     Icon(
                                         imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.action_add_to_favorites),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier
                                             .height(28.dp)
