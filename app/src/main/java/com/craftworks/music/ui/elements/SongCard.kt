@@ -279,7 +279,7 @@ fun HorizontalSongCard(
                         }
                     )
                     DropdownMenuItem(
-                        enabled = !(song.mediaMetadata.getProvider()?.featureFlags?.has(
+                        enabled = (song.mediaMetadata.getProvider()?.featureFlags?.has(
                             ProviderFeatures.DOWNLOADS)?:false),
                         text = {
                             Text(stringResource(R.string.action_download))
