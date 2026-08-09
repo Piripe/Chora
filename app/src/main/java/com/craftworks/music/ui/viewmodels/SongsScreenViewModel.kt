@@ -130,27 +130,29 @@ class SongsScreenViewModel @Inject constructor(
 
     fun setSongRating(
         songId: String,
-        rating: Int,
+        rating: Int
     ) {
-        val song =_allSongs.value.firstOrNull {
+        val song = _allSongs.value.firstOrNull {
             it.mediaMetadata.id == songId
-        } ?: _searchResults.value.first {
+        } ?: _searchResults.value.firstOrNull {
             it.mediaMetadata.id == songId
         }
 
-        val maxStars = (song.mediaMetadata.userRating as? StarRating)?.maxStars ?: 5
+        val maxStars = (song?.mediaMetadata?.userRating as? StarRating)?.maxStars ?: 5
 
-        val updatedSong = song.buildUpon().setMediaMetadata(
+        val updatedSong = song?.buildUpon()?.setMediaMetadata(
             song.mediaMetadata.buildUpon()
                 .setUserRating(StarRating(maxStars, rating.toFloat()))
                 .build()
-        ).build()
+        )?.build()
 
-        _allSongs.value = _allSongs.value.map { item ->
-            if (item.mediaId == song.mediaId) updatedSong else item
-        }
-        _searchResults.value = _searchResults.value.map { item ->
-            if (item.mediaId == song.mediaId) updatedSong else item
+        if (updatedSong != null) {
+            _allSongs.value = _allSongs.value.map { item ->
+                if (item.mediaId == song.mediaId) updatedSong else item
+            }
+            _searchResults.value = _searchResults.value.map { item ->
+                if (item.mediaId == song.mediaId) updatedSong else item
+            }
         }
 
         viewModelScope.launch {

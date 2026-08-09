@@ -62,14 +62,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun SongsHorizontalColumn(
     songList: List<MediaItem>,
-    onSongSelected: (itemsList: List<MediaItem>, index: Int) -> Unit,
-    onAddToQueue: (song: MediaItem) -> Unit,
-    onSetRating: (sond: MediaItem) -> Unit,
     isSearch: Boolean? = false,
     showFavoritesOnly: Boolean = false,
-    viewModel: SongsScreenViewModel? = null
+    viewModel: SongsScreenViewModel? = null,
+    mediaController: MediaController? = null,
 ){
     val listState = rememberLazyListState()
+
+    val scope = rememberCoroutineScope()
 
     val showDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
 
@@ -129,14 +129,12 @@ fun SongsHorizontalColumn(
                 HorizontalSongCard(
                     song = song,
                     onClick = {
-                        onSongSelected(songsInGroup, index)
+                        println("Starting song at index: $index")
+                        scope.launch {
+                            SongHelper.play(songsInGroup, index, mediaController)
+                        }
                     },
-                    onAddToQueue = {
-                        onAddToQueue(song)
-                    },
-                    onSetRating = {
-                        onSetRating(song)
-                    }
+                    mediaController = mediaController
                 )
             }
         }

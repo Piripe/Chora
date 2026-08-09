@@ -86,7 +86,8 @@ open class SubsonicMediaProvider : MediaProvider() {
                 ProviderFeatures.DOWNLOADS +
                 ProviderFeatures.FAVORITES +
                 ProviderFeatures.INTERNET_RADIO +
-                ProviderFeatures.PLAYLIST
+                ProviderFeatures.PLAYLIST +
+                ProviderFeatures.RATING
 
     @Transient
     override val featureFlags: ProviderFeatures = _featureFlags

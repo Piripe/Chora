@@ -58,13 +58,13 @@ import androidx.core.text.htmlEncode
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddToPlaylistDialog(){
-    AddSongToPlaylist(setShowDialog = {})
+    AddSongToPlaylist(onDismissRequest = {}, MediaItem.EMPTY)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewNewPlaylistDialog(){
-    NewPlaylist(hiltViewModel(),setShowDialog = {})
+    NewPlaylist(hiltViewModel(), onDismissRequest = {}, MediaItem.EMPTY)
 }
 
 @Preview(showBackground = true)
@@ -74,20 +74,22 @@ fun PreviewDeletePlaylistDialog(){
 }
 //endregion
 
-var showAddSongToPlaylistDialog = mutableStateOf(false)
-var showNewPlaylistDialog = mutableStateOf(false)
-var songToAddToPlaylist = mutableStateOf(MediaItem.EMPTY)
+//var showAddSongToPlaylistDialog = mutableStateOf(false)
+//var showNewPlaylistDialog = mutableStateOf(false)
+//var songToAddToPlaylist = mutableStateOf(MediaItem.EMPTY)
 var showDeletePlaylistDialog = mutableStateOf(false)
 var playlistToDelete = mutableStateOf("")
 
 @Composable
 fun AddSongToPlaylist(
-    setShowDialog: (Boolean) -> Unit,
+    onDismissRequest: () -> Unit,
+    songToAddToPlaylist: MediaItem,
     viewModel: PlaylistScreenViewModel = hiltViewModel()
 ) {
+    var showNewPlaylistDialog by remember { mutableStateOf(false) }
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
 
-    Dialog(onDismissRequest = { setShowDialog(false) }) {
+    Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -104,7 +106,7 @@ fun AddSongToPlaylist(
                         text = AnnotatedString.fromHtml(
                             stringResource(
                                 R.string.add_to_playlist_title,
-                                songToAddToPlaylist.value.mediaMetadata.title.toString().htmlEncode()
+                                songToAddToPlaylist.mediaMetadata.title.toString().htmlEncode()
                             )
                         ),
                         style = TextStyle(
@@ -133,7 +135,7 @@ fun AddSongToPlaylist(
 
                         for (playlist in playlists) {
                             // Allow ONLY adding songs to playlists of the same provider.
-                            val disabled = songToAddToPlaylist.value.mediaMetadata.providerId != playlist.mediaMetadata.providerId
+                            val disabled = songToAddToPlaylist.mediaMetadata.providerId != playlist.mediaMetadata.providerId
 
                             Row(modifier = Modifier
                                 .padding(bottom = 12.dp)
@@ -142,12 +144,12 @@ fun AddSongToPlaylist(
                                 .clickable(
                                     enabled = !disabled
                                 ) {
-                                    if (playlist.mediaMetadata.id == songToAddToPlaylist.value.mediaMetadata.id)
+                                    if (playlist.mediaMetadata.id == songToAddToPlaylist.mediaMetadata.id)
                                         return@clickable
 
                                     viewModel.addSongsToPlaylist(playlist.mediaMetadata.id ?: "",
-                                        listOf(songToAddToPlaylist.value.mediaMetadata.id ?: ""))
-                                    setShowDialog(false)
+                                        listOf(songToAddToPlaylist.mediaMetadata.id ?: ""))
+                                    onDismissRequest()
                                 }, verticalAlignment = Alignment.CenterVertically
                             ) {
                                 val artwork = if (playlist.mediaMetadata.providerType == ProviderType.LOCAL_FOLDER.ordinal)
@@ -189,7 +191,7 @@ fun AddSongToPlaylist(
                     Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
                         Button(
                             onClick = {
-                                showNewPlaylistDialog.value = true
+                                showNewPlaylistDialog = true
                             },
                             modifier = Modifier
                                 .widthIn(max = 320.dp)
@@ -201,8 +203,11 @@ fun AddSongToPlaylist(
                         }
                     }
 
-                    if (showNewPlaylistDialog.value) {
-                        NewPlaylist(viewModel) { showNewPlaylistDialog.value = it }
+                    if (showNewPlaylistDialog) {
+                        NewPlaylist(viewModel, {
+                            showNewPlaylistDialog = false
+                            onDismissRequest()
+                        }, songToAddToPlaylist)
                     }
                 }
             }
@@ -214,11 +219,12 @@ fun AddSongToPlaylist(
 @Composable
 fun NewPlaylist(
     viewModel: PlaylistScreenViewModel,
-    setShowDialog: (Boolean) -> Unit
+    onDismissRequest: () -> Unit,
+    songToAddToPlaylist: MediaItem
 ) {
     var name: String by remember { mutableStateOf("") }
 
-    Dialog(onDismissRequest = { setShowDialog(false) }) {
+    Dialog(onDismissRequest = onDismissRequest) {
         Surface(
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -250,12 +256,12 @@ fun NewPlaylist(
 
                                 viewModel.createPlaylist(
                                     name,
-                                    listOf(songToAddToPlaylist.value.mediaMetadata.id ?: ""),
+                                    listOf(songToAddToPlaylist.mediaMetadata.id ?: ""),
                                     context
                                 )
 
-                                showAddSongToPlaylistDialog.value = false
-                                setShowDialog(false)
+                                //showAddSongToPlaylistDialog.value = false
+                                onDismissRequest()
                             },
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)

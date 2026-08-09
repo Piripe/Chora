@@ -46,9 +46,7 @@ import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.SongsHorizontalColumn
 import com.craftworks.music.ui.elements.TopBarWithSearch
-import com.craftworks.music.ui.elements.dialogs.AddSongToPlaylist
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
-import com.craftworks.music.ui.elements.dialogs.showAddSongToPlaylistDialog
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
@@ -77,8 +75,6 @@ fun SongsScreen(
         viewModel.getSongs()
         showRipple++
     }
-
-    var songToRate by remember { mutableStateOf<MediaItem?>(null) }
 
     var showSortMenu by remember { mutableStateOf(false) }
 
@@ -127,19 +123,10 @@ fun SongsScreen(
                     searchResults = {
                         SongsHorizontalColumn(
                             songList = searchResults,
-                            onSongSelected = { songs, index ->
-                                println("Starting song at index: $index")
-                                coroutineScope.launch {
-                                    SongHelper.play(songs, index, mediaController)
-                                }
-                            },
-                            onAddToQueue = {
-                                mediaController?.addMediaItem(it)
-                            },
-                            onSetRating = { songToRate = it },
                             isSearch = true,
                             showFavoritesOnly = false,
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            mediaController = mediaController
                         )
                     },
                     extraAction = {
@@ -212,36 +199,13 @@ fun SongsScreen(
             ) {
                 SongsHorizontalColumn(
                     songList = allSongsList,
-                    onSongSelected = { songs, index ->
-                        println("Starting song at index: $index")
-                        coroutineScope.launch {
-                            SongHelper.play(songs, index, mediaController)
-                        }
-                    },
-                    onAddToQueue = {
-                        mediaController?.addMediaItem(it)
-                    },
-                    onSetRating = { songToRate = it },
                     isSearch = false,
                     showFavoritesOnly = showFavoritesOnly,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    mediaController = mediaController
                 )
             }
         }
-    }
-
-    if(showAddSongToPlaylistDialog.value)
-        AddSongToPlaylist(setShowDialog =  { showAddSongToPlaylistDialog.value = it } )
-
-    songToRate?.let { song ->
-        RatingDialog(
-            currentRating = (song.mediaMetadata.userRating as? StarRating)?.starRating?.toInt() ?: 0,
-            onDismiss = { songToRate = null },
-            onSetRating = { rating ->
-                viewModel.setSongRating(song.mediaMetadata.id ?: "", rating)
-                songToRate = null
-            }
-        )
     }
 
     RippleEffect(

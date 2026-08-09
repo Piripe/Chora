@@ -10,6 +10,7 @@ value class ProviderFeatures(val mask: Long) {
         val OFFLINE_PLAYBACK = ProviderFeatures(1L shl 4)
         val INTERNET_RADIO = ProviderFeatures(1L shl 5)
         val PLAYLIST = ProviderFeatures(1L shl 6)
+        val RATING = ProviderFeatures(1L shl 7)
     }
 
     fun has (flags: ProviderFeatures): Boolean =

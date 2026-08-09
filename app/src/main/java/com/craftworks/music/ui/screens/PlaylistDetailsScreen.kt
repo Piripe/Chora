@@ -69,18 +69,15 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.model.providerType
 import com.craftworks.music.fadingEdge
 import com.craftworks.music.formatSeconds
-import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.HorizontalSongCard
-import com.craftworks.music.ui.elements.dialogs.AddSongToPlaylist
-import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
-import com.craftworks.music.ui.elements.dialogs.showAddSongToPlaylistDialog
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import kotlinx.coroutines.launch
 
@@ -106,8 +103,6 @@ fun PlaylistDetails(
         remember(playlistSongs) { playlistSongs.sumOf { it.mediaMetadata.durationMs ?: 0 } }
 
     val coroutineScope = rememberCoroutineScope()
-
-    var songToRate by remember { mutableStateOf<MediaItem?>(null) }
 
     println("artwork uri: ${playlistMetadata?.artworkUri}; artwork data: ${playlistMetadata?.artworkData}")
 
@@ -201,9 +196,7 @@ fun PlaylistDetails(
                         )
                     }
 
-                    if (MediaProviderManager.getProvider(
-                            playlistMetadata?.extras?.getString("providerId")?:""
-                    )?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false)
+                    if (playlistMetadata?.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false)
                     Button(
                         onClick = {
                             coroutineScope.launch {
@@ -316,10 +309,6 @@ fun PlaylistDetails(
                             )
                         }
                     },
-                    onAddToQueue = {
-                        mediaController?.addMediaItem(song)
-                    },
-                    onSetRating = { songToRate = song },
                     extraMenuItems = { onDismiss ->
                         DropdownMenuItem(
                             text = {
@@ -339,23 +328,10 @@ fun PlaylistDetails(
                                 )
                             }
                         )
-                    }
+                    },
+                    mediaController = mediaController
                 )
             }
         }
-    }
-
-    if(showAddSongToPlaylistDialog.value)
-        AddSongToPlaylist(setShowDialog =  { showAddSongToPlaylistDialog.value = it } )
-
-    songToRate?.let { song ->
-        RatingDialog(
-            currentRating = (song.mediaMetadata.userRating as? StarRating)?.starRating?.toInt() ?: 0,
-            onDismiss = { songToRate = null },
-            onSetRating = { rating ->
-                viewModel.setSongRating(song.mediaMetadata.id ?: "", rating)
-                songToRate = null
-            }
-        )
     }
 }

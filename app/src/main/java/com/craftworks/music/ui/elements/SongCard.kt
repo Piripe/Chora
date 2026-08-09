@@ -43,21 +43,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
+import androidx.media3.session.MediaController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.data.model.providerId
 import com.craftworks.music.formatSeconds
-import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.ui.elements.dialogs.showAddSongToPlaylistDialog
-import com.craftworks.music.ui.elements.dialogs.songToAddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.AddSongToPlaylist
+import com.craftworks.music.ui.elements.dialogs.RatingDialog
+import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,11 +67,14 @@ fun HorizontalSongCard(
     modifier: Modifier = Modifier,
     showTrackNumber: Boolean = false,
     onClick: () -> Unit,
-    onAddToQueue: () -> Unit,
-    onSetRating: () -> Unit,
-    extraMenuItems: @Composable (onDismiss: () -> Unit) -> Unit = {}
+    extraMenuItems: @Composable (onDismiss: () -> Unit) -> Unit = {},
+    viewModel: SongsScreenViewModel = hiltViewModel(),
+    mediaController: MediaController?
 ) {
     val context = LocalContext.current
+
+    var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
+    var showSongRatingDialog by remember { mutableStateOf(false) }
 
     Card(
         onClick = onClick,
@@ -218,7 +222,7 @@ fun HorizontalSongCard(
                             Text(stringResource(R.string.action_set_rating))
                         },
                         onClick = {
-                            onSetRating()
+                            showSongRatingDialog = true
                             expanded = false
                         },
                         leadingIcon = {
@@ -233,7 +237,7 @@ fun HorizontalSongCard(
                             Text(stringResource(R.string.action_add_to_queue))
                         },
                         onClick = {
-                            onAddToQueue()
+                            mediaController?.addMediaItem(song)
                             expanded = false
                         },
                         leadingIcon = {
@@ -245,12 +249,26 @@ fun HorizontalSongCard(
                     )
                     DropdownMenuItem(
                         text = {
+                            Text(stringResource(R.string.action_play_next))
+                        },
+                        onClick = {
+                            mediaController?.currentMediaItemIndex?.let { mediaController.addMediaItem(it+1,song) }
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.play_next_24px),
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
                             Text(stringResource(R.string.action_add_to_playlist))
                         },
                         onClick = {
                             println("Add Song To Playlist")
-                            showAddSongToPlaylistDialog.value = true
-                            songToAddToPlaylist.value = song
+                            showAddSongToPlaylistDialog = true
                             expanded = false
                         },
                         leadingIcon = {
@@ -286,6 +304,22 @@ fun HorizontalSongCard(
             }
         }
     }
+
+    if (showAddSongToPlaylistDialog) {
+        AddSongToPlaylist(
+            onDismissRequest = {showAddSongToPlaylistDialog = false},
+            songToAddToPlaylist = song
+        )
+    }
+    if (showSongRatingDialog) {
+        RatingDialog(
+            currentRating = (song.mediaMetadata.userRating as? StarRating)?.starRating?.toInt() ?: 0,
+            onDismiss = { showSongRatingDialog = false },
+            onSetRating = { rating ->
+                viewModel.setSongRating(song.mediaMetadata.id ?: "", rating)
+            }
+        )
+    }
 }
 
 @Preview(showSystemUi = false, showBackground = true)
@@ -299,7 +333,6 @@ fun PReviewHorizontalSongCard() {
                     .build()
             ).build(),
         onClick = {},
-        onAddToQueue = {},
-        onSetRating = {}
+        mediaController = null
     )
 }
