@@ -71,8 +71,6 @@ fun SongsHorizontalColumn(
 
     val scope = rememberCoroutineScope()
 
-    val showDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
-
     // Load more songs at scroll
         LaunchedEffect(listState) {
             if (songList.size % 100 != 0) return@LaunchedEffect
@@ -99,44 +97,18 @@ fun SongsHorizontalColumn(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        // Group songs by their source (Local or Navidrome)
-        val groupedSongs = songList.groupBy { song ->
-            song.mediaMetadata.providerId
-        }
 
-        groupedSongs.forEach { (providerId, songsInGroup) ->
-            if (showDividers && groupedSongs.size > 1) {
-                item {
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .height(1.dp)
-                            .fillMaxWidth(),
-                            //.background(MaterialTheme.colorScheme.background),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
-                    )
-                    Text(
-                        text = MediaProviderManager.getProvider(providerId?:"")?.providerName?.let {stringResource(it)} ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            //.background(MaterialTheme.colorScheme.background)
-                            .padding(8.dp)
-                    )
-                }
-            }
-            itemsIndexed(songsInGroup) { index, song ->
-                HorizontalSongCard(
-                    song = song,
-                    onClick = {
-                        println("Starting song at index: $index")
-                        scope.launch {
-                            SongHelper.play(songsInGroup, index, mediaController)
-                        }
-                    },
-                    mediaController = mediaController
-                )
-            }
+        itemsIndexed(songList) { index, song ->
+            HorizontalSongCard(
+                song = song,
+                onClick = {
+                    println("Starting song at index: $index")
+                    scope.launch {
+                        SongHelper.play(songList, index, mediaController)
+                    }
+                },
+                mediaController = mediaController
+            )
         }
     }
 }
@@ -154,8 +126,6 @@ fun AlbumGrid(
 ){
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
-
-    val showDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
 
     // Group songs by their source (Local or Navidrome)
     val groupedAlbums = albums.groupBy {
@@ -188,69 +158,26 @@ fun AlbumGrid(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
-        if (showDividers && groupedAlbums.size > 1) {
-            groupedAlbums.forEach { (providerId, albumsInGroup) ->
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Column (Modifier.padding(start = 12.dp)) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .height(1.dp)
-                                .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
-                        )
-                        Text(
-                            text = MediaProviderManager.getProvider(providerId?:"")?.providerName?.let { stringResource(it) } ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        )
+        items(
+            items = albums,
+            key = { it.mediaId }
+        ) { album ->
+            AlbumCard(album = album,
+                onClick = {
+                    onAlbumSelected(album)
+                },
+                onPlay = {
+                    coroutineScope.launch {
+                        val mediaItems = viewModel.getAlbum(album.mediaMetadata.id ?: "")
+                        if (mediaItems.isNotEmpty())
+                            SongHelper.play(
+                                mediaItems = mediaItems.subList(1, mediaItems.size),
+                                index = 0,
+                                mediaController = mediaController
+                            )
                     }
-
                 }
-                itemsIndexed(albumsInGroup) { index, album ->
-                    AlbumCard(album = album,
-                        onClick = {
-                            onAlbumSelected(album)
-                        },
-                        onPlay = {
-                            coroutineScope.launch {
-                                val mediaItems = viewModel.getAlbum(album.mediaMetadata.id ?: "")
-                                if (mediaItems.isNotEmpty())
-                                    SongHelper.play(
-                                        mediaItems = mediaItems.subList(1, mediaItems.size),
-                                        index = 0,
-                                        mediaController = mediaController
-                                    )
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        else {
-            items(
-                items = albums,
-                key = { it.mediaId }
-            ) { album ->
-                AlbumCard(album = album,
-                    onClick = {
-                        onAlbumSelected(album)
-                    },
-                    onPlay = {
-                        coroutineScope.launch {
-                            val mediaItems = viewModel.getAlbum(album.mediaMetadata.id ?: "")
-                            if (mediaItems.isNotEmpty())
-                                SongHelper.play(
-                                    mediaItems = mediaItems.subList(1, mediaItems.size),
-                                    index = 0,
-                                    mediaController = mediaController
-                                )
-                        }
-                    }
-                )
-            }
+            )
         }
     }
 }
@@ -266,13 +193,6 @@ fun AlbumGrid(
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
 
-    val showDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
-
-    // Group songs by their source (Local or Navidrome)
-    val groupedAlbums = albums.groupBy { song ->
-        song.mediaMetadata.providerId
-    }
-
     LazyVerticalGrid(
         columns = GridCells.Adaptive(96.dp),
         modifier = Modifier
@@ -283,69 +203,26 @@ fun AlbumGrid(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
-        if (false) {
-            groupedAlbums.forEach { (providerId, albumsInGroup) ->
-                item(key = providerId,span = { GridItemSpan(maxLineSpan) }) {
-                    Column (Modifier.padding(start = 12.dp)) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .height(1.dp)
-                                .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
-                        )
-                        Text(
-                            text = MediaProviderManager.getProvider(providerId?:"")?.providerName?.let { stringResource(it) } ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        )
+        items(
+            items = albums,
+            key = { it.mediaId }
+        ) { album ->
+            AlbumCard(album = album,
+                onClick = {
+                    onAlbumSelected(album)
+                },
+                onPlay = {
+                    coroutineScope.launch {
+                        val mediaItems = onGetAlbum(album.mediaMetadata.id ?: "")
+                        if (mediaItems.isNotEmpty())
+                            SongHelper.play(
+                                mediaItems = mediaItems.subList(1, mediaItems.size),
+                                index = 0,
+                                mediaController = mediaController
+                            )
                     }
-
                 }
-                itemsIndexed(albumsInGroup) { index, album ->
-                    AlbumCard(album = album,
-                        onClick = {
-                            onAlbumSelected(album)
-                        },
-                        onPlay = {
-                            coroutineScope.launch {
-                                val mediaItems = onGetAlbum(album.mediaMetadata.id ?: "")
-                                if (mediaItems.isNotEmpty())
-                                    SongHelper.play(
-                                        mediaItems = mediaItems.subList(1, mediaItems.size),
-                                        index = 0,
-                                        mediaController = mediaController
-                                    )
-                            }
-                        }
-                    )
-                }
-            }
-        }
-        else {
-            items(
-                items = albums,
-                key = { it.mediaId }
-            ) { album ->
-                AlbumCard(album = album,
-                    onClick = {
-                        onAlbumSelected(album)
-                    },
-                    onPlay = {
-                        coroutineScope.launch {
-                            val mediaItems = onGetAlbum(album.mediaMetadata.id ?: "")
-                            if (mediaItems.isNotEmpty())
-                                SongHelper.play(
-                                    mediaItems = mediaItems.subList(1, mediaItems.size),
-                                    index = 0,
-                                    mediaController = mediaController
-                                )
-                        }
-                    }
-                )
-            }
+            )
         }
     }
 }
@@ -357,9 +234,6 @@ fun AlbumRow(
     onAlbumSelected: (album: MediaItem) -> Unit,
     onPlay: (album: MediaItem) -> Unit,
 ){
-    val showProviderDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
-    val dividerIndex = albums.indexOfFirst { it.mediaMetadata.providerType == ProviderType.LOCAL_FOLDER.ordinal }
-
     LazyRow(
         modifier = Modifier
             .fillMaxSize()
@@ -371,31 +245,6 @@ fun AlbumRow(
             items = albums,
             key = { _, album -> album.mediaId }
         ) { index, album ->
-            // Show divider between local and navidrome albums
-            if (showProviderDividers) {
-                if (index == dividerIndex && index != albums.lastIndex && index != 0) {
-                    Row(
-                        modifier = Modifier.padding(start = 12.dp),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        VerticalDivider(
-                            modifier = Modifier
-                                .height(172.dp)
-                                .width(1.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
-                        )
-                        Text(
-                            text = stringResource(R.string.source_local_folder),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .rotateVertically(),
-                        )
-                    }
-                }
-            }
-
             AlbumCard(
                 album = album,
                 onClick = {
@@ -419,9 +268,6 @@ fun ArtistsGrid(
     onArtistSelected: (artist: MediaModel.Artist) -> Unit
 ){
     val gridState = rememberLazyGridState()
-    val showProviderDividers by AppearanceSettingsManager(LocalContext.current).showProviderDividersFlow.collectAsStateWithLifecycle(true)
-
-    val groupedArtists = artists.groupBy { artist -> artist.getProvider()}
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(96.dp),
@@ -433,42 +279,13 @@ fun ArtistsGrid(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
-        if (showProviderDividers && groupedArtists.size > 1) {
-            groupedArtists.forEach { (provider, artistsInGroup) ->
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Column(Modifier.padding(start = 12.dp)) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .height(1.dp)
-                                .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
-                        )
-                        Text(
-                            text = provider?.providerName?.let { stringResource(it) } ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        )
-                    }
-
-                }
-                itemsIndexed(artistsInGroup) { index, artist ->
-                    ArtistCard(artist = artist, onClick = {
-                        onArtistSelected(artist)
-                    })
-                }
-            }
-        } else {
-            items(
-                items = artists,
-                key = { it.id }
-            ) { artist ->
-                ArtistCard(artist = artist, onClick = {
-                    onArtistSelected(artist)
-                })
-            }
+        items(
+            items = artists,
+            key = { it.id }
+        ) { artist ->
+            ArtistCard(artist = artist, onClick = {
+                onArtistSelected(artist)
+            })
         }
     }
 }

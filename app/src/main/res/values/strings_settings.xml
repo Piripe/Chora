@@ -29,7 +29,6 @@
         <string name="appearance_lyrics_animation_speed">Lyrics Animation Speed</string>
         <string name="appearance_more_info">Show More Info</string>
         <string name="appearance_provider_logo">Show Provider Logo</string>
-        <string name="appearance_provider_dividers">Show Provider Dividers</string>
         <string name="appearance_refresh_animation">Show Refresh Animation</string>
         <string name="appearance_track_numbers_in_album_view">Show Track Numbers in Album View</string>
     <string name="settings_media_providers">Media Providers</string>

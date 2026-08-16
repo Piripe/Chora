@@ -282,21 +282,6 @@ fun TvS_AppearanceScreen() {
                     }
                 )
 
-                // Show Provider Dividers
-                val showProviderDividers by AppearanceSettingsManager(context).showProviderDividersFlow.collectAsState(
-                    true
-                )
-                SettingsSwitchItem(
-                    title = stringResource(R.string.appearance_provider_dividers),
-                    icon = ImageVector.vectorResource(R.drawable.s_a_moreinfo),
-                    checked = showProviderDividers,
-                    onCheckedChange = {
-                        coroutineScope.launch {
-                            AppearanceSettingsManager(context).setShowProviderDividers(it)
-                        }
-                    }
-                )
-
                 // Refresh Ripple
                 /*
                 val refreshRipple by AppearanceSettingsManager(context).refreshAnimationFlow.collectAsState(

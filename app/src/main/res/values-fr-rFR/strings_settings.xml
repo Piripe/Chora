@@ -29,7 +29,6 @@
         <string name="appearance_lyrics_animation_speed">Vitesse d\'animation du texte</string>
         <string name="appearance_more_info">Afficher plus d\'informations</string>
         <string name="appearance_provider_logo">Afficher le logo du fournisseur de médias</string>
-        <string name="appearance_provider_dividers">Afficher les séparateurs de fournisseurs</string>
         <string name="appearance_refresh_animation">Afficher l\'animation d\'actualisation</string>
         <string name="appearance_track_numbers_in_album_view">Afficher les numéros de piste de l\'album</string>
     <string name="settings_media_providers">Fournisseurs de médias</string>

@@ -490,22 +490,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
 
-                    //Show Provider Dividers
-                    val showProviderDividers =
-                        AppearanceSettingsManager(context).showProviderDividersFlow.collectAsState(
-                            true
-                        )
-                    SettingsSwitch(
-                        showProviderDividers.value,
-                        stringResource(R.string.appearance_provider_dividers),
-                        ImageVector.vectorResource(R.drawable.s_a_moreinfo),
-                        toggleEvent = {
-                            coroutineScope.launch {
-                                AppearanceSettingsManager(context).setShowProviderDividers(!showProviderDividers.value)
-                            }
-                        }
-                    )
-
                     //Refresh Ripple
                     val refreshRipple =
                         AppearanceSettingsManager(context).refreshAnimationFlow.collectAsState(true)
