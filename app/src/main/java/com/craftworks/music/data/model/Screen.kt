@@ -29,7 +29,7 @@ sealed interface Screen {
     @Serializable
     object ArtistsList : Screen
     @Serializable
-    data class ArtistDetails(val artistId: String, val imageUri: String) : Screen
+    data class ArtistDetails(val artistId: String, val imageUri: String?) : Screen
     @Serializable
     object Playlists : Screen
     @Serializable

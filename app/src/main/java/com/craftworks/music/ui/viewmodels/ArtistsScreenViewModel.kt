@@ -127,7 +127,7 @@ class ArtistsScreenViewModel @Inject constructor(
 
 
     fun loadArtistDetails(artistId: String) {
-        _selectedArtist.value = _allArtists.value.first { it.id == artistId }
+        _selectedArtist.value = _allArtists.value.firstOrNull { it.id == artistId }
         _artistAlbums.value = emptyList()
 
         viewModelScope.launch {

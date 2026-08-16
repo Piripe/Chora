@@ -1,5 +1,6 @@
 package com.craftworks.music.data.model
 
+import android.os.Build
 import android.os.Bundle
 import androidx.core.net.toUri
 import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
@@ -96,6 +97,7 @@ abstract class MediaModel()
                             putString("providerId", this@Album.providerId)
                             putInt("providerType", this@Album.providerType.ordinal)
                             putBoolean("userFavorite", this@Album.userFavorite == true)
+                            putSerializable("artists", ArrayList(this@Album.artists))
                             putString("imageId", this@Album.imageId)
                         }
                     )
@@ -373,6 +375,14 @@ val MediaMetadata.providerType: Int?
 
 val MediaMetadata.favorite: Boolean?
     get() = extras?.getBoolean("userFavorite")
+
+@Suppress("UNCHECKED_CAST")
+val MediaMetadata.artists: List<MediaModel.Artist>?
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            extras?.getSerializable("artists", ArrayList::class.java) as? ArrayList<MediaModel.Artist>
+        } else {
+            extras?.getSerializable("artists") as? ArrayList<MediaModel.Artist>
+        }
 
 
 fun MediaMetadata.getProvider(): MediaProvider? {

@@ -65,7 +65,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,6 +79,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.Screen
+import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
@@ -230,11 +235,22 @@ fun AlbumDetails(
                             )
 
                             Text(
-                                text = currentAlbum[0].mediaMetadata.artist.toString() +
-                                        " • " +
-                                        currentAlbum[0].mediaMetadata.recordingYear.toString() +
-                                        " • " +
-                                        formatSeconds(currentAlbum[0].mediaMetadata.durationMs?.div(1000)?.toInt() ?: 0),
+                                text = buildAnnotatedString {
+                                    currentAlbum[0].mediaMetadata.artists?.forEach { artist ->
+                                        withLink(
+                                            LinkAnnotation.Clickable(
+                                                tag = "ARTIST",
+                                                linkInteractionListener = {
+                                                    navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)}))
+                                                }
+                                            )
+                                        ) {
+                                            append(artist.name)
+                                        }
+                                        append(" • ")
+                                    }
+                                    append("${currentAlbum[0].mediaMetadata.recordingYear.toString()} • ${formatSeconds(currentAlbum[0].mediaMetadata.durationMs?.div(1000)?.toInt() ?: 0)}")
+                                },
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
                                 style = MaterialTheme.typography.titleMedium,
                                 textAlign = TextAlign.Left

@@ -166,7 +166,7 @@ fun ArtistDetails(
                         //Image and Name
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(selectedArtistImage)
+                                .data(selectedArtistImage ?: artist?.imageUrl ?: artist?.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")
                                 .diskCacheKey(selectedArtistId)
                                 .crossfade(true)
                                 .build(),
