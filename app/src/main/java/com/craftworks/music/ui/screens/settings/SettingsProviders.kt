@@ -66,7 +66,7 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Setting.route) {
+                            navHostController.navigate(Screen.Settings) {
                                 launchSingleTop = true
                             }
                         },

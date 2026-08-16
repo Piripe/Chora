@@ -147,7 +147,7 @@ fun TvSongsScreen(
                 onClick = {
                     coroutineScope.launch {
                         SongHelper.play(songs, index, mediaController)
-                        navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                        navHostController.navigate(Screen.NowPlayingLandscape) {
                             launchSingleTop = true
                         }
                     }

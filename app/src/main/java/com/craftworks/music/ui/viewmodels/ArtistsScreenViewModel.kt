@@ -126,8 +126,8 @@ class ArtistsScreenViewModel @Inject constructor(
         )
 
 
-    fun setSelectedArtist(artist: MediaModel.Artist) {
-        _selectedArtist.value = artist
+    fun loadArtistDetails(artistId: String) {
+        _selectedArtist.value = _allArtists.value.first { it.id == artistId }
         _artistAlbums.value = emptyList()
 
         viewModelScope.launch {
@@ -139,13 +139,13 @@ class ArtistsScreenViewModel @Inject constructor(
             }
             loadingJob.start()
             try {
-                val infoDeferred = async { artistRepository.getArtistInfo(artist.id) }
+                val infoDeferred = async { artistRepository.getArtistInfo(artistId) }
 
-                val artistDetail = artistRepository.getArtistDetail(artist.id)
+                val artistDetail = artistRepository.getArtistDetail(artistId)
 
                 _selectedArtist.value = artistDetail?.artist
                 if (artistDetail?.albums.isNullOrEmpty()) {
-                    val artistAlbumsAsync = async { artistRepository.getArtistAlbums(artist.id) }
+                    val artistAlbumsAsync = async { artistRepository.getArtistAlbums(artistId) }
                     _artistAlbums.value = artistAlbumsAsync.await()
                 } else {
                     _artistAlbums.value = artistDetail.albums.map { it.toMediaItem() }

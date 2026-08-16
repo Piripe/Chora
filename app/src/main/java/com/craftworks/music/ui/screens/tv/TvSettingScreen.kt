@@ -52,7 +52,7 @@ fun TvSettingScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SettingsButton(
-            Screen.S_Appearance.route,
+            Screen.S_Appearance,
             R.drawable.s_a_palette,
             R.string.settings_appearance,
             navHostController,
@@ -62,7 +62,7 @@ fun TvSettingScreen(
         )
 
         SettingsButton(
-            Screen.S_Providers.route,
+            Screen.S_Providers,
             R.drawable.s_m_media_providers,
             R.string.settings_media_providers,
             navHostController,
@@ -72,7 +72,7 @@ fun TvSettingScreen(
         )
 
         SettingsButton(
-            Screen.S_Playback.route,
+            Screen.S_Playback,
             R.drawable.s_m_playback,
             R.string.settings_playback,
             navHostController,
@@ -85,7 +85,7 @@ fun TvSettingScreen(
 
 @Composable
 private fun SettingsButton(
-    route: String,
+    route: Screen,
     icon: Int,
     text: Int,
     navHostController: NavHostController,

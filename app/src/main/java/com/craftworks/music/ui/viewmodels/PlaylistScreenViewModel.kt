@@ -67,9 +67,9 @@ class PlaylistScreenViewModel @Inject constructor(
         }
     }
 
-    fun setCurrentPlaylist(playlist: MediaItem) {
+    fun loadPlaylistDetails(playlistId: String) {
         _selectedPlaylistSongs.value = emptyList<MediaItem>()
-        _selectedPlaylist.value = playlist
+        _selectedPlaylist.value = _allPlaylists.value.first { it.mediaMetadata.id == playlistId}
         fetchPlaylistDetails() // Fetch details when playlist is set
     }
 

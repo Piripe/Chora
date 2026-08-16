@@ -68,8 +68,7 @@ fun TvPlaylistScreen(
             TvPlaylistCard (
                 playlist = playlist,
                 onClick = {
-                    viewModel.setCurrentPlaylist(playlist)
-                    navHostController.navigate(Screen.PlaylistDetails.route) {
+                    navHostController.navigate(Screen.PlaylistDetails(playlist.mediaMetadata.id?:"", playlist.mediaMetadata.artworkUri.toString())) {
                         launchSingleTop = true
                     }
                 },

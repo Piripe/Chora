@@ -58,6 +58,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
@@ -69,10 +70,16 @@ import java.net.URLEncoder
 @Composable
 @Preview
 fun TvArtistDetailsScreen(
+    selectedArtistId: String? = null,
+    selectedArtistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
     viewModel: ArtistsScreenViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(selectedArtistId) {
+        if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId)
+    }
+
     val showLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val artist = viewModel.selectedArtist.collectAsStateWithLifecycle().value
     val artistAlbums = viewModel.artistAlbums.collectAsStateWithLifecycle().value
@@ -121,8 +128,8 @@ fun TvArtistDetailsScreen(
                 ) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(artist?.let { it.getProvider()?.getImageUrl(it.imageId ?: "", LibraryType.ARTIST) } ?: "android.resource://com.craftworks.music/${R.drawable.placeholder}")
-                            .diskCacheKey(artist?.id)
+                            .data(selectedArtistImage ?: "android.resource://com.craftworks.music/${R.drawable.placeholder}")
+                            .diskCacheKey(selectedArtistId)
                             .crossfade(true)
                             .build(),
                         fallback = painterResource(R.drawable.rounded_artist_24),
@@ -176,7 +183,7 @@ fun TvArtistDetailsScreen(
                                             0,
                                             mediaController
                                         )
-                                        navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                        navHostController.navigate(Screen.NowPlayingLandscape) {
                                             launchSingleTop = true
                                         }
                                     }
@@ -216,7 +223,7 @@ fun TvArtistDetailsScreen(
                                             random,
                                             mediaController
                                         )
-                                        navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                        navHostController.navigate(Screen.NowPlayingLandscape) {
                                             launchSingleTop = true
                                         }
                                     }
@@ -252,8 +259,7 @@ fun TvArtistDetailsScreen(
                     TvAlbumCard(
                         album = album,
                         onClick = {
-                            val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                            navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.id}/$encodedImage") {
+                            navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                                 launchSingleTop = true
                             }
                         },

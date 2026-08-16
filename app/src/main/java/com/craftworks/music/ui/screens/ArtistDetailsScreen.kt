@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +73,8 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.fadingEdge
@@ -87,6 +90,8 @@ import java.net.URLEncoder
 @Composable
 @Preview
 fun ArtistDetails(
+    selectedArtistId: String? = null,
+    selectedArtistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
     viewModel: ArtistsScreenViewModel = hiltViewModel()
@@ -98,6 +103,10 @@ fun ArtistDetails(
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
 
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(selectedArtistId) {
+        if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId)
+    }
 
     // Loading spinner
     AnimatedVisibility(
@@ -157,8 +166,8 @@ fun ArtistDetails(
                         //Image and Name
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(artist?.imageUrl)  // TODO("Call provider's getImageUrl")
-                                .diskCacheKey(artist?.id)
+                                .data(selectedArtistImage)
+                                .diskCacheKey(selectedArtistId)
                                 .crossfade(true)
                                 .build(),
                             placeholder = painterResource(R.drawable.s_a_username),
@@ -373,8 +382,7 @@ fun ArtistDetails(
                     AlbumCard(
                         album = album,
                         onClick = {
-                            val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                            navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.id}/$encodedImage") {
+                            navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                                 launchSingleTop = true
                             }
                         },

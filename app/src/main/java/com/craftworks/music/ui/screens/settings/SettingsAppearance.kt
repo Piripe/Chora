@@ -119,7 +119,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Setting.route) {
+                            navHostController.navigate(Screen.Settings) {
                                 launchSingleTop = true
                             }
                         },
@@ -169,7 +169,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 Box {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Setting.route) {
+                            navHostController.navigate(Screen.Settings) {
                                 launchSingleTop = true
                             }
                         },

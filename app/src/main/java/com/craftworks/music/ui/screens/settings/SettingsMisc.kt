@@ -44,7 +44,6 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
-import com.craftworks.music.managers.settings.PlaybackSettingsManager
 import com.craftworks.music.ui.elements.dialogs.DownloadTemplateDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import kotlinx.coroutines.launch
@@ -72,7 +71,7 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Setting.route) {
+                            navHostController.navigate(Screen.Settings) {
                                 launchSingleTop = true
                             }
                         },

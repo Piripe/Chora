@@ -33,8 +33,10 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.tv.TvAlbumCard
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
 import kotlinx.coroutines.flow.filter
@@ -151,8 +153,7 @@ fun TvAlbumScreen(
                     focusRequester.saveFocusedChild()
                 },
                 onClick = {
-                    val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                    navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.extras?.getString("id")}/$encodedImage") {
+                    navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                         launchSingleTop = true
                     }
                 }

@@ -37,9 +37,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.AlbumListSort
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.ui.elements.AlbumGrid
 import com.craftworks.music.ui.elements.RippleEffect
@@ -115,8 +117,7 @@ fun AlbumScreen(
                                 searchResults,
                                 mediaController,
                                 onAlbumSelected = { album ->
-                                    val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                                    navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.extras?.getString("id")}/$encodedImage") {
+                                    navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                                         launchSingleTop = true
                                     }
                                 },
@@ -197,8 +198,7 @@ fun AlbumScreen(
                     albums,
                     mediaController,
                     onAlbumSelected = { album ->
-                        val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                        navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.extras?.getString("id")}/$encodedImage") {
+                        navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                             launchSingleTop = true
                         }
                     },

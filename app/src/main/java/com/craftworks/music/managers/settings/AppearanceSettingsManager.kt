@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.craftworks.music.R
 import com.craftworks.music.data.BottomNavItem
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.dataStore
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
@@ -153,12 +154,12 @@ class AppearanceSettingsManager @Inject constructor(
     val bottomNavItemsFlow: Flow<List<BottomNavItem>> = context.dataStore.data.map { preferences ->
         val jsonString = preferences[BOTTOM_NAV_ITEMS_KEY]
         val defaultValue = listOf(
-            BottomNavItem(context.getString(R.string.nav_home), R.drawable.rounded_home_24, "home_screen"),
-            BottomNavItem(context.getString(R.string.nav_albums), R.drawable.rounded_library_music_24, "album_screen"),
-            BottomNavItem(context.getString(R.string.nav_songs), R.drawable.round_music_note_24, "songs_screen"),
-            BottomNavItem(context.getString(R.string.nav_artists), R.drawable.rounded_artist_24, "artists_screen"),
-            BottomNavItem(context.getString(R.string.nav_radios), R.drawable.rounded_radio, "radio_screen"),
-            BottomNavItem(context.getString(R.string.nav_playlists), R.drawable.placeholder, "playlist_screen")
+            BottomNavItem(context.getString(R.string.nav_home), R.drawable.rounded_home_24, Screen.Home),
+            BottomNavItem(context.getString(R.string.nav_albums), R.drawable.rounded_library_music_24, Screen.Albums),
+            BottomNavItem(context.getString(R.string.nav_songs), R.drawable.round_music_note_24, Screen.Songs),
+            BottomNavItem(context.getString(R.string.nav_artists), R.drawable.rounded_artist_24, Screen.Artists),
+            BottomNavItem(context.getString(R.string.nav_radios), R.drawable.rounded_radio, Screen.Radios),
+            BottomNavItem(context.getString(R.string.nav_playlists), R.drawable.placeholder, Screen.Playlists)
         )
         try {
             jsonString?.let { Json.decodeFromString<List<BottomNavItem>>(it) } ?: defaultValue

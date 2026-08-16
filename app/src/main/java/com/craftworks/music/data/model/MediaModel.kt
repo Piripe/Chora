@@ -3,6 +3,7 @@ package com.craftworks.music.data.model
 import android.os.Bundle
 import androidx.core.net.toUri
 import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
+import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
 import com.craftworks.music.R
@@ -20,6 +21,7 @@ abstract class MediaModel()
         return MediaProviderManager.getProvider(providerId)
     }
 
+    @Serializable
     data class Album(
         override val id: String,
         override val providerId: String,
@@ -57,6 +59,19 @@ abstract class MediaModel()
         val userRating: Int? = null,
         val version: String? = null
     ) : MediaModel() {
+        companion object {
+            fun fromMediaItem(mi: MediaItem): MediaModel.Album {
+                return MediaModel.Album(
+                    id = mi.mediaMetadata.id?:"",
+                    providerId = mi.mediaMetadata.providerId?:"",
+                    providerType = ProviderType.entries[mi.mediaMetadata.providerType?:0],
+                    name = mi.mediaMetadata.title.toString(),
+                    imageUrl = mi.mediaMetadata.artworkUri.toString(),
+                    imageId = mi.mediaMetadata.extras?.getString("imageId")
+                    // TODO : Complete that
+                )
+            }
+        }
         fun toMediaItem(): androidx.media3.common.MediaItem {
             return toMediaItem(getProvider())
         }

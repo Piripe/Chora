@@ -37,6 +37,7 @@ import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.PlaylistListSort
 import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
@@ -222,11 +223,11 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         serviceIOScope.launch {
             appearanceSettingsManager.bottomNavItemsFlow.collect { items ->
                 val routeToItem = mapOf(
-                    "home_screen" to homeItem,
-                    "album_screen" to albumsItem,
-                    "artists_screen" to artistsItem,
-                    "radio_screen" to radiosItem,
-                    "playlist_screen" to playlistsItem
+                    Screen.Home to homeItem,
+                    Screen.Albums to albumsItem,
+                    Screen.Artists to artistsItem,
+                    Screen.Radios to radiosItem,
+                    Screen.Playlists to playlistsItem
                 )
 
                 rootHierarchy = items

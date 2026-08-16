@@ -56,7 +56,7 @@ fun SettingScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Home.route) {
+                            navHostController.navigate(Screen.Home) {
                                 launchSingleTop = true
                             }
                         },
@@ -88,28 +88,28 @@ fun SettingScreen(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 SettingsButton(
-                    Screen.S_Appearance.route,
+                    Screen.S_Appearance,
                     R.drawable.s_a_palette,
                     R.string.settings_appearance,
                     navHostController
                 )
 
                 SettingsButton(
-                    Screen.S_Providers.route,
+                    Screen.S_Providers,
                     R.drawable.s_m_media_providers,
                     R.string.settings_media_providers,
                     navHostController
                 )
 
                 SettingsButton(
-                    Screen.S_Playback.route,
+                    Screen.S_Playback,
                     R.drawable.s_m_playback,
                     R.string.settings_playback,
                     navHostController
                 )
 
                 SettingsButton(
-                    Screen.S_Misc.route,
+                    Screen.S_Misc,
                     Icons.Rounded.Menu,
                     R.string.settings_misc,
                     navHostController
@@ -120,11 +120,11 @@ fun SettingScreen(
 }
 
 @Composable
-private fun SettingsButton(route: String, icon: Int, text: Int, navHostController: NavHostController){
+private fun SettingsButton(route: Screen, icon: Int, text: Int, navHostController: NavHostController){
     SettingsButton(route, ImageVector.vectorResource(icon), text, navHostController)
 }
 @Composable
-private fun SettingsButton(route: String, icon: ImageVector, text: Int, navHostController: NavHostController) {
+private fun SettingsButton(route: Screen, icon: ImageVector, text: Int, navHostController: NavHostController) {
     Button(
         onClick = { navHostController.navigate(route) {
             launchSingleTop = true

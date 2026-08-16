@@ -107,8 +107,7 @@ fun ArtistsScreen(
                     onSearch = { query -> viewModel.onSearchQueryChange(query) },
                     searchResults = {
                         ArtistsGrid(searchResults, onArtistSelected = { artist ->
-                            viewModel.setSelectedArtist(artist)
-                            navHostController.navigate(Screen.ArtistDetails.route) {
+                            navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {
                                 launchSingleTop = true
                             }
                         })
@@ -176,8 +175,7 @@ fun ArtistsScreen(
                     .padding(top = innerPadding.calculateTopPadding())
             ) {
                 ArtistsGrid(allArtistList, onArtistSelected = { artist ->
-                    viewModel.setSelectedArtist(artist)
-                    navHostController.navigate(Screen.ArtistDetails.route) {
+                    navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {
                         launchSingleTop = true
                     }
                 })

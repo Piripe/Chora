@@ -118,8 +118,7 @@ fun TvArtistScreen(
                 },
                 onClick = {
                     focusRequester.saveFocusedChild()
-                    viewModel.setSelectedArtist(artist)
-                    navHostController.navigate(Screen.ArtistDetails.route) {
+                    navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {
                         launchSingleTop = true
                     }
                 }

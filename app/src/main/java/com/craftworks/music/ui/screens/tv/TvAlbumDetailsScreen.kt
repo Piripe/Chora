@@ -217,7 +217,7 @@ fun TvAlbumDetails(
                                     0,
                                     mediaController
                                 )
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }
@@ -246,7 +246,7 @@ fun TvAlbumDetails(
                                     random,
                                     mediaController
                                 )
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }
@@ -301,7 +301,7 @@ fun TvAlbumDetails(
                                 onClick = {
                                     coroutineScope.launch {
                                         SongHelper.play(songs, songs.indexOf(song), mediaController)
-                                        navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                        navHostController.navigate(Screen.NowPlayingLandscape) {
                                             launchSingleTop = true
                                         }
                                     }
@@ -321,7 +321,7 @@ fun TvAlbumDetails(
                             onClick = {
                                 coroutineScope.launch {
                                     SongHelper.play(songs, songs.indexOf(song), mediaController)
-                                    navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                    navHostController.navigate(Screen.NowPlayingLandscape) {
                                         launchSingleTop = true
                                     }
                                 }

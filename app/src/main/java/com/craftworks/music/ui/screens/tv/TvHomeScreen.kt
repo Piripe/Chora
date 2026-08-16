@@ -76,6 +76,7 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
@@ -215,7 +216,7 @@ fun TvHomeScreen(
                                     index = 0,
                                     mediaController = mediaController
                                 )
-                            navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                            navHostController.navigate(Screen.NowPlayingLandscape) {
                                 launchSingleTop = true
                             }
                         }
@@ -257,8 +258,7 @@ fun TvHomeScreen(
                         TvAlbumCard(
                             album = album,
                             onClick = {
-                                val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                                navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.id}/$encodedImage") {
+                                navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                                     launchSingleTop = true
                                 }
                             }

@@ -72,10 +72,16 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
 fun TvPlaylistDetails(
+    selectedPlaylistId: String? = null,
+    selectedPlaylistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = rememberManagedMediaController().value,
     viewModel: PlaylistScreenViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(selectedPlaylistId) {
+        if (selectedPlaylistId != null) viewModel.loadPlaylistDetails(selectedPlaylistId)
+    }
+
     val playlistMetadata =
         viewModel.selectedPlaylist.collectAsStateWithLifecycle().value?.mediaMetadata
 
@@ -119,8 +125,8 @@ fun TvPlaylistDetails(
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(playlistMetadata?.artworkUri)
-                        .diskCacheKey(playlistMetadata?.id)
+                        .data(selectedPlaylistImage)
+                        .diskCacheKey(selectedPlaylistId)
                         .crossfade(true)
                         .build(),
                     placeholder = painterResource(R.drawable.placeholder),
@@ -168,7 +174,7 @@ fun TvPlaylistDetails(
                                     0,
                                     mediaController
                                 )
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }
@@ -197,7 +203,7 @@ fun TvPlaylistDetails(
                                     random,
                                     mediaController
                                 )
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }
@@ -232,7 +238,7 @@ fun TvPlaylistDetails(
                         onClick = {
                             coroutineScope.launch {
                                 SongHelper.play(playlistSongs, playlistSongs.indexOf(song), mediaController)
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }

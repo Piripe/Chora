@@ -52,6 +52,7 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
@@ -194,8 +195,7 @@ fun TvSearchScreen(
                             focusRequester.saveFocusedChild()
                         },
                         onClick = {
-                            val encodedImage = URLEncoder.encode(it.mediaMetadata.artworkUri.toString(), "UTF-8")
-                            navHostController.navigate(Screen.AlbumDetails.route + "/${it.mediaMetadata.id}/$encodedImage") {
+                            navHostController.navigate(Screen.AlbumDetails(it.mediaMetadata.id?:"", it.mediaMetadata.artworkUri.toString())) {
                                 launchSingleTop = true
                             }
                         }
@@ -216,7 +216,7 @@ fun TvSearchScreen(
                         onClick = {
                             coroutineScope.launch {
                                 SongHelper.play(songs, index, mediaController)
-                                navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                                navHostController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                 }
                             }
@@ -240,8 +240,7 @@ fun TvSearchScreen(
                         },
                         onClick = {
                             focusRequester.saveFocusedChild()
-                            artistsViewModel.setSelectedArtist(it)
-                            navHostController.navigate(Screen.ArtistDetails.route) {
+                            navHostController.navigate(Screen.ArtistDetails) {
                                 launchSingleTop = true
                             }
                         }

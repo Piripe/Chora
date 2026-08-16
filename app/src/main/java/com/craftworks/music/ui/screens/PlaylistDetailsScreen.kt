@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,10 +88,16 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
 fun PlaylistDetails(
+    selectedPlaylistId: String? = null,
+    selectedPlaylistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = rememberManagedMediaController().value,
     viewModel: PlaylistScreenViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(selectedPlaylistId) {
+        if (selectedPlaylistId != null) viewModel.loadPlaylistDetails(selectedPlaylistId)
+    }
+
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red, Color.Transparent))
 
     val requester = remember { FocusRequester() }
@@ -158,16 +165,9 @@ fun PlaylistDetails(
                 ) {
                     SubcomposeAsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(
-                                if (playlistMetadata?.providerType == ProviderType.LOCAL_FOLDER.ordinal)
-                                    playlistMetadata.artworkData else
-                                    playlistMetadata?.artworkUri
-                            )
+                            .data(selectedPlaylistImage)
+                            .diskCacheKey(selectedPlaylistId)
                             .crossfade(true)
-                            .diskCacheKey(
-                                playlistMetadata?.id
-                                    ?: playlistMetadata?.title.toString()
-                            )
                             .build(),
                         contentScale = ContentScale.FillWidth,
                         contentDescription = "Playlist cover art",

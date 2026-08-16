@@ -30,6 +30,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
+import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.PlaylistGrid
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.dialogs.DeletePlaylist
@@ -88,8 +89,7 @@ fun PlaylistScreen(
                     )
             ) {
                 PlaylistGrid(playlists, onPlaylistSelected = { playlist ->
-                    viewModel.setCurrentPlaylist(playlist)
-                    navHostController.navigate(Screen.PlaylistDetails.route) {
+                    navHostController.navigate(Screen.PlaylistDetails(playlist.mediaMetadata.id?:"", playlist.mediaMetadata.artworkUri.toString())) {
                         launchSingleTop = true
                     }
                 })

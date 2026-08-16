@@ -69,6 +69,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
+import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
@@ -158,7 +159,7 @@ fun HomeScreen(
                 }
                 IconButton(
                     onClick = {
-                        navHostController.navigate(Screen.Setting.route) {
+                        navHostController.navigate(Screen.Settings) {
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -361,7 +362,7 @@ fun ProviderLogo(provider: MediaProvider){
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 12.dp)
                     .clickable {
-                        navHostController.navigate(Screen.HomeLists.route + "/$key") {
+                        navHostController.navigate(Screen.HomeLists(key)) {
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -388,8 +389,7 @@ fun ProviderLogo(provider: MediaProvider){
         AlbumRow(
             albums,
             onAlbumSelected = { album ->
-                val encodedImage = URLEncoder.encode(album.mediaMetadata.artworkUri.toString(), "UTF-8")
-                navHostController.navigate(Screen.AlbumDetails.route + "/${album.mediaMetadata.extras?.getString("id")}/$encodedImage") {
+                navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                     launchSingleTop = true
                 }
             },

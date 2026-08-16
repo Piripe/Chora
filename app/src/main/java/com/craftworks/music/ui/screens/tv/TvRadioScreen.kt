@@ -87,7 +87,7 @@ fun TvRadioScreen(
                             0,
                             mediaController
                         )
-                        navHostController.navigate(Screen.NowPlayingLandscape.route) {
+                        navHostController.navigate(Screen.NowPlayingLandscape) {
                             launchSingleTop = true
                         }
                     }

@@ -37,6 +37,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.data.BottomNavItem
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.OLEDProtectionMode
@@ -315,17 +316,17 @@ fun NavbarItemsDialog(setShowDialog: (Boolean) -> Unit) {
                 AppearanceSettingsManager(context).setBottomNavItems(
                     mutableStateListOf(
                         BottomNavItem(
-                            "Home", R.drawable.rounded_home_24, "home_screen"
+                            "Home", R.drawable.rounded_home_24, Screen.Home
                         ), BottomNavItem(
-                            "Albums", R.drawable.rounded_library_music_24, "album_screen"
+                            "Albums", R.drawable.rounded_library_music_24, Screen.Albums
                         ), BottomNavItem(
-                            "Songs", R.drawable.round_music_note_24, "songs_screen", false
+                            "Songs", R.drawable.round_music_note_24, Screen.Songs, false
                         ), BottomNavItem(
-                            "Artists", R.drawable.rounded_artist_24, "artists_screen"
+                            "Artists", R.drawable.rounded_artist_24, Screen.Artists
                         ), BottomNavItem(
-                            "Radios", R.drawable.rounded_radio, "radio_screen"
+                            "Radios", R.drawable.rounded_radio, Screen.Radios
                         ), BottomNavItem(
-                            "Playlists", R.drawable.placeholder, "playlist_screen"
+                            "Playlists", R.drawable.placeholder, Screen.Playlists
                         )
                     )
                 )
