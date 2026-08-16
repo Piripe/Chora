@@ -138,7 +138,7 @@ fun HomeScreen(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(
-                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                        top = 4.dp
                     )
             ) {
                 Row (Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
