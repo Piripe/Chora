@@ -56,7 +56,7 @@ import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.formatSeconds
-import com.craftworks.music.ui.elements.dialogs.AddSongToPlaylist
+import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
@@ -306,9 +306,9 @@ fun HorizontalSongCard(
     }
 
     if (showAddSongToPlaylistDialog) {
-        AddSongToPlaylist(
+        AddToPlaylist(
             onDismissRequest = {showAddSongToPlaylistDialog = false},
-            songToAddToPlaylist = song
+            mediaToAddToPlaylist = listOf(song)
         )
     }
     if (showSongRatingDialog) {

@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
@@ -83,6 +84,7 @@ import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.GenrePill
 import com.craftworks.music.ui.elements.HorizontalSongCard
+import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
 import kotlinx.coroutines.delay
@@ -108,6 +110,8 @@ fun AlbumDetails(
     var showLoading by remember { mutableStateOf(false) }
     val currentAlbum = viewModel.songsInAlbum.collectAsStateWithLifecycle().value
     val showTrackNumbers by AppearanceSettingsManager(LocalContext.current).showTrackNumbersFlow.collectAsStateWithLifecycle(false)
+
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -301,6 +305,7 @@ fun AlbumDetails(
                                         if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.FAVORITES)?:false) {
                                             DropdownMenuItem(
                                                 onClick = {
+                                                    showBottomSheet = false
                                                     coroutineScope.launch {
                                                         if (isStarred)
                                                             currentAlbum[0].mediaMetadata.id?.let {
@@ -334,8 +339,25 @@ fun AlbumDetails(
                                                 text = {Text(if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(R.string.action_add_to_favorites))}
                                             )
                                         }
+                                        if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.PLAYLIST)?:false) {
+                                            DropdownMenuItem(
+                                                onClick = {
+                                                    showBottomSheet = false
+                                                    showAddToPlaylistDialog = true
+                                                },
+                                                modifier = Modifier
+                                                    .padding(horizontal = 12.dp).fillMaxWidth(),
+                                                leadingIcon = {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Add,
+                                                        contentDescription = stringResource(R.string.action_add_to_playlist)
+                                                    )
+                                                },
+                                                text = {Text(stringResource(R.string.action_add_to_playlist))}
+                                            )
+                                        }
 
-                                        // TODO : Add Download, Add to Playlist and Share buttons
+                                        // TODO : Add Download and Share buttons
                                     }
                                 }
                             }
@@ -525,6 +547,13 @@ fun AlbumDetails(
                     )
                 }
             }
+        }
+
+        if (showAddToPlaylistDialog) {
+            AddToPlaylist(
+                onDismissRequest = { showAddToPlaylistDialog = false },
+                mediaToAddToPlaylist = currentAlbum
+            )
         }
     }
 }

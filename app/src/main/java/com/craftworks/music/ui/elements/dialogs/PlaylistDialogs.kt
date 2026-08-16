@@ -53,18 +53,19 @@ import com.craftworks.music.fadingEdge
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import androidx.core.text.htmlEncode
+import androidx.media3.common.MediaMetadata
 
 //region PREVIEWS
 @Preview(showBackground = true)
 @Composable
 fun PreviewAddToPlaylistDialog(){
-    AddSongToPlaylist(onDismissRequest = {}, MediaItem.EMPTY)
+    AddToPlaylist(onDismissRequest = {}, emptyList())
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewNewPlaylistDialog(){
-    NewPlaylist(hiltViewModel(), onDismissRequest = {}, MediaItem.EMPTY)
+    NewPlaylist(hiltViewModel(), onDismissRequest = {}, emptyList())
 }
 
 @Preview(showBackground = true)
@@ -81,9 +82,9 @@ var showDeletePlaylistDialog = mutableStateOf(false)
 var playlistToDelete = mutableStateOf("")
 
 @Composable
-fun AddSongToPlaylist(
+fun AddToPlaylist(
     onDismissRequest: () -> Unit,
-    songToAddToPlaylist: MediaItem,
+    mediaToAddToPlaylist: List<MediaItem>,
     viewModel: PlaylistScreenViewModel = hiltViewModel()
 ) {
     var showNewPlaylistDialog by remember { mutableStateOf(false) }
@@ -106,7 +107,13 @@ fun AddSongToPlaylist(
                         text = AnnotatedString.fromHtml(
                             stringResource(
                                 R.string.add_to_playlist_title,
-                                songToAddToPlaylist.mediaMetadata.title.toString().htmlEncode()
+                                if (
+                                    mediaToAddToPlaylist.firstOrNull()?.mediaMetadata?.mediaType == MediaMetadata.MEDIA_TYPE_ALBUM ||
+                                    mediaToAddToPlaylist.size == 1
+                                    )
+                                    mediaToAddToPlaylist.first().mediaMetadata.title.toString().htmlEncode()
+                                else
+                                    stringResource(R.string.add_to_playlist_songs, mediaToAddToPlaylist.size)
                             )
                         ),
                         style = TextStyle(
@@ -135,7 +142,7 @@ fun AddSongToPlaylist(
 
                         for (playlist in playlists) {
                             // Allow ONLY adding songs to playlists of the same provider.
-                            val disabled = songToAddToPlaylist.mediaMetadata.providerId != playlist.mediaMetadata.providerId
+                            val disabled = mediaToAddToPlaylist.firstOrNull()?.mediaMetadata?.providerId != playlist.mediaMetadata.providerId
 
                             Row(modifier = Modifier
                                 .padding(bottom = 12.dp)
@@ -144,11 +151,12 @@ fun AddSongToPlaylist(
                                 .clickable(
                                     enabled = !disabled
                                 ) {
-                                    if (playlist.mediaMetadata.id == songToAddToPlaylist.mediaMetadata.id)
+                                    if (playlist.mediaMetadata.id == mediaToAddToPlaylist.firstOrNull()?.mediaMetadata?.id)
                                         return@clickable
 
                                     viewModel.addSongsToPlaylist(playlist.mediaMetadata.id ?: "",
-                                        listOf(songToAddToPlaylist.mediaMetadata.id ?: ""))
+                                        mediaToAddToPlaylist.mapNotNull { it.mediaMetadata.id }
+                                    )
                                     onDismissRequest()
                                 }, verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -207,7 +215,7 @@ fun AddSongToPlaylist(
                         NewPlaylist(viewModel, {
                             showNewPlaylistDialog = false
                             onDismissRequest()
-                        }, songToAddToPlaylist)
+                        }, mediaToAddToPlaylist.mapNotNull { it.mediaMetadata.id })
                     }
                 }
             }
@@ -220,7 +228,7 @@ fun AddSongToPlaylist(
 fun NewPlaylist(
     viewModel: PlaylistScreenViewModel,
     onDismissRequest: () -> Unit,
-    songToAddToPlaylist: MediaItem
+    songsToAddToPlaylist: List<String>
 ) {
     var name: String by remember { mutableStateOf("") }
 
@@ -256,7 +264,7 @@ fun NewPlaylist(
 
                                 viewModel.createPlaylist(
                                     name,
-                                    listOf(songToAddToPlaylist.mediaMetadata.id ?: ""),
+                                    songsToAddToPlaylist,
                                     context
                                 )
 
