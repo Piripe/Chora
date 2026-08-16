@@ -11,7 +11,6 @@
         <string name="appearance_lyrics_animation_speed">Velocità Animazione Testo</string>
         <string name="appearance_more_info">Mostra Altre Info</string>
         <string name="appearance_provider_logo">Mostra Logo Navidrome</string>
-        <string name="appearance_provider_dividers">Mostra Divisori Provider</string>
         <string name="appearance_refresh_animation">Mostra Animazione Refresh</string>
         <string name="appearance_track_numbers_in_album_view">Mostra Numero di Traccia negli Album</string>
     <string name="settings_media_providers">Fonti Media</string>

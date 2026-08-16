@@ -116,7 +116,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_appearance)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Setting.route) {
@@ -486,22 +486,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         toggleEvent = {
                             coroutineScope.launch {
                                 AppearanceSettingsManager(context).setShowNavidromeLogo(!showNavidromeLogo.value)
-                            }
-                        }
-                    )
-
-                    //Show Provider Dividers
-                    val showProviderDividers =
-                        AppearanceSettingsManager(context).showProviderDividersFlow.collectAsState(
-                            true
-                        )
-                    SettingsSwitch(
-                        showProviderDividers.value,
-                        stringResource(R.string.appearance_provider_dividers),
-                        ImageVector.vectorResource(R.drawable.s_a_moreinfo),
-                        toggleEvent = {
-                            coroutineScope.launch {
-                                AppearanceSettingsManager(context).setShowProviderDividers(!showProviderDividers.value)
                             }
                         }
                     )

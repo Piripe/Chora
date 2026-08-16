@@ -44,7 +44,6 @@ class AppearanceSettingsManager @Inject constructor(
         private val HOME_ITEMS_KEY = stringPreferencesKey("home_items_order")
         private val APP_THEME = stringPreferencesKey("theme")
 
-        private val SHOW_PROVIDER_DIVIDERS = booleanPreferencesKey("provider_dividers")
         private val LYRICS_ANIMATION_SPEED = intPreferencesKey("lyrics_animation_speed")
         private val LYRICS_AUTOSCROLL = booleanPreferencesKey("lyrics_auto_scroll")
         private val LYRICS_RECENTER_AFTER_SCROLL = booleanPreferencesKey("lyrics_recenter_after_Scroll")
@@ -185,18 +184,6 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[APP_THEME] = theme.name
-            }
-        }
-    }
-
-    val showProviderDividersFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[SHOW_PROVIDER_DIVIDERS] ?: true
-    }
-
-    suspend fun setShowProviderDividers(showDividers: Boolean) {
-        withContext(NonCancellable) {
-            context.dataStore.edit { preferences ->
-                preferences[SHOW_PROVIDER_DIVIDERS] = showDividers
             }
         }
     }

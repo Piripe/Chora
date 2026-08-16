@@ -72,7 +72,7 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_playback)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Setting.route) {

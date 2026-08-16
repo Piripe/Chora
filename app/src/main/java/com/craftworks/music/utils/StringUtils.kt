@@ -13,4 +13,20 @@ object StringUtils {
         val allowedChars = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         return (1..length).map { allowedChars.random() }.joinToString("")
     }
+
+    fun makeValidFilename(segment: String): String {
+        return segment
+            .replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1F]"), "_")
+            .trim()
+            .trimEnd('.', ' ')
+            .ifBlank { "_" }
+    }
+
+    fun makeValidFilepath(segment: String): String {
+        return segment
+            .replace(Regex("[:*?\"<>|\\x00-\\x1F]"), "_")
+            .trim()
+            .trimEnd('.', ' ')
+            .ifBlank { "_" }
+    }
 }

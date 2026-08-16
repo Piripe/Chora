@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,7 +53,7 @@ fun SettingScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.home_settings)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Home.route) {
@@ -105,6 +107,13 @@ fun SettingScreen(
                     R.string.settings_playback,
                     navHostController
                 )
+
+                SettingsButton(
+                    Screen.S_Misc.route,
+                    Icons.Rounded.Menu,
+                    R.string.settings_misc,
+                    navHostController
+                )
             }
         }
     }
@@ -112,6 +121,10 @@ fun SettingScreen(
 
 @Composable
 private fun SettingsButton(route: String, icon: Int, text: Int, navHostController: NavHostController){
+    SettingsButton(route, ImageVector.vectorResource(icon), text, navHostController)
+}
+@Composable
+private fun SettingsButton(route: String, icon: ImageVector, text: Int, navHostController: NavHostController) {
     Button(
         onClick = { navHostController.navigate(route) {
             launchSingleTop = true
@@ -127,7 +140,7 @@ private fun SettingsButton(route: String, icon: Int, text: Int, navHostControlle
             verticalAlignment = Alignment.CenterVertically
         ){
             Icon(
-                imageVector = ImageVector.vectorResource(icon),
+                imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier

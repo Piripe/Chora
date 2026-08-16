@@ -29,7 +29,6 @@
         <string name="appearance_lyrics_animation_speed">Lyrics Animation Speed</string>
         <string name="appearance_more_info">Show More Info</string>
         <string name="appearance_provider_logo">Show Provider Logo</string>
-        <string name="appearance_provider_dividers">Show Provider Dividers</string>
         <string name="appearance_refresh_animation">Show Refresh Animation</string>
         <string name="appearance_track_numbers_in_album_view">Show Track Numbers in Album View</string>
     <string name="settings_media_providers">Media Providers</string>
@@ -53,4 +52,28 @@
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
+    <string name="settings_misc">Miscellaneous</string>
+        // Download
+    <string name="misc_download_template">Download Template</string>
+        <string name="misc_download_template_description">
+            {title} - Song title\n
+            {album} - Album title\n
+            {artist} - Song artist\n
+            {album_artist} - Album artist\n
+            {ext} - Extension\n
+            {track} - Track number\n
+            {disc} - Disc number
+        </string>
+    <string name="misc_playlist_download_template">Playlist Download Template</string>
+        <string name="misc_playlist_download_template_description">
+            {title} - Song title\n
+            {album} - Album title\n
+            {artist} - Song artist\n
+            {album_artist} - Album artist\n
+            {ext} - Extension\n
+            {track} - Track number\n
+            {disc} - Disc number\n
+            {playlist} - Playlist title\n
+            {playlist_index} - Playlist track index
+        </string>
 </resources>

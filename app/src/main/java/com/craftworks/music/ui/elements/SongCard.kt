@@ -262,42 +262,45 @@ fun HorizontalSongCard(
                             )
                         }
                     )
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.action_add_to_playlist))
-                        },
-                        onClick = {
-                            println("Add Song To Playlist")
-                            showAddSongToPlaylistDialog = true
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        enabled = (song.mediaMetadata.getProvider()?.featureFlags?.has(
-                            ProviderFeatures.DOWNLOADS)?:false),
-                        text = {
-                            Text(stringResource(R.string.action_download))
-                        },
-                        onClick = {
-                            coroutineScope.launch {
-                                TODO("Download song")
-                                //downloadNavidromeSong(context, song.mediaMetadata)
+                    if (song.mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.PLAYLIST) ?: false) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(stringResource(R.string.action_add_to_playlist))
+                            },
+                            onClick = {
+                                println("Add Song To Playlist")
+                                showAddSongToPlaylistDialog = true
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = null
+                                )
                             }
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-                                contentDescription = null
-                            )
-                        }
-                    )
+                        )
+                    }
+                    if (song.mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false) {
+                        DropdownMenuItem(
+                            enabled = (song.mediaMetadata.getProvider()?.featureFlags?.has(
+                                ProviderFeatures.DOWNLOADS)?:false),
+                            text = {
+                                Text(stringResource(R.string.action_download))
+                            },
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.downloadSong(song, context)
+                                }
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
 
                     extraMenuItems { expanded = false }
                 }

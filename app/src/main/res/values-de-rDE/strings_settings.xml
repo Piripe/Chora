@@ -9,7 +9,6 @@
         <string name="appearance_lyrics_animation_speed">Songtext-Animationsgeschwindigkeit</string>
         <string name="appearance_more_info">Weitere Infos anzeigen</string>
         <string name="appearance_provider_logo">Navidrome-Logo anzeigen</string>
-        <string name="appearance_provider_dividers">Provider-Trennzeichen anzeigen</string>
         <string name="appearance_refresh_animation">Aktualisierungsanimation anzeigen</string>
         <string name="appearance_track_numbers_in_album_view">Titelnummern in der Albumansicht anzeigen</string>
     <string name="settings_media_providers">Medienanbieter</string>

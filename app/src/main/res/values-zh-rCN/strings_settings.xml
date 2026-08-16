@@ -9,7 +9,6 @@
         <string name="appearance_lyrics_animation_speed">歌词动画速度</string>
         <string name="appearance_more_info">显示更多信息</string>
         <string name="appearance_provider_logo">显示 Navidrome 图标</string>
-        <string name="appearance_provider_dividers">显示媒体源分隔</string>
         <string name="appearance_refresh_animation">显示刷新动画</string>
         <string name="appearance_track_numbers_in_album_view">专辑页显示曲目编号</string>
     <string name="settings_media_providers">媒体源</string>

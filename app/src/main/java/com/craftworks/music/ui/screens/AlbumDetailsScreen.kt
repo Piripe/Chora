@@ -32,11 +32,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +66,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -112,9 +109,7 @@ fun AlbumDetails(
 
     var showLoading by remember { mutableStateOf(false) }
     val currentAlbum = viewModel.songsInAlbum.collectAsStateWithLifecycle().value
-    val showTrackNumbers by AppearanceSettingsManager(LocalContext.current).showTrackNumbersFlow.collectAsStateWithLifecycle(
-        false
-    )
+    val showTrackNumbers by AppearanceSettingsManager(LocalContext.current).showTrackNumbersFlow.collectAsStateWithLifecycle(false)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
 
@@ -160,11 +155,7 @@ fun AlbumDetails(
         visible = currentAlbum.isNotEmpty(),
         enter = fadeIn()
     ) {
-        var isStarred by remember {
-            mutableStateOf(
-                currentAlbum[0].mediaMetadata.favorite ?: false
-            )
-        }
+        var isStarred by remember { mutableStateOf(currentAlbum[0].mediaMetadata.favorite ?: false) }
         val requester = remember { FocusRequester() }
 
         val coroutineScope = rememberCoroutineScope()
@@ -352,12 +343,13 @@ fun AlbumDetails(
                                                     ) {
                                                         if (it) Icon(
                                                             imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                                            contentDescription = stringResource(R.string.action_remove_from_favorites),
+                                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
                                                         )
-                                                        else Icon(
-                                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                                            contentDescription = stringResource(R.string.action_add_to_favorites)
-                                                        )
+                                                        else
+                                                            Icon(
+                                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                                                contentDescription = stringResource(R.string.action_add_to_favorites)
+                                                            )
                                                     }
                                                 }
                                             },
@@ -659,95 +651,5 @@ fun AlbumDetails(
                 }
             }
         }
-    }
-}
-
-@Preview
-@Composable
-fun PlayerActionButtonGroup() {
-    val interactionSources = remember { List(4) { MutableInteractionSource() } }
-
-    ButtonGroup(
-        overflowIndicator = { menuState ->
-            ButtonGroupDefaults.OverflowIndicator(menuState = menuState)
-        },
-        modifier = Modifier
-            .height(64.dp)
-            .widthIn(max = 640.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // More
-        customItem(
-            buttonGroupContent = {
-                FilledTonalIconButton(
-                    onClick = { /* show sheet */ },
-                    interactionSource = interactionSources[3],
-                    modifier = Modifier
-                        .height(32.dp)
-                        .animateWidth(interactionSources[3]),
-                ) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = "More")
-                }
-            },
-            menuContent = { DropdownMenuItem(text = { Text("More") }, onClick = {}) },
-        )
-
-        // Heart
-        customItem(
-            buttonGroupContent = {
-                FilledTonalIconButton(
-                    onClick = { /* like */ },
-                    interactionSource = interactionSources[1],
-                    modifier = Modifier
-                        .size(64.dp)
-                        .animateWidth(interactionSources[1]),
-                    shape = CircleShape
-                ) {
-                    Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Like")
-                }
-            },
-            menuContent = { DropdownMenuItem(text = { Text("Like") }, onClick = {}) },
-        )
-
-        // Shuffle
-        customItem(
-            buttonGroupContent = {
-                FilledTonalIconButton(
-                    onClick = { /* shuffle */ },
-                    interactionSource = interactionSources[2],
-                    modifier = Modifier
-                        .size(64.dp)
-                        .animateWidth(interactionSources[2]),
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.round_shuffle_28),
-                        contentDescription = "Shuffle"
-                    )
-                }
-            },
-            menuContent = { DropdownMenuItem(text = { Text("Shuffle") }, onClick = {}) },
-        )
-
-        // Play pill — filled, primary
-        clickableItem(
-            onClick = {},
-            label = "Play",
-            icon = {
-                Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
-            },
-        )
-//                                    customItem(
-//                                        buttonGroupContent = {
-//                                            Button(
-//                                                onClick = { /* play */ },
-//                                                interactionSource = interactionSources[0],
-//                                                modifier = Modifier.animateWidth(interactionSources[0]),
-//                                            ) {
-//                                                Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
-//                                            }
-//                                        },
-//                                        menuContent = { DropdownMenuItem(text = { Text("Play") }, onClick = {}) },
-//                                    )
     }
 }
