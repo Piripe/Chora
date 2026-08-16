@@ -647,7 +647,27 @@ fun AlbumDetails(
                         )
                     }
 
-                    // TODO : Add Download and Share buttons
+                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS)?:false) {
+                        DropdownMenuItem(
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size), context)
+                                }
+                                showBottomSheet = false
+                            },
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp).fillMaxWidth(),
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
+                                    contentDescription = stringResource(R.string.action_download)
+                                )
+                            },
+                            text = {Text(stringResource(R.string.action_download))}
+                        )
+                    }
+
+                    // TODO : Add Share buttons
                 }
             }
         }
