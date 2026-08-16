@@ -101,9 +101,7 @@ fun NameDialog(setShowDialog: (Boolean) -> Unit = {} ) {
             OutlinedTextField(
                 value = usernameTextField,
                 onValueChange = {
-                    runBlocking {
-                        AppearanceSettingsManager(context).setUsername(it)
-                    }
+                    usernameTextField = it
                 },
                 label = { stringResource(R.string.appearance_username) },
                 singleLine = true
@@ -112,7 +110,7 @@ fun NameDialog(setShowDialog: (Boolean) -> Unit = {} ) {
         confirmButton = {
             Button(onClick = {
                 runBlocking {
-                    AppearanceSettingsManager(context).setUsername(username)
+                    AppearanceSettingsManager(context).setUsername(usernameTextField)
                     setShowDialog(false)
                 }
             }) {

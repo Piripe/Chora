@@ -45,9 +45,7 @@ fun DownloadTemplateDialog(onDismissRequest: () -> Unit = {}, onConfirm: (templa
                 OutlinedTextField(
                     value = templateTextField,
                     onValueChange = {
-                        runBlocking {
-                            templateTextField = it
-                        }
+                        templateTextField = it
                     },
                     label = { stringResource(title) },
                     singleLine = true
