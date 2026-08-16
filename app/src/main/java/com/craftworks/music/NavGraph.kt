@@ -400,6 +400,7 @@ fun SetupNavGraph(
                 NowPlayingContent(
                     mediaController,
                     metadata,
+                    navController,
                     viewModel
                 )
 

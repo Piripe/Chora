@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("com.google.devtools.ksp")
+    id("kotlin-parcelize")
     kotlin("plugin.serialization") version "2.3.21"
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)

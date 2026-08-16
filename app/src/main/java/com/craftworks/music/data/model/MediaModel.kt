@@ -2,6 +2,7 @@ package com.craftworks.music.data.model
 
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.core.net.toUri
 import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
 import androidx.media3.common.MediaItem
@@ -10,6 +11,7 @@ import androidx.media3.common.StarRating
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.data.providers.media.MediaProvider
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 abstract class MediaModel()
@@ -97,7 +99,7 @@ abstract class MediaModel()
                             putString("providerId", this@Album.providerId)
                             putInt("providerType", this@Album.providerType.ordinal)
                             putBoolean("userFavorite", this@Album.userFavorite == true)
-                            putSerializable("artists", ArrayList(this@Album.artists))
+                            putParcelableArrayList("artists", ArrayList(this@Album.artists))
                             putString("imageId", this@Album.imageId)
                         }
                     )
@@ -111,6 +113,7 @@ abstract class MediaModel()
     }
 
     @Serializable
+    @Parcelize
     data class Artist(
         override val id: String,
         override val providerId: String,
@@ -130,7 +133,7 @@ abstract class MediaModel()
         val uploadedImage: String? = null,
         val userFavorite: Boolean? = null,
         val userRating: Int? = null
-    ) : MediaModel() {
+    ) : MediaModel(), Parcelable {
         fun toMediaItem(): androidx.media3.common.MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
@@ -168,13 +171,14 @@ abstract class MediaModel()
     }
 
     @Serializable
+    @Parcelize
     data class Genre(
         val albumCount: Int? = null,
         val imageId: String? = null,
         val imageUrl: String? = null,
         val name: String,
         val songCount: Int? = null
-    )
+    ) : Parcelable
 
     data class InternetRadioStation(
         override val id: String,
@@ -348,6 +352,7 @@ abstract class MediaModel()
                             putString("imageId", this@Song.imageId)
                             putString("format", this@Song.format)
                             putLong("bitrate", this@Song.bitRate?.toLong() ?: 0)
+                            putParcelableArrayList("artists", ArrayList(this@Song.artists))
                             putBoolean("userFavorite", this@Song.userFavorite ?: false)
                             putBoolean(METADATA_KEY_IS_EXPLICIT, this@Song.explicit == true)
                             putString("lyricsArtist", if (this@Song.artists.isNotEmpty()) this@Song.artists[0].name else this@Song.artistName)
@@ -379,10 +384,11 @@ val MediaMetadata.favorite: Boolean?
 @Suppress("UNCHECKED_CAST")
 val MediaMetadata.artists: List<MediaModel.Artist>?
     get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            extras?.getSerializable("artists", ArrayList::class.java) as? ArrayList<MediaModel.Artist>
-        } else {
-            extras?.getSerializable("artists") as? ArrayList<MediaModel.Artist>
-        }
+        extras?.getParcelableArrayList("artists", MediaModel.Artist::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        extras?.getParcelableArrayList("artists")
+    }
 
 
 fun MediaMetadata.getProvider(): MediaProvider? {

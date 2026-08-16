@@ -32,7 +32,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.OLEDProtectionMode
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
@@ -49,7 +52,9 @@ enum class NowPlayingAlignment {
 fun NowPlayingContent(
     mediaController: MediaController? = null,
     metadata: MediaMetadata? = null,
+    navHostController: NavHostController = rememberNavController(),
     viewModel: NowPlayingViewModel = viewModel(),
+    onHide: () -> Unit = {}
 ) {
     val backgroundStyle by viewModel.backgroundStyle.collectAsStateWithLifecycle(NowPlayingBackground.STATIC_BLUR)
     val backgroundDarkMode by viewModel.isBackgroundDark.collectAsStateWithLifecycle()
@@ -96,6 +101,10 @@ fun NowPlayingContent(
             sleepTimerMinutes = sleepTimerMinutes,
             onOpenSleepTimer = { viewModel.setSleepTimerDialogOpen(true) },
             onToggleQueue = { viewModel.setPlayQueueOpen(!playQueueOpen) },
+            onArtistNav = { artist ->
+                onHide()
+                navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)}))
+            }
         )
     } else {
         NowPlayingPortrait(
@@ -108,7 +117,11 @@ fun NowPlayingContent(
             onToggleQueue = { viewModel.setPlayQueueOpen(!playQueueOpen) },
             onToggleDetails = { viewModel.setDetailsOpen(!detailsOpen) },
             onOpenSleepTimer = { viewModel.setSleepTimerDialogOpen(true) },
-            onRefreshLyrics =  { viewModel.refreshLyrics(metadata) }
+            onRefreshLyrics =  { viewModel.refreshLyrics(metadata) },
+            onArtistNav = { artist ->
+                onHide()
+                navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)}))
+            }
         )
     }
 

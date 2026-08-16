@@ -272,7 +272,13 @@ class MainActivity : ComponentActivity() {
                                         println("Recomposing sheetcontent")
                                         NowPlayingContent(
                                             mediaController = mediaController,
-                                            metadata = metadata
+                                            metadata = metadata,
+                                            navController,
+                                            onHide = {
+                                                coroutineScope.launch {
+                                                    scaffoldState.bottomSheetState.partialExpand()
+                                                }
+                                            }
                                         )
                                     }
 
