@@ -63,7 +63,7 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_media_providers)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Setting.route) {

@@ -53,7 +53,7 @@ fun SettingScreen(
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.home_settings)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Home.route) {

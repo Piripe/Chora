@@ -69,7 +69,7 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_misc)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Setting.route) {

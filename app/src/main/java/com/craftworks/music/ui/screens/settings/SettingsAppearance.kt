@@ -116,7 +116,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         topBar = {
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_appearance)) },
-                actions = {
+                navigationIcon = {
                     IconButton(
                         onClick = {
                             navHostController.navigate(Screen.Setting.route) {
