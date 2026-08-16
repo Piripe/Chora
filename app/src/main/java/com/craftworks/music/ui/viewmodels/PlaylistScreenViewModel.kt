@@ -15,12 +15,14 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.PlaylistRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -169,6 +171,19 @@ class PlaylistScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             songRepository.setSongRating(songId, rating)
+        }
+    }
+    fun downloadPlaylist(songs: List<MediaItem>, playlistName: String, context: Context) {
+        viewModelScope.launch {
+            songs.forEachIndexed { index, song ->
+                songRepository.downloadSong(
+                    song,
+                    context,
+                    MiscSettingsManager(context).playlistDownloadTemplateFlow.first(),
+                    playlistName,
+                    (index + 1).toString()
+                )
+            }
         }
     }
 }

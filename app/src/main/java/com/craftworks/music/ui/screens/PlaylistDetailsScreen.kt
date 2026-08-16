@@ -79,6 +79,7 @@ import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
+import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -103,6 +104,8 @@ fun PlaylistDetails(
         remember(playlistSongs) { playlistSongs.sumOf { it.mediaMetadata.durationMs ?: 0 } }
 
     val coroutineScope = rememberCoroutineScope()
+
+    val context = LocalContext.current
 
     println("artwork uri: ${playlistMetadata?.artworkUri}; artwork data: ${playlistMetadata?.artworkData}")
 
@@ -196,30 +199,30 @@ fun PlaylistDetails(
                         )
                     }
 
-                    if (playlistMetadata?.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false)
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                TODO("Download playlist")
-                                //downloadNavidromeAlbum(context, playlistMetadata?.title.toString(), playlistSongs)
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 12.dp, end = 12.dp)
-                            .size(32.dp),
-                        contentPadding = PaddingValues(4.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground)
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-                            contentDescription = "Unstar Album",
-                            tint = MaterialTheme.colorScheme.primary,
+                    if (playlistMetadata?.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false) {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    viewModel.downloadPlaylist(playlistSongs, playlistMetadata.title.toString(), context)
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .height(28.dp)
-                                .size(28.dp)
-                        )
+                                .align(Alignment.TopEnd)
+                                .padding(top = 12.dp, end = 12.dp)
+                                .size(32.dp),
+                            contentPadding = PaddingValues(4.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground)
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
+                                contentDescription = "Unstar Album",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .height(28.dp)
+                                    .size(28.dp)
+                            )
+                        }
                     }
 
                     // Playlist name

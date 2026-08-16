@@ -62,6 +62,7 @@ import com.craftworks.music.ui.screens.RadioScreen
 import com.craftworks.music.ui.screens.SettingScreen
 import com.craftworks.music.ui.screens.SongsScreen
 import com.craftworks.music.ui.screens.settings.S_AppearanceScreen
+import com.craftworks.music.ui.screens.settings.S_MiscScreen
 import com.craftworks.music.ui.screens.settings.S_PlaybackScreen
 import com.craftworks.music.ui.screens.settings.S_ProviderScreen
 import com.craftworks.music.ui.screens.tv.TvAlbumDetails
@@ -351,6 +352,21 @@ fun SetupNavGraph(
                     TvS_PlaybackScreen()
                 else
                     S_PlaybackScreen(navController)
+            }
+            composable(
+                route = Screen.S_Misc.route,
+                enterTransition = {
+                    slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeIn(tween(300))
+                },
+                exitTransition = {
+                    slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                        fullWidth / 4
+                    } + fadeOut(tween(300))
+                }
+            ) {
+                S_MiscScreen(navController)
             }
         }
 

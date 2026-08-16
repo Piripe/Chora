@@ -53,4 +53,28 @@
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
+    <string name="settings_misc">Miscellaneous</string>
+        // Download
+    <string name="misc_download_template">Download Template</string>
+        <string name="misc_download_template_description">
+            {title} - Song title\n
+            {album} - Album title\n
+            {artist} - Song artist\n
+            {album_artist} - Album artist\n
+            {ext} - Extension\n
+            {track} - Track number\n
+            {disc} - Disc number
+        </string>
+    <string name="misc_playlist_download_template">Playlist Download Template</string>
+        <string name="misc_playlist_download_template_description">
+            {title} - Song title\n
+            {album} - Album title\n
+            {artist} - Song artist\n
+            {album_artist} - Album artist\n
+            {ext} - Extension\n
+            {track} - Track number\n
+            {disc} - Disc number\n
+            {playlist} - Playlist title\n
+            {playlist_index} - Playlist track index
+        </string>
 </resources>

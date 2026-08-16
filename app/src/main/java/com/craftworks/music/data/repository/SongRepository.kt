@@ -1,11 +1,23 @@
 package com.craftworks.music.data.repository
 
+import android.app.DownloadManager
+import android.content.Context
+import android.os.Environment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.ScrobbleEvent
+import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.MiscSettingsManager
+import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,5 +50,31 @@ class SongRepository @Inject constructor() {
             event = event,
             submission = submission
         )
+    }
+
+    fun downloadSong(song: MediaItem, context: Context, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
+        val values = mapOf(
+            "title" to StringUtils.makeValidFilename(song.mediaMetadata.title.toString()),
+            "album" to StringUtils.makeValidFilename(song.mediaMetadata.albumTitle.toString()),
+            "artist" to StringUtils.makeValidFilename(song.mediaMetadata.artist.toString()),
+            "album_artist" to StringUtils.makeValidFilename(song.mediaMetadata.albumArtist.toString()),
+            "ext" to (song.mediaMetadata.extras?.getString("format") ?: "mp3"),
+            "track" to song.mediaMetadata.trackNumber.toString(),
+            "disc" to song.mediaMetadata.discNumber.toString(),
+            "playlist" to StringUtils.makeValidFilename(playlistName),
+            "playlist_index" to playlistIndex
+        )
+        val fileName = StringUtils.makeValidFilepath(Regex("\\{(\\w+)\\}").replace(template) { match ->
+            val key = match.groupValues[1]
+            values[key] ?: match.value
+        })
+        val request = DownloadManager.Request(song.mediaMetadata.getProvider()?.getStreamUrl(song.mediaMetadata.id?:"", false)?.toUri())
+            .setTitle("${context.getString(R.string.notification_download_name)} ${song.mediaMetadata.title}")
+            .setDescription(context.getString(R.string.notification_download_desc))
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, fileName)
+
+        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        manager.enqueue(request)
     }
 }

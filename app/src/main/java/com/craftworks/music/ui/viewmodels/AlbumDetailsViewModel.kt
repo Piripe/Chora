@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -9,10 +10,12 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
+import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -75,6 +78,14 @@ class AlbumDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             songRepository.setSongRating(songId, rating)
+        }
+    }
+    fun downloadAlbum(songs: List<MediaItem>, context: Context) {
+        viewModelScope.launch {
+            val template = MiscSettingsManager(context).downloadTemplateFlow.first()
+            songs.forEach { song ->
+                songRepository.downloadSong(song, context, template)
+            }
         }
     }
 }
