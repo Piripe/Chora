@@ -22,8 +22,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -200,9 +200,7 @@ fun AlbumDetails(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(
-                                top = WindowInsets.statusBars
-                                    .asPaddingValues()
-                                    .calculateTopPadding(),
+                                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
                                 bottom = 12.dp
                             )
                             .padding(horizontal = 24.dp)

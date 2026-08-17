@@ -10,12 +10,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.captionBar
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -108,14 +104,13 @@ fun SetupNavGraph(
     val leftPadding = if (LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE || isTv) 0.dp else 80.dp + WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(
         LayoutDirection.Ltr)
 
-    val animationSpec = MaterialTheme.LocalMotionScheme.current.slowSpatialSpec<Float>()
+    val animationSpec = MaterialTheme.LocalMaterialTheme.current.motionScheme.slowSpatialSpec<Float>()
 
     NavHost(
         navController = navController,
         startDestination = Screen.MainGraph,
         modifier = Modifier
-            .padding(bottom = bottomPadding, start = leftPadding)
-            .windowInsetsPadding(WindowInsets.systemBars),
+            .padding(bottom = bottomPadding, start = leftPadding),
         enterTransition = {
             fadeIn(animationSpec)
         },

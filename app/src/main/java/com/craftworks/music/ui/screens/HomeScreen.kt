@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
@@ -70,20 +71,19 @@ import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
-import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.player.SongHelper
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.data.providers.media.local.LocalMediaProvider
 import com.craftworks.music.data.providers.media.navidrome.NavidromeMediaProvider
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
+import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
+import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.AlbumRow
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import java.net.URLEncoder
 import kotlin.math.roundToInt
 
 @Stable
@@ -137,8 +137,10 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(
-                        top = 4.dp
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(
+                        top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
                     )
             ) {
                 Row (Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {

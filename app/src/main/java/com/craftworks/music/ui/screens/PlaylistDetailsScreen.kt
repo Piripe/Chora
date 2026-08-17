@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,11 +34,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -60,8 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.StarRating
 import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -69,10 +64,8 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
-import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.data.model.providerType
 import com.craftworks.music.fadingEdge
 import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
@@ -80,7 +73,6 @@ import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
-import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -152,9 +144,10 @@ fun PlaylistDetails(
                 .fillMaxWidth()
                 .dialogFocusable(),
             contentPadding = PaddingValues(
-                top = WindowInsets.statusBars
-                    .asPaddingValues()
-                    .calculateTopPadding(), bottom = 16.dp, start = 12.dp, end = 12.dp
+                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+                bottom = 16.dp,
+                start = 12.dp,
+                end = 12.dp
             )
         ) {
             item {

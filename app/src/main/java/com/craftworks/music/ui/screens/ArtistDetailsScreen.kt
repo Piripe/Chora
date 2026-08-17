@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -73,8 +73,6 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
-import com.craftworks.music.data.model.LibraryType
-import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.fadingEdge
@@ -83,7 +81,6 @@ import com.craftworks.music.ui.elements.AlbumCard
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
@@ -143,7 +140,7 @@ fun ArtistDetails(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
                 )
                 .dialogFocusable(),
             columns = GridCells.Adaptive(96.dp),
