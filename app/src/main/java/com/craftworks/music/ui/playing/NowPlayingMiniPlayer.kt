@@ -67,10 +67,10 @@ fun NowPlayingMiniPlayer(
         .background(MaterialTheme.colorScheme.surfaceContainer)
         .height(72.dp)
         .fillMaxWidth()
-        .padding(horizontal = 12.dp)
         .clickable {
             onClick.invoke()
         }
+        .padding(horizontal = 12.dp)
     ) {
         // Album Image
         SubcomposeAsyncImage(
