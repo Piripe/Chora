@@ -1,6 +1,8 @@
 package com.craftworks.music.ui.elements.dialogs.tv
 
 import android.os.Build
+import android.view.Gravity
+import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,9 +10,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.tv.material3.Button
 import androidx.tv.material3.Checkbox
 import androidx.tv.material3.ListItem
@@ -29,9 +35,15 @@ fun <T> GenericListDialog(
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
     label: @Composable (T) -> String,
+    modifier: Modifier = Modifier,
     helperText: (T) -> String = { "" },
+    leftAligned: Boolean = false
 ) {
     AlertDialog(
+        properties = DialogProperties(
+            usePlatformDefaultWidth = leftAligned
+        ),
+        modifier = modifier,
         onDismissRequest = { setShowDialog(false) },
         containerColor = MaterialTheme.colorScheme.surface,
         title = {
@@ -42,6 +54,19 @@ fun <T> GenericListDialog(
             )
         },
         text = {
+            if (leftAligned) {
+                val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+                SideEffect {
+                    window?.let {
+                        it.setGravity(Gravity.END)
+                        it.setLayout(
+                            WindowManager.LayoutParams.WRAP_CONTENT,
+                            WindowManager.LayoutParams.MATCH_PARENT
+                        )
+                    }
+                }
+            }
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
