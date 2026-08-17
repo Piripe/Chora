@@ -681,7 +681,11 @@ open class SubsonicMediaProvider : MediaProvider() {
     }
 
     override suspend fun ping(): Boolean {
-        TODO("Not yet implemented")
+        return try {
+            service.ping().subsonicResponse.openSubsonic == true
+        } catch (ex: Exception) {
+            false
+        }
     }
 
     override suspend fun removeFromPlaylist(

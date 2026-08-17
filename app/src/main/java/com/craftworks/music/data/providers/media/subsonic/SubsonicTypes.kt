@@ -31,6 +31,7 @@ data class SubsonicBody(
     val status: String,
     val type: String,
     val version: String,
+    val openSubsonic: Boolean? = false,
     val error: SubsonicError? = null,
 
     val user: SubsonicUser? = null,

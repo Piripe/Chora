@@ -54,6 +54,7 @@ object MediaProviderManager {
 
         mediaProvider.id = id
         mediaProvider.data = MediaProviderData(mediaProvider.getMusicFolderList().map { Pair(it, true) })
+        mediaProvider.init(appContext)
 
         updateProvidersFlow()
         saveProviders()
