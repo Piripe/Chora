@@ -111,11 +111,6 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
                 for (provider in providers) {
                     ProviderCard(provider)
                 }
-
-                // Then Navidrome Providers
-                /*for (server in navidromeServers) {
-                    NavidromeProviderCard(server)
-                }*/
             }
 
             FloatingActionButton(

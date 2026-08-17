@@ -4,10 +4,11 @@ import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -26,6 +27,10 @@ import androidx.tv.material3.RadioButton
 import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.ui.playing.NowPlayingBackground
+import com.gigamole.composefadingedges.FadingEdgesGravity
+import com.gigamole.composefadingedges.content.FadingEdgesContentType
+import com.gigamole.composefadingedges.content.scrollconfig.FadingEdgesScrollConfig
+import com.gigamole.composefadingedges.verticalFadingEdges
 
 @Composable
 fun <T> GenericListDialog(
@@ -67,10 +72,20 @@ fun <T> GenericListDialog(
                 }
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            val lazyColumnState = rememberLazyListState()
+
+            LazyColumn(
+                state = lazyColumnState,
+                modifier = Modifier
+                    .verticalFadingEdges(
+                    FadingEdgesContentType.Dynamic.Lazy.List(
+                        FadingEdgesScrollConfig.Dynamic(), lazyColumnState
+                    ), FadingEdgesGravity.All, 64.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp)
             ) {
-                options.forEach { option ->
+                items(options) { option ->
                     val isSelected = option == selectedOption
 
                     ListItem(

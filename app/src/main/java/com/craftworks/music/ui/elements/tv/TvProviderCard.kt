@@ -1,14 +1,34 @@
 package com.craftworks.music.ui.elements.tv
 
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Checkbox
+import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.FilterChip
+import androidx.tv.material3.FilterChipDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.ListItemDefaults
@@ -16,7 +36,12 @@ import androidx.tv.material3.ListItemScale
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.providers.media.MediaProvider
+import com.craftworks.music.data.providers.media.local.LocalMediaProvider
+import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import com.craftworks.music.data.repository.LyricsState
+import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import kotlinx.coroutines.launch
 
@@ -68,28 +93,18 @@ private fun ProviderItem(
     )
 }
 
-// TODO("Make this working instead of erroring")
-/*
-@OptIn(ExperimentalTvMaterial3Api::class)
-@Preview
+@OptIn(ExperimentalTvMaterial3Api::class, ExperimentalTvMaterial3Api::class)
 @Composable
-fun NavidromeProviderCard(
-    server: NavidromeProvider = NavidromeProvider(
-        "0",
-        "https://demo.navidrome.org",
-        "demo",
-        "demo",
-        enabled = true,
-        allowSelfSignedCert = true
-    )
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
+fun TvProviderCard(provider: MediaProvider) {
+    val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
-    val currentServerId by NavidromeManager.currentServerId.collectAsStateWithLifecycle()
-    val libraries by NavidromeManager.libraries.collectAsStateWithLifecycle()
+    val libraries = if (provider == currentProvider) {
+        currentProvider?.data?.libraries ?: emptyList()
+    } else {
+        provider.data?.libraries ?: emptyList()
+    }
 
-    val checked by remember { derivedStateOf { server.id == currentServerId } }
+    val checked by remember { derivedStateOf { provider == currentProvider } }
 
     val (mainFocus, librariesFocus) = remember { FocusRequester.createRefs() }
 
@@ -97,7 +112,7 @@ fun NavidromeProviderCard(
         modifier = Modifier
             .focusProperties {
                 down =
-                    if (libraries.size > 1 && server.id == currentServerId) librariesFocus else FocusRequester.Default
+                    if (libraries.size > 1 && provider == currentProvider) librariesFocus else FocusRequester.Default
             }
             .focusRequester(mainFocus),
         selected = checked,
@@ -111,7 +126,7 @@ fun NavidromeProviderCard(
         },
         headlineContent = {
             Text(
-                text = server.username,
+                text = stringResource(provider.providerName),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier
             )
@@ -121,10 +136,14 @@ fun NavidromeProviderCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = server.url,
+                    text = when (provider) {
+                        is LocalMediaProvider -> provider.data.libraries.joinToString(", ") { it.first.name }
+                        is SubsonicMediaProvider -> provider.providerData.url
+                        else -> ""
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                if (libraries.size > 1 && server.id == currentServerId) {
+                if (libraries.size > 1 && provider == currentProvider) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
@@ -138,13 +157,16 @@ fun NavidromeProviderCard(
                         libraries.forEach { (library, isSelected) ->
                             FilterChip(
                                 onClick = {
-                                    NavidromeManager.currentServerId.value?.let { serverId ->
-                                        NavidromeManager.toggleServerLibraryEnabled(
-                                            serverId,
-                                            library.id,
-                                            !isSelected
-                                        )
-                                    }
+                                    MediaProviderManager.setProviderLibraries(
+                                        provider.id,
+                                        libraries = libraries.map { (currentLibrary, currentEnabled) ->
+                                            if (currentLibrary.id == library.id) {
+                                                Pair(library, !isSelected)
+                                            } else {
+                                                Pair(currentLibrary, currentEnabled)
+                                            }
+                                        }
+                                    )
                                 },
                                 content = {
                                     Text(library.name)
@@ -177,37 +199,14 @@ fun NavidromeProviderCard(
             }
         },
         onClick = {
-            coroutineScope.launch {
-                if (!checked && NavidromeManager.getAllServers().size == 1)
-                    NavidromeManager.setCurrentServer(null)
-                else
-                    NavidromeManager.setCurrentServer(server.id)
-                AppearanceSettingsManager(context).setUsername(server.username)
-            }
-            Log.d("NAVIDROME", "Navidrome Current Server: ${server.id}")
+            MediaProviderManager.setCurrentProvider(provider)
         },
         onLongClick = {
-            NavidromeManager.removeServer(server.id)
+            MediaProviderManager.removeProvider(provider.id)
             DataRefreshManager.notifyDataSourcesChanged()
         }
     )
 }
-
-@Preview
-@Composable
-fun LocalProviderCard(
-    folder: String = ""
-) = ProviderItem(
-    icon = R.drawable.s_m_local_filled,
-    title = "Local",
-    subtitle = folder,
-    enabled = LocalProviderManager.getAllFolders().contains(folder),
-    onClick = { },
-    onLongClick = {
-        LocalProviderManager.removeFolder(folder)
-        DataRefreshManager.notifyDataSourcesChanged()
-    }
-)*/
 
 @Composable
 fun LrcLibProviderCard(

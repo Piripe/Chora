@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.runtime.Composable
@@ -31,25 +32,25 @@ import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
-import com.craftworks.music.ui.elements.dialogs.tv.CreateLocalProviderDialog
-import com.craftworks.music.ui.elements.dialogs.tv.CreateNavidromeProviderDialog
 import com.craftworks.music.ui.elements.dialogs.tv.ModifyLrcLibProviderDialog
+import com.craftworks.music.ui.elements.dialogs.tv.TvCreateMediaProviderDialog
 import com.craftworks.music.ui.elements.tv.LrcLibProviderCard
 import com.craftworks.music.ui.elements.tv.NetEaseProviderCard
+import com.craftworks.music.ui.elements.tv.TvProviderCard
 
 @Composable
 fun TvS_ProviderScreen() {
     val context = LocalContext.current.applicationContext
 
-    // TODO("Update providers settings")
-
     val providers by MediaProviderManager.allProviders.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Navidrome", "Folders", "Lyrics")
+    val tabs = listOf(
+        "Media",
+        "Lyrics"
+    )
 
-    var showNavidromeServerDialog by remember { mutableStateOf(false) }
-    var showLocalFolderDialog by remember { mutableStateOf(false) }
+    var showAddProviderDialog by remember { mutableStateOf(false) }
     var showLrcLibEditDialog by remember { mutableStateOf(false) }
 
     val lrclibUrl by MediaProviderSettingsManager(context).lrcLibEndpointFlow.collectAsStateWithLifecycle("")
@@ -84,14 +85,15 @@ fun TvS_ProviderScreen() {
                 contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                /*items(providers, key = { it.first }) { server ->
-                    NavidromeProviderCard(server)
-                }*/
+                items(providers, key = { it.id }) { provider ->
+                    TvProviderCard(provider)
+                }
+
                 item {
                     ListItem(
                         selected = false,
                         onClick = {
-                            showNavidromeServerDialog = true
+                            showAddProviderDialog = true
                         },
                         leadingContent = {
                             Icon(Icons.Rounded.Add, contentDescription = null)
@@ -103,30 +105,7 @@ fun TvS_ProviderScreen() {
                 }
             }
 
-            /*1 -> LazyColumn(
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(localProviders, key = { it }) { local ->
-                    LocalProviderCard(local)
-                }
-                item {
-                    ListItem(
-                        selected = false,
-                        onClick = {
-                            showLocalFolderDialog = true
-                        },
-                        leadingContent = {
-                            Icon(Icons.Rounded.Add, contentDescription = null)
-                        },
-                        headlineContent = {
-                            Text(stringResource(R.string.Action_Add))
-                        }
-                    )
-                }
-            }*/
-
-            2 -> Column(
+            1 -> Column(
                 modifier = Modifier.padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -138,11 +117,8 @@ fun TvS_ProviderScreen() {
         }
     }
 
-    if(showNavidromeServerDialog)
-        CreateNavidromeProviderDialog(setShowDialog = { showNavidromeServerDialog = it })
-
-    if(showLocalFolderDialog)
-        CreateLocalProviderDialog(setShowDialog = { showLocalFolderDialog = it })
+    if(showAddProviderDialog)
+        TvCreateMediaProviderDialog(setShowDialog = { showAddProviderDialog = it })
 
     if(showLrcLibEditDialog)
         ModifyLrcLibProviderDialog(

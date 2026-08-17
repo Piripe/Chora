@@ -3,9 +3,12 @@ package com.craftworks.music.ui.elements.dialogs.tv
 import android.content.res.Configuration
 import android.os.Environment
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -42,6 +46,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,13 +55,21 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.tv.material3.CarouselDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.providers.media.navidrome.NavidromeMediaProvider
+import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
+import com.craftworks.music.data.providers.media.subsonic.SubsonicProviderData
+import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
+import com.craftworks.music.ui.screens.tv.settings.SettingsSwitchItem
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -69,7 +82,7 @@ private enum class DialogStep { URL, CREDENTIALS }
     wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
 )
 @Composable
-fun CreateNavidromeProviderDialog(
+private fun CreateSubsonicProviderDialog(
     setShowDialog: (Boolean) -> Unit = { }
 ) {
     var url: String by remember { mutableStateOf("") }
@@ -95,14 +108,17 @@ fun CreateNavidromeProviderDialog(
         errorTextColor = MaterialTheme.colorScheme.error
     )
 
+    var isError: Boolean by remember { mutableStateOf(false) }
+    var errorMessage: String by remember { mutableStateOf("") }
+
     Dialog(
         onDismissRequest = { setShowDialog(false) },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-//        Text(
-//            text = stringResource(R.string.Settings_Header_Media),
-//            style = MaterialTheme.typography.titleLarge
-//        )
+        Text(
+            text = stringResource(R.string.settings_media_providers),
+            style = MaterialTheme.typography.titleLarge
+        )
 
         Row(
             modifier = Modifier
@@ -112,8 +128,6 @@ fun CreateNavidromeProviderDialog(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Top
         ) {
-            // TODO("Remake this")
-            /*
             AnimatedContent(
                 targetState = step,
             ) {
@@ -132,7 +146,7 @@ fun CreateNavidromeProviderDialog(
                                 onValueChange = { url = it },
                                 label = {
                                     Text(
-                                        text = stringResource(R.string.Label_Navidrome_URL),
+                                        text = stringResource(R.string.add_media_provider_server_url),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 },
@@ -143,7 +157,7 @@ fun CreateNavidromeProviderDialog(
                                     )
                                 },
                                 singleLine = true,
-                                isError = navidromeStatus.value == "Invalid URL",
+                                isError = isError,
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     keyboardType = KeyboardType.Uri,
                                     imeAction = ImeAction.Next,
@@ -152,19 +166,25 @@ fun CreateNavidromeProviderDialog(
                                 keyboardActions = KeyboardActions(
                                     onNext = {
                                         coroutineScope.launch {
-                                            val server = NavidromeProvider(
-                                                url,
-                                                url,
-                                                username,
-                                                password,
-                                                true,
-                                                allowCerts
-                                            )
-                                            getNavidromeStatus(server)
-                                            if (navidromeStatus.value.contains("Error 10") ||
-                                                navidromeStatus.value.contains("Error 40")) {
-                                                navidromeStatus.value = ""
-                                                step = DialogStep.CREDENTIALS
+                                            var provider = SubsonicMediaProvider().apply {
+                                                this.providerData = SubsonicProviderData(
+                                                    url = url,
+                                                    username = username,
+                                                    password = password,
+                                                    allowSelfSignedCert = allowCerts,
+                                                )
+                                            }
+
+                                            try {
+                                                if (provider.ping())
+                                                    step = DialogStep.CREDENTIALS
+                                                else
+                                                    isError = true
+                                            }
+                                            catch (ex: Exception) {
+                                                println(ex.message)
+                                                println(ex.stackTrace)
+                                                isError = true
                                             }
                                         }
                                     }
@@ -174,17 +194,14 @@ fun CreateNavidromeProviderDialog(
 
                             /* Allow Self Signed Certs */
                             SettingsSwitchItem(
-                                title = stringResource(R.string.Label_Allow_Self_Signed_Certs),
+                                title = stringResource(R.string.add_media_provider_server_allow_self_signed_certs),
                                 checked = allowCerts,
                                 onCheckedChange = {
                                     allowCerts = it
                                 }
                             )
 
-                            if (navidromeStatus.value.isNotEmpty() && !navidromeStatus.value.contains(
-                                    "Error 10"
-                                )
-                            ) {
+                            if (errorMessage.isNotEmpty()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -192,7 +209,7 @@ fun CreateNavidromeProviderDialog(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "Status: ${navidromeStatus.value}",
+                                        text = "Status: ${errorMessage}",
                                         fontWeight = FontWeight.Medium,
                                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                                         color = MaterialTheme.colorScheme.onBackground,
@@ -203,22 +220,29 @@ fun CreateNavidromeProviderDialog(
 
                             ListItem(
                                 selected = false,
-                                headlineContent = { Text(stringResource(R.string.Action_Done)) },
+                                headlineContent = { Text(stringResource(R.string.action_done)) },
                                 modifier = Modifier.focusRequester(nextFocus),
                                 onClick = {
                                     coroutineScope.launch {
-                                        val server = NavidromeProvider(
-                                            url,
-                                            url,
-                                            "",
-                                            "",
-                                            true,
-                                            allowCerts
-                                        )
-                                        getNavidromeStatus(server)
-                                        if (navidromeStatus.value.contains("Error 10")) {
-                                            navidromeStatus.value = ""
-                                            step = DialogStep.CREDENTIALS
+                                        var provider = SubsonicMediaProvider().apply {
+                                            this.providerData = SubsonicProviderData(
+                                                url = url,
+                                                username = username,
+                                                password = password,
+                                                allowSelfSignedCert = allowCerts,
+                                            )
+                                        }
+
+                                        try {
+                                            if (provider.ping())
+                                                step = DialogStep.CREDENTIALS
+                                            else
+                                                isError = true
+                                        }
+                                        catch (ex: Exception) {
+                                            println(ex.message)
+                                            println(ex.stackTrace)
+                                            isError = true
                                         }
                                     }
                                 }
@@ -234,12 +258,12 @@ fun CreateNavidromeProviderDialog(
                                 onValueChange = { username = it },
                                 label = {
                                     Text(
-                                        text = stringResource(R.string.Label_Navidrome_Username),
+                                        text = stringResource(R.string.add_media_provider_server_username),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 },
                                 singleLine = true,
-                                isError = navidromeStatus.value.contains("40"),
+                                isError = isError,
                                 modifier = Modifier.focusRequester(usernameFocus),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     keyboardType = KeyboardType.Text,
@@ -261,29 +285,12 @@ fun CreateNavidromeProviderDialog(
                                 onValueChange = { password = it },
                                 label = {
                                     Text(
-                                        text = stringResource(R.string.Label_Navidrome_Password),
+                                        text = stringResource(R.string.add_media_provider_server_password),
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 },
                                 singleLine = true,
-                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-//                                trailingIcon = {
-//                                    val image = if (passwordVisible)
-//                                        R.drawable.round_visibility_24
-//                                    else
-//                                        R.drawable.round_visibility_off_24
-//
-//                                    val description =
-//                                        if (passwordVisible) "Hide password" else "Show password"
-//
-//                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-//                                        Icon(
-//                                            imageVector = ImageVector.vectorResource(id = image),
-//                                            description
-//                                        )
-//                                    }
-//                                },
-                                isError = navidromeStatus.value.contains("40"),
+                                isError = isError,
                                 modifier = Modifier.focusRequester(passwordFocus),
                                 keyboardOptions = KeyboardOptions.Default.copy(
                                     keyboardType = KeyboardType.Password,
@@ -293,24 +300,39 @@ fun CreateNavidromeProviderDialog(
                                 keyboardActions = KeyboardActions(
                                     onGo = {
                                         coroutineScope.launch {
-                                            val server = NavidromeProvider(
-                                                url,
-                                                url,
-                                                username,
-                                                password,
-                                                true,
-                                                allowCerts
-                                            )
-                                            getNavidromeStatus(server)
-                                            if (navidromeStatus.value == "ok")
-                                                addFocus.requestFocus()
+                                            var provider = SubsonicMediaProvider().apply {
+                                                this.providerData = SubsonicProviderData(
+                                                    url = url,
+                                                    username = username,
+                                                    password = password,
+                                                    allowSelfSignedCert = allowCerts,
+                                                )
+                                            }
+
+                                            try {
+                                                val res = provider.authenticate(username, password)
+
+                                                if (res.providerType == ProviderType.NAVIDROME)
+                                                    provider = NavidromeMediaProvider().apply {
+                                                        this.providerData = provider.providerData
+                                                    }
+
+                                                MediaProviderManager.addProvider(provider)
+                                                AppearanceSettingsManager(context).setUsername(username)
+                                                setShowDialog(false)
+                                            }
+                                            catch (ex: Exception) {
+                                                println(ex.message)
+                                                println(ex.stackTrace)
+                                                isError = true
+                                            }
                                         }
                                     }
                                 ),
                                 colors = textFieldColors
                             )
 
-                            if (navidromeStatus.value.isNotEmpty() && navidromeStatus.value != "ok") {
+                            if (errorMessage.isNotEmpty()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -318,7 +340,7 @@ fun CreateNavidromeProviderDialog(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "Status: ${navidromeStatus.value}",
+                                        text = "Status: ${errorMessage}",
                                         fontWeight = FontWeight.Medium,
                                         fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                                         color = MaterialTheme.colorScheme.onBackground,
@@ -326,6 +348,49 @@ fun CreateNavidromeProviderDialog(
                                     )
                                 }
                             }
+
+                            ListItem(
+                                selected = false,
+                                enabled = !isError,
+                                headlineContent = { Text(stringResource(R.string.action_add)) },
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Add,
+                                        contentDescription = stringResource(R.string.add_media_provider_login),
+                                    )
+                                },
+                                modifier = Modifier.focusRequester(addFocus),
+                                onClick = {
+                                    coroutineScope.launch {
+                                        var provider = SubsonicMediaProvider().apply {
+                                            this.providerData = SubsonicProviderData(
+                                                url = url,
+                                                username = username,
+                                                password = password,
+                                                allowSelfSignedCert = allowCerts,
+                                            )
+                                        }
+
+                                        try {
+                                            val res = provider.authenticate(username, password)
+
+                                            if (res.providerType == ProviderType.NAVIDROME)
+                                                provider = NavidromeMediaProvider().apply {
+                                                    this.providerData = provider.providerData
+                                                }
+
+                                            MediaProviderManager.addProvider(provider)
+                                            AppearanceSettingsManager(context).setUsername(username)
+                                            setShowDialog(false)
+                                        }
+                                        catch (ex: Exception) {
+                                            println(ex.message)
+                                            println(ex.stackTrace)
+                                            isError = true
+                                        }
+                                    }
+                                }
+                            )
                         }
                     }
 
@@ -336,74 +401,6 @@ fun CreateNavidromeProviderDialog(
                     )
                 }
             }
-
-            AnimatedVisibility(
-                visible = step == DialogStep.CREDENTIALS,
-                modifier = Modifier.widthIn(max = 320.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ListItem(
-                        selected = false,
-                        headlineContent = { Text(stringResource(R.string.Action_Login)) },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Rounded.AccountCircle,
-                                contentDescription = stringResource(R.string.Action_Login),
-                            )
-                        },
-                        modifier = Modifier.focusRequester(loginFocus),
-                        onClick = {
-                            coroutineScope.launch {
-                                val server = NavidromeProvider(
-                                    url,
-                                    url,
-                                    username,
-                                    password,
-                                    true,
-                                    allowCerts
-                                )
-                                getNavidromeStatus(server)
-                                if (navidromeStatus.value == "ok")
-                                    addFocus.requestFocus()
-                            }
-                        }
-                    )
-
-                    ListItem(
-                        selected = false,
-                        enabled = navidromeStatus.value == "ok",
-                        headlineContent = { Text(stringResource(R.string.Action_Add)) },
-                        leadingContent = {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = stringResource(R.string.Action_Login),
-                            )
-                        },
-                        modifier = Modifier.focusRequester(addFocus),
-                        onClick = {
-                            coroutineScope.launch {
-                                val server = NavidromeProvider(
-                                    url,
-                                    url,
-                                    username,
-                                    password,
-                                    true,
-                                    allowCerts
-                                )
-                                NavidromeManager.addServer(server)
-                                AppearanceSettingsManager(context).setUsername(username)
-                                navidromeStatus.value = ""
-                                setShowDialog(false)
-                            }
-                        }
-                    )
-
-
-                }
-            }
-             */
         }
     }
 }
@@ -414,7 +411,7 @@ fun CreateNavidromeProviderDialog(
     wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
 )
 @Composable
-fun CreateLocalProviderDialog(
+private fun CreateLocalProviderDialog(
     setShowDialog: (Boolean) -> Unit = {}
 ) {
     val rootOptions = remember {
@@ -673,5 +670,88 @@ fun ModifyLrcLibProviderDialog(
                 )
             }
         }
+    }
+}
+
+@Preview(
+    showBackground = false, showSystemUi = true, device = "id:tv_1080p",
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_TELEVISION,
+    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
+)
+@Composable
+fun SelectProviderType(
+    setShowDialog: (Boolean) -> Unit = { },
+    selectProvider: (ProviderType) -> Unit = { }
+) {
+    AlertDialog(
+        onDismissRequest = { setShowDialog(false) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = {
+            Text(
+                text = stringResource(R.string.settings_media_providers),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                item {
+                    ListItem(
+                        selected = false,
+                        leadingContent = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.s_m_opensubsonic_bw),
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = {
+                            Text(text = "OpenSubsonic/Navidrome")
+                        },
+                        onClick = { selectProvider(ProviderType.SUBSONIC) },
+                    )
+                }
+
+                item {
+                    ListItem(
+                        selected = false,
+                        leadingContent = {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.s_m_local_filled),
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = {
+                            Text(text = stringResource(R.string.source_local_folder))
+                        },
+                        onClick = { selectProvider(ProviderType.LOCAL_FOLDER) },
+                    )
+                }
+            }
+        },
+        confirmButton = {}
+    )
+}
+
+@Preview(
+    showBackground = false, showSystemUi = true, device = "id:tv_1080p",
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_TELEVISION,
+    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
+)
+@Composable
+fun TvCreateMediaProviderDialog(
+    setShowDialog: (Boolean) -> Unit = { },
+) {
+    var selectedProvider:ProviderType? by remember { mutableStateOf(null) }
+
+    when (selectedProvider) {
+        null -> SelectProviderType(setShowDialog) { selectedProvider = it }
+
+        ProviderType.SUBSONIC -> CreateSubsonicProviderDialog(setShowDialog)
+        ProviderType.NAVIDROME -> CreateSubsonicProviderDialog(setShowDialog)
+
+        ProviderType.LOCAL_FOLDER -> CreateLocalProviderDialog(setShowDialog)
     }
 }
