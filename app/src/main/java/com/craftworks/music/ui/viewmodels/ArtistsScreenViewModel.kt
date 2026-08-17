@@ -1,16 +1,21 @@
 package com.craftworks.music.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import com.craftworks.music.data.model.AlbumArtistListSort
+import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.ArtistRepository
+import com.craftworks.music.data.repository.SongRepository
+import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.DataRefreshManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
+import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -23,6 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +37,8 @@ import javax.inject.Inject
 class ArtistsScreenViewModel @Inject constructor(
     private val artistRepository: ArtistRepository,
     private val albumRepository: AlbumRepository,
+    private val songRepository: SongRepository,
+    private val starredRepository: StarredRepository,
     private val localDataSettingsManager: LocalDataSettingsManager
 ) : ViewModel() {
     private val _allArtists = MutableStateFlow<List<MediaModel.Artist>>(emptyList())
@@ -176,6 +184,24 @@ class ArtistsScreenViewModel @Inject constructor(
     fun setShowFavoritesOnly(showFavorites: Boolean) {
         viewModelScope.launch {
             localDataSettingsManager.saveShowFavoriteArtist(showFavorites)
+        }
+    }
+    fun starArtist(id: String) {
+        viewModelScope.launch {
+            starredRepository.starItem(listOf(id), LibraryType.ARTIST)
+        }
+    }
+    fun unstarArtist(id: String) {
+        viewModelScope.launch {
+            starredRepository.unStarItem(listOf(id), LibraryType.ARTIST)
+        }
+    }
+    fun downloadArtist(songs: List<MediaItem>, context: Context) {
+        viewModelScope.launch {
+            val template = MiscSettingsManager(context).downloadTemplateFlow.first()
+            songs.forEach { song ->
+                songRepository.downloadSong(song, context, template)
+            }
         }
     }
 }
