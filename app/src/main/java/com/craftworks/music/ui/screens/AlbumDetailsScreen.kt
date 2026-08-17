@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -34,6 +35,8 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -61,7 +64,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -280,10 +285,8 @@ fun AlbumDetails(
                                 ButtonGroup(
                                     overflowIndicator = { menuState ->
                                         FilledTonalIconButton(
-                                            onClick = { showBottomSheet = true },
-                                            interactionSource = interactionSources[3],
-                                            modifier = Modifier
-                                                .height(64.dp)
+                                            onClick = { menuState.show() },
+                                            modifier = Modifier.height(64.dp)
                                         ) {
                                             Icon(
                                                 Icons.Outlined.MoreVert,
@@ -320,6 +323,22 @@ fun AlbumDetails(
                                             ProviderFeatures.FAVORITES
                                         ) ?: false
                                     ) {
+                                        val heartAction: () -> Unit = {
+                                            coroutineScope.launch {
+                                                if (isStarred)
+                                                    currentAlbum[0].mediaMetadata.id?.let {
+                                                        viewModel.unstarAlbum(it)
+                                                    }
+                                                else
+                                                    currentAlbum[0].mediaMetadata.id?.let {
+                                                        viewModel.starAlbum(it)
+                                                    }
+                                                viewModel.loadAlbumDetails(
+                                                    selectedAlbumId
+                                                )
+                                                isStarred = !isStarred
+                                            }
+                                        }
                                         customItem(
                                             buttonGroupContent = {
                                                 val cornerRadius by animateDpAsState(
@@ -332,22 +351,7 @@ fun AlbumDetails(
                                                 )
 
                                                 FilledTonalIconButton(
-                                                    onClick = {
-                                                        coroutineScope.launch {
-                                                            if (isStarred)
-                                                                currentAlbum[0].mediaMetadata.id?.let {
-                                                                    viewModel.unstarAlbum(it)
-                                                                }
-                                                            else
-                                                                currentAlbum[0].mediaMetadata.id?.let {
-                                                                    viewModel.starAlbum(it)
-                                                                }
-                                                            viewModel.loadAlbumDetails(
-                                                                selectedAlbumId
-                                                            )
-                                                            isStarred = !isStarred
-                                                        }
-                                                    },
+                                                    onClick = heartAction,
                                                     interactionSource = interactionSources[1],
                                                     modifier = Modifier
                                                         .size(64.dp)
@@ -369,30 +373,54 @@ fun AlbumDetails(
                                                     }
                                                 }
                                             },
-                                            menuContent = { },
+                                            menuContent = {
+                                                DropdownMenuItem(
+                                                    text = { Text(
+                                                            if (isStarred) stringResource(R.string.action_remove_from_favorites)
+                                                            else stringResource(R.string.action_add_to_favorites)
+                                                            )},
+                                                    leadingIcon = {
+                                                        Crossfade(
+                                                            targetState = isStarred
+                                                        ) {
+                                                            if (it) Icon(
+                                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                                                                contentDescription = stringResource(R.string.action_remove_from_favorites)
+                                                            )
+                                                            else
+                                                                Icon(
+                                                                    imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                                                    contentDescription = stringResource(R.string.action_add_to_favorites)
+                                                                )
+                                                        }
+                                                    },
+                                                    onClick = heartAction
+                                                )
+                                            },
                                         )
                                     }
 
                                     // Shuffle
+                                    val shuffleAction: () -> Unit = {
+                                        coroutineScope.launch {
+                                            val random = currentAlbum.subList(
+                                                1,
+                                                currentAlbum.size
+                                            ).indices.random()
+                                            SongHelper.play(
+                                                currentAlbum.subList(
+                                                    1,
+                                                    currentAlbum.size
+                                                ),
+                                                random,
+                                                mediaController
+                                            )
+                                        }
+                                    }
                                     customItem(
                                         buttonGroupContent = {
                                             FilledTonalIconButton(
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        val random = currentAlbum.subList(
-                                                            1,
-                                                            currentAlbum.size
-                                                        ).indices.random()
-                                                        SongHelper.play(
-                                                            currentAlbum.subList(
-                                                                1,
-                                                                currentAlbum.size
-                                                            ),
-                                                            random,
-                                                            mediaController
-                                                        )
-                                                    }
-                                                },
+                                                onClick = shuffleAction,
                                                 interactionSource = interactionSources[2],
                                                 modifier = Modifier
                                                     .size(64.dp)
@@ -405,28 +433,58 @@ fun AlbumDetails(
                                                 )
                                             }
                                         },
-                                        menuContent = { },
+                                        menuContent = {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.action_shuffle)) },
+                                                leadingIcon = { Icon(ImageVector.vectorResource(R.drawable.round_shuffle_28), contentDescription = null) },
+                                                onClick = shuffleAction
+                                            )
+                                        },
                                     )
 
                                     // Play pill — filled, primary
-                                    clickableItem(
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                SongHelper.play(
-                                                    currentAlbum.subList(1, currentAlbum.size),
-                                                    0,
-                                                    mediaController
-                                                )
+                                    val playAction: () -> Unit = {
+                                        coroutineScope.launch {
+                                            SongHelper.play(
+                                                currentAlbum.subList(1, currentAlbum.size),
+                                                0,
+                                                mediaController
+                                            )
+                                        }
+                                    }
+                                    customItem(
+                                        buttonGroupContent = {
+                                            var isCompact by remember { mutableStateOf(false) }
+                                            val density = LocalDensity.current
+                                            val compactThresholdPx = remember(density) { with(density) { 128.dp.roundToPx() } }
+
+                                            Button(
+                                                onClick = playAction, // event callback — launch happens here, not during composition
+                                                interactionSource = interactionSources[0],
+                                                modifier = Modifier
+                                                    .height(64.dp)
+                                                    .weight(0.5f)
+                                                    .animateWidth(interactionSources[0])
+                                                    .onSizeChanged { size -> isCompact = size.width < compactThresholdPx },
+                                                shape = RoundedCornerShape(32.dp),
+                                                contentPadding = if (isCompact) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
+                                            ) {
+                                                Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
+                                                AnimatedVisibility(visible = !isCompact) {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Spacer(Modifier.width(8.dp))
+                                                        Text("Play")
+                                                    }
+                                                }
                                             }
                                         },
-                                        label = "Play",
-                                        icon = {
-                                            Icon(
-                                                Icons.Filled.PlayArrow,
-                                                contentDescription = "Play"
+                                        menuContent = {
+                                            DropdownMenuItem(
+                                                text = { Text("Play") },
+                                                leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
+                                                onClick = playAction
                                             )
                                         },
-                                        weight = 0.5f
                                     )
                                 }
                             }
