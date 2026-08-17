@@ -46,7 +46,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -468,7 +470,7 @@ fun AlbumDetails(
                                                 contentPadding = if (isCompact) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
                                             ) {
                                                 Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
-                                                AnimatedVisibility(visible = !isCompact) {
+                                                if(!isCompact) {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         Spacer(Modifier.width(8.dp))
                                                         Text("Play")
