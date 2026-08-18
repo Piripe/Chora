@@ -46,6 +46,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import com.craftworks.music.R
+import com.craftworks.music.data.model.uuid
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -113,7 +114,7 @@ fun PlayQueueContent(
         contentPadding = PaddingValues(12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        itemsIndexed(currentList, key = { _, item -> item.mediaId }) { index, item ->
+        itemsIndexed(currentList, key = { _, item -> item.mediaMetadata.uuid ?: item.mediaId }) { index, item ->
             ReorderableItem(
                 state = reorderableState,
                 key = item.mediaId,

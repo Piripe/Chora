@@ -374,6 +374,8 @@ abstract class MediaModel()
 
 val MediaMetadata.id: String?
     get() = extras?.getString("id")
+val MediaMetadata.uuid: String?
+    get() = extras?.getString("uuid")
 
 val MediaMetadata.providerId: String?
     get() = extras?.getString("providerId")
@@ -400,4 +402,10 @@ fun MediaMetadata.getProvider(): MediaProvider? {
 
 @OptIn(ExperimentalUuidApi::class)
 fun MediaItem.makeUnique(): MediaItem =
-    buildUpon().setMediaId(Uuid.generateV4().toString()).build()
+    buildUpon().setMediaMetadata(
+        mediaMetadata.buildUpon().setExtras(
+            (mediaMetadata.extras?.let { Bundle(it) } ?:Bundle()).apply {
+                putString("uuid", Uuid.generateV7().toString())
+            }
+        ).build()
+    ).build()
