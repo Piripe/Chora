@@ -169,7 +169,7 @@ data class SubsonicSong(
         discSubtitle = null,
         durationMs = this.duration * 1000,
         explicit = this.explicitStatus?.let { it == "explicit"},
-        gain = GainInfo(replayGain?.albumPeak?.toDouble(), replayGain?.trackGain?.toDouble()),
+        gain = GainInfo(replayGain?.albumPeak, replayGain?.trackGain),
         genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: listOf(),
         imageId = this.imageUrl,
         imageUrl = this.imageUrl,

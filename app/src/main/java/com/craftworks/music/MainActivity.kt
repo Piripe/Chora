@@ -103,6 +103,9 @@ import androidx.media3.common.util.NotificationUtil.IMPORTANCE_LOW
 import androidx.media3.common.util.NotificationUtil.createNotificationChannel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -486,9 +489,9 @@ fun TvSideNavigation(
             ) {
                 NavigationDrawerItem(
                     modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                    selected = Screen.Search == backStackEntry?.destination,
+                    selected = backStackEntry?.destination.isRouteSelected(Screen.Search),
                     onClick = {
-                        if (Screen.Search != backStackEntry?.destination) {
+                        if (!backStackEntry?.destination.isRouteSelected(Screen.Search)) {
                             navController.navigate(Screen.Search) {
                                 launchSingleTop = true
                                 restoreState = true
@@ -506,13 +509,13 @@ fun TvSideNavigation(
                         )
                     }
                 ) {
-                    androidx.tv.material3.Text(text = "Search")
+                    androidx.tv.material3.Text(text = stringResource(R.string.nav_search))
                 }
 
                 orderedNavItems.forEach { item ->
                     if (!item.enabled) return@forEach
 
-                    val isSelected = item.screenRoute == backStackEntry?.destination
+                    val isSelected = backStackEntry?.destination.isRouteSelected(item.screenRoute)
                     NavigationDrawerItem(
                         modifier = Modifier
                             .padding(vertical = 4.dp, horizontal = 8.dp)
@@ -553,7 +556,7 @@ fun TvSideNavigation(
                 }
 
                 val isPlayingSelected =
-                    Screen.NowPlayingLandscape == backStackEntry?.destination
+                    backStackEntry?.destination.isRouteSelected(Screen.NowPlayingLandscape)
 
                 var isPlayingVisible by remember { mutableStateOf(mediaController?.currentMediaItem != null) }
                 LaunchedEffect(mediaController?.mediaMetadata) {
@@ -583,7 +586,7 @@ fun TvSideNavigation(
                             )
                         }
                     ) {
-                        androidx.tv.material3.Text(text = "Playing")
+                        androidx.tv.material3.Text(text = stringResource(R.string.nav_playing))
                     }
                 }
 
@@ -595,9 +598,9 @@ fun TvSideNavigation(
                 ) {
                     NavigationDrawerItem(
                         modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                        selected = Screen.Settings == backStackEntry?.destination,
+                        selected = backStackEntry?.destination.isRouteSelected(Screen.Settings),
                         onClick = {
-                            if (Screen.Settings != backStackEntry?.destination)
+                            if (!backStackEntry?.destination.isRouteSelected(Screen.Settings))
                                 navController.navigate(Screen.Settings) {
                                     launchSingleTop = true
                                     restoreState = true
@@ -703,9 +706,9 @@ fun AnimatedBottomNavBar(
                 if (!item.enabled) return@forEachIndexed
 
                 NavigationBarItem(
-                    selected = item.screenRoute == backStackEntry?.destination,
+                    selected = backStackEntry?.destination.isRouteSelected(item.screenRoute),
                     onClick = {
-                        if (item.screenRoute == backStackEntry?.destination) return@NavigationBarItem
+                        if (backStackEntry?.destination.isRouteSelected(item.screenRoute)) return@NavigationBarItem
                         navController.navigate(item.screenRoute) {
                             launchSingleTop = true
                         }
@@ -721,9 +724,9 @@ fun AnimatedBottomNavBar(
             }
             if (LocalWindowInfo.current.containerSize.width > dpToPx(640))
                 NavigationBarItem(
-                    selected = Screen.NowPlayingLandscape == backStackEntry?.destination,
+                    selected = backStackEntry?.destination.isRouteSelected(Screen.NowPlayingLandscape),
                     onClick = {
-                        if (Screen.NowPlayingLandscape == backStackEntry?.destination) return@NavigationBarItem
+                        if (backStackEntry?.destination.isRouteSelected(Screen.NowPlayingLandscape)) return@NavigationBarItem
                         navController.navigate(Screen.NowPlayingLandscape) {
                             launchSingleTop = true
                         }
@@ -731,12 +734,12 @@ fun AnimatedBottomNavBar(
                             if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) scaffoldState.bottomSheetState.partialExpand()
                         }
                     },
-                    label = { Text(text = "Playing") },
+                    label = { Text(text = stringResource(R.string.nav_playing)) },
                     alwaysShowLabel = false,
                     icon = {
                         Icon(
                             ImageVector.vectorResource(R.drawable.s_m_playback),
-                            contentDescription = "Playing"
+                            contentDescription = null
                         )
                     },
                 )
@@ -758,9 +761,11 @@ fun AnimatedBottomNavBar(
                     if (!item.enabled) return@items
 
                     NavigationRailItem(
-                        selected = item.screenRoute == backStackEntry?.destination,
+                        selected = backStackEntry?.destination.isRouteSelected(item.screenRoute),
                         onClick = {
-                            if (item.screenRoute == backStackEntry?.destination) return@NavigationRailItem
+                            if (backStackEntry?.destination.isRouteSelected(item.screenRoute))
+                                return@NavigationRailItem
+
                             navController.navigate(item.screenRoute) {
                                 launchSingleTop = true
                             }
@@ -777,22 +782,25 @@ fun AnimatedBottomNavBar(
                 }
                 item {
                     NavigationRailItem(
-                        selected = Screen.NowPlayingLandscape == backStackEntry?.destination,
+                        selected = backStackEntry?.destination.isRouteSelected(Screen.NowPlayingLandscape),
                         onClick = {
-                            if (Screen.NowPlayingLandscape == backStackEntry?.destination) return@NavigationRailItem
+                            if (backStackEntry?.destination.isRouteSelected(Screen.NowPlayingLandscape))
+                                return@NavigationRailItem
+
                             navController.navigate(Screen.NowPlayingLandscape) {
                                 launchSingleTop = true
                             }
                             coroutineScope.launch {
-                                if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded) scaffoldState.bottomSheetState.partialExpand()
+                                if (scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded)
+                                    scaffoldState.bottomSheetState.partialExpand()
                             }
                         },
-                        label = { Text(text = "Playing") },
+                        label = { Text(text = stringResource(R.string.nav_playing)) },
                         alwaysShowLabel = false,
                         icon = {
                             Icon(
                                 ImageVector.vectorResource(R.drawable.s_m_playback),
-                                contentDescription = "Playing"
+                                contentDescription = null
                             )
                         },
                     )
@@ -801,6 +809,9 @@ fun AnimatedBottomNavBar(
         }
     }
 }
+
+private fun NavDestination?.isRouteSelected(route: Screen): Boolean =
+    this?.hierarchy?.any { it.hasRoute(route::class) } == true
 
 // TODO("Move these utils funtions to a separated utils package")
 fun formatSeconds(seconds: Int): String {

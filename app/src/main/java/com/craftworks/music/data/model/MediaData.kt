@@ -10,8 +10,8 @@ data class MusicFolder (
 
 @Serializable
 data class GainInfo(
-    val album: Double? = null,
-    val track: Double? = null
+    val album: Float? = null,
+    val track: Float? = null
 )
 
 data class PlaylistRules(

@@ -16,6 +16,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Rating
 import androidx.media3.common.StarRating
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
@@ -264,6 +265,11 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             }
         )
 
+        val audioOffloadPreferences =
+            TrackSelectionParameters.AudioOffloadPreferences.Builder()
+                .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
+                .build()
+
         player = ExoPlayer.Builder(this)
             .setSeekParameters(SeekParameters.EXACT)
             .setMediaSourceFactory(DefaultMediaSourceFactory(resolvingDataSourceFactory))
@@ -279,6 +285,13 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .build()
 
+        // todo: make it a setting
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setAudioOffloadPreferences(audioOffloadPreferences)
+                .build()
+
         player.repeatMode = Player.REPEAT_MODE_OFF
         player.shuffleModeEnabled = false
 
@@ -287,14 +300,12 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 // Apply ReplayGain
-                if (mediaItem?.mediaMetadata?.extras?.getFloat("replayGain") != null) {
-                    player.volume = clamp(
-                        (10f.pow(
-                            ((mediaItem.mediaMetadata.extras?.getFloat("replayGain") ?: 0f) / 20f)
-                        )), 0f, 1f
-                    )
-                    Log.d("REPLAY GAIN", "Setting ReplayGain to ${player.volume}")
-                }
+                player.volume = clamp(
+                    (10f.pow(((mediaItem?.mediaMetadata?.extras?.getFloat("replayGain") ?: 0f) / 20f))),
+                    0f,
+                    1f
+                )
+                Log.d("REPLAY GAIN", "Setting ReplayGain to ${player.volume}")
 
                 playerScrobbled = false
 

@@ -9,8 +9,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
 import com.craftworks.music.R
-import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.data.providers.media.MediaProvider
+import com.craftworks.music.managers.MediaProviderManager
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
@@ -356,6 +356,7 @@ abstract class MediaModel()
                             putBoolean("userFavorite", this@Song.userFavorite ?: false)
                             putBoolean(METADATA_KEY_IS_EXPLICIT, this@Song.explicit == true)
                             putString("lyricsArtist", if (this@Song.artists.isNotEmpty()) this@Song.artists[0].name else this@Song.artistName)
+                            this@Song.gain?.track?.let{ putFloat("replayGain", it) }
                         }
                     )
                     .build()
