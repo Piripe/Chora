@@ -71,9 +71,7 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Settings) {
-                                launchSingleTop = true
-                            }
+                            navHostController.popBackStack()
                         },
                         modifier = Modifier.size(56.dp, 70.dp),
                     ) {

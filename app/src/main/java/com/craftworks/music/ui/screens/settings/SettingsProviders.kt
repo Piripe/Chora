@@ -66,9 +66,7 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Settings) {
-                                launchSingleTop = true
-                            }
+                            navHostController.popBackStack()
                         },
                         modifier = Modifier.size(56.dp, 70.dp),
                     ) {

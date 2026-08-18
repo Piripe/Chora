@@ -56,9 +56,7 @@ fun SettingScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Home) {
-                                launchSingleTop = true
-                            }
+                            navHostController.popBackStack()
                         },
                         modifier = Modifier.size(56.dp, 70.dp),
                     ) {
