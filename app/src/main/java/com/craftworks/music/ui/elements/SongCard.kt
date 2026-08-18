@@ -56,6 +56,7 @@ import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.formatSeconds
+import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
@@ -237,7 +238,7 @@ fun HorizontalSongCard(
                             Text(stringResource(R.string.action_add_to_queue))
                         },
                         onClick = {
-                            mediaController?.addMediaItem(song)
+                            SongHelper.enqueue(listOf(song), mediaController)
                             expanded = false
                         },
                         leadingIcon = {
@@ -252,7 +253,7 @@ fun HorizontalSongCard(
                             Text(stringResource(R.string.action_play_next))
                         },
                         onClick = {
-                            mediaController?.currentMediaItemIndex?.let { mediaController.addMediaItem(it+1,song) }
+                            SongHelper.playNext(listOf(song), mediaController)
                             expanded = false
                         },
                         leadingIcon = {

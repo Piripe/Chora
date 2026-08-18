@@ -13,6 +13,8 @@ import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.managers.MediaProviderManager
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 abstract class MediaModel()
 {
@@ -395,3 +397,7 @@ val MediaMetadata.artists: List<MediaModel.Artist>?
 fun MediaMetadata.getProvider(): MediaProvider? {
     return MediaProviderManager.getProvider(extras?.getString("providerId")?:"")
 }
+
+@OptIn(ExperimentalUuidApi::class)
+fun MediaItem.makeUnique(): MediaItem =
+    buildUpon().setMediaId(Uuid.generateV4().toString()).build()

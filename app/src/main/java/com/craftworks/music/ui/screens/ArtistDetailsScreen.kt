@@ -346,7 +346,7 @@ fun ArtistDetails(
                                         true
                                     ) {
                                         coroutineScope.launch {
-                                            mediaController?.addMediaItems(getArtistSongs())
+                                            SongHelper.enqueue(getArtistSongs(), mediaController)
                                         }
                                     },
                                     ActionButton(
@@ -354,11 +354,7 @@ fun ArtistDetails(
                                         true
                                     ) {
                                         coroutineScope.launch {
-                                            val allArtistSongsList = getArtistSongs()
-                                            mediaController?.addMediaItems(
-                                                mediaController.currentMediaItemIndex + 1,
-                                                allArtistSongsList
-                                            )
+                                            SongHelper.playNext(getArtistSongs(), mediaController)
                                         }
                                     },
                                     ActionButton(

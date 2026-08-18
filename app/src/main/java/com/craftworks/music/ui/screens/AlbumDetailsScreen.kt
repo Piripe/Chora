@@ -324,11 +324,11 @@ fun AlbumDetails(
                                             true
                                         ) {
                                             coroutineScope.launch {
-                                                mediaController?.addMediaItems(
+                                                SongHelper.enqueue(
                                                     currentAlbum.subList(
                                                         1,
                                                         currentAlbum.size
-                                                    )
+                                                    ), mediaController
                                                 )
                                             }
                                         },
@@ -337,12 +337,11 @@ fun AlbumDetails(
                                             true
                                         ) {
                                             coroutineScope.launch {
-                                                mediaController?.addMediaItems(
-                                                    mediaController.currentMediaItemIndex + 1,
+                                                SongHelper.enqueue(
                                                     currentAlbum.subList(
                                                         1,
                                                         currentAlbum.size
-                                                    )
+                                                    ), mediaController
                                                 )
                                             }
                                         },
