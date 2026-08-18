@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +26,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -48,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
@@ -70,7 +73,10 @@ import com.craftworks.music.fadingEdge
 import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
+import com.craftworks.music.ui.elements.ActionButton
+import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.HorizontalSongCard
+import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import kotlinx.coroutines.launch
@@ -144,149 +150,133 @@ fun PlaylistDetails(
                 .fillMaxWidth()
                 .dialogFocusable(),
             contentPadding = PaddingValues(
-                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
                 bottom = 16.dp,
-                start = 12.dp,
-                end = 12.dp
             )
         ) {
             item {
                 Box(
                     modifier = Modifier
-                        .height(192.dp)
+                        .height(320.dp)
                         .fillMaxWidth()
                 ) {
-                    SubcomposeAsyncImage(
+                    AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(selectedPlaylistImage)
                             .diskCacheKey(selectedPlaylistId)
                             .crossfade(true)
                             .build(),
+                        fallback = painterResource(R.drawable.placeholder),
                         contentScale = ContentScale.FillWidth,
-                        contentDescription = "Playlist cover art",
+                        contentDescription = "Album Image",
                         modifier = Modifier
                             .fillMaxWidth()
                             .fadingEdge(imageFadingEdge)
-                            .clip(RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp))
                             .blur(8.dp)
                     )
-                    Button(
-                        onClick = { navHostController.popBackStack() },
-                        shape = RoundedCornerShape(12.dp),
+                    Column(
                         modifier = Modifier
-                            .padding(top = 12.dp, start = 12.dp)
-                            .size(32.dp),
-                        contentPadding = PaddingValues(4.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.background,
-                            contentColor = MaterialTheme.colorScheme.onBackground
-                        )
+                            .fillMaxSize()
+                            .padding(
+                                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+                                bottom = 12.dp
+                            )
+                            .padding(horizontal = 24.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.primary,
-                            contentDescription = "Settings",
+                        // Back button
+                        FilledTonalIconButton(
+                            onClick = { navHostController.popBackStack() },
                             modifier = Modifier
-                                .height(32.dp)
-                                .size(32.dp)
-                        )
-                    }
-
-                    if (playlistMetadata?.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false) {
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    viewModel.downloadPlaylist(playlistSongs, playlistMetadata.title.toString())
-                                }
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(top = 12.dp, end = 12.dp)
-                                .size(32.dp),
-                            contentPadding = PaddingValues(4.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background, contentColor = MaterialTheme.colorScheme.onBackground)
+                                .size(36.dp)
                         ) {
                             Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-                                contentDescription = "Unstar Album",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .height(28.dp)
-                                    .size(28.dp)
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = "back"
                             )
                         }
-                    }
 
-                    // Playlist name
-                    Column(modifier = Modifier.align(Alignment.BottomCenter)) {
-                        Text(
-                            text = playlistMetadata?.title.toString(),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = MaterialTheme.typography.headlineLarge.fontSize,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                            lineHeight = 32.sp,
-                        )
-                        Text(
-                            text = formatSeconds((playlistDuration / 1000).toInt()),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = MaterialTheme.typography.headlineSmall.fontSize,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
+                        Spacer(Modifier.weight(1f))
 
-            item {
-                // Play and shuffle buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                SongHelper.play(playlistSongs, 0, mediaController)
-                            }
-                        },
-                        modifier = Modifier
-                            .widthIn(min = 128.dp, max = 320.dp)
-                            .focusRequester(requester)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.height(24.dp)
+                        // Album Name and Artist
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(Icons.Rounded.PlayArrow, "Play Album")
-                            Text(stringResource(R.string.action_play), maxLines = 1)
-                        }
-                    }
-                    OutlinedButton (
-                        onClick = {
-                            mediaController?.shuffleModeEnabled = true
-                            coroutineScope.launch {
-                                val random = playlistSongs.indices.random()
-                                SongHelper.play(playlistSongs, random, mediaController)
-                            }
-                        },
-                        modifier = Modifier.widthIn(min = 128.dp, max = 320.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.height(24.dp)
-                        ) {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.round_shuffle_28),
-                                "Shuffle Album"
+                            Text(
+                                text = playlistMetadata?.title.toString(),
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.headlineMediumEmphasized,
+                                textAlign = TextAlign.Left,
                             )
-                            Text(stringResource(R.string.action_shuffle), maxLines = 1)
+
+                            Text(
+                                text = formatSeconds((playlistDuration / 1000).toInt()),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Left
+                            )
+
+                            Spacer(Modifier.height(6.dp))
+
+                            // Play, shuffle and more buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                            ) {
+                                SongListActionButtons(
+                                    buttons = listOf(
+                                        ActionButton(
+                                            ActionButtonType.ADD_TO_QUEUE,
+                                            false
+                                        ) {
+                                            coroutineScope.launch {
+                                                SongHelper.enqueue(playlistSongs, mediaController)
+                                            }
+                                        },
+                                        ActionButton(
+                                            ActionButtonType.SHUFFLE,
+                                            false
+                                        ) {
+                                            mediaController?.shuffleModeEnabled = true
+                                            coroutineScope.launch {
+                                                val random = playlistSongs.indices.random()
+                                                SongHelper.play(playlistSongs, random, mediaController)
+                                            }
+                                        },
+                                        ActionButton(
+                                            ActionButtonType.PLAY_NEXT,
+                                            true
+                                        ) {
+                                            coroutineScope.launch {
+                                                SongHelper.enqueue(playlistSongs, mediaController)
+                                            }
+                                        },
+                                        ActionButton(
+                                            ActionButtonType.SEPARATOR,
+                                            true
+                                        ),
+                                        ActionButton(
+                                            ActionButtonType.DOWNLOAD,
+                                            true
+                                        ) {
+                                            coroutineScope.launch {
+                                                viewModel.downloadPlaylist(
+                                                    playlistSongs,
+                                                    playlistMetadata?.title.toString()
+                                                )
+                                            }
+                                        },
+                                    ),
+                                    providerFeatures = playlistMetadata?.getProvider()?.featureFlags
+                                        ?: ProviderFeatures(0L),
+                                    playAction = {
+                                        coroutineScope.launch {
+                                            SongHelper.play(playlistSongs, 0, mediaController)
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -295,7 +285,9 @@ fun PlaylistDetails(
             items(playlistSongs) { song ->
                 HorizontalSongCard(
                     song = song,
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .animateItem(),
                     onClick = {
                         coroutineScope.launch {
                             SongHelper.play(
