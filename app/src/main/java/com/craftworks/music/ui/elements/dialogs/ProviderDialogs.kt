@@ -60,14 +60,14 @@ import com.craftworks.music.data.model.MediaProviderData
 import com.craftworks.music.data.model.MusicFolder
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.Screen
-import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import com.craftworks.music.data.providers.media.local.LocalMediaProvider
 import com.craftworks.music.data.providers.media.local.LocalProviderData
 import com.craftworks.music.data.providers.media.navidrome.NavidromeMediaProvider
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import com.craftworks.music.data.providers.media.subsonic.SubsonicProviderData
+import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
+import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import com.craftworks.music.ui.elements.bounceClick
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -258,7 +258,6 @@ fun CreateMediaProviderDialog(
                         onClick = {
                             coroutineScope.launch {
                                 try {
-
                                     val provider = LocalMediaProvider(
                                         LocalProviderData("")
                                     ).apply {
@@ -276,7 +275,6 @@ fun CreateMediaProviderDialog(
                                         println(ex.stackTrace)
                                         isError = true
                                     }
-                                    //LocalProviderManager.addFolder(dir)
                                 } catch (_: Exception) {
                                     // DO NOTHING
                                 }
@@ -395,6 +393,8 @@ fun CreateMediaProviderDialog(
                                                 allowSelfSignedCert = allowCerts,
                                             )
                                         }
+
+                                        provider.init(context)
 
                                         try {
                                             val res = provider.authenticate(username, password)

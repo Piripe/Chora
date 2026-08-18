@@ -62,7 +62,11 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.MediaProviderData
+import com.craftworks.music.data.model.MusicFolder
 import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.providers.media.local.LocalMediaProvider
+import com.craftworks.music.data.providers.media.local.LocalProviderData
 import com.craftworks.music.data.providers.media.navidrome.NavidromeMediaProvider
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import com.craftworks.music.data.providers.media.subsonic.SubsonicProviderData
@@ -233,6 +237,8 @@ private fun CreateSubsonicProviderDialog(
                                             )
                                         }
 
+                                        provider.init(context)
+
                                         try {
                                             if (provider.ping())
                                                 step = DialogStep.CREDENTIALS
@@ -309,6 +315,8 @@ private fun CreateSubsonicProviderDialog(
                                                 )
                                             }
 
+                                            provider.init(context)
+
                                             try {
                                                 val res = provider.authenticate(username, password)
 
@@ -370,6 +378,8 @@ private fun CreateSubsonicProviderDialog(
                                                 allowSelfSignedCert = allowCerts,
                                             )
                                         }
+
+                                        provider.init(context)
 
                                         try {
                                             val res = provider.authenticate(username, password)
@@ -436,6 +446,9 @@ private fun CreateLocalProviderDialog(
 
     val backgroundColor = MaterialTheme.colorScheme.surface
     val (content, action) = remember { FocusRequester.createRefs() }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Dialog(
         onDismissRequest = { setShowDialog(false) },
@@ -559,9 +572,23 @@ private fun CreateLocalProviderDialog(
                         )
                     },
                     onClick = {
-                        TODO("Add local folder")
-                        //LocalProviderManager.addFolder(currentDir.canonicalPath)
-                        setShowDialog(false)
+                        coroutineScope.launch {
+                            val provider = LocalMediaProvider(
+                                LocalProviderData("")
+                            ).apply {
+                                data = MediaProviderData(listOf(Pair(MusicFolder(currentDir.canonicalPath, currentDir.canonicalPath), true)))
+                            }
+
+                            provider.init(context)
+
+                            try {
+                                MediaProviderManager.addProvider(provider)
+                                setShowDialog(false)
+                            } catch (ex: Exception) {
+                                println(ex.message)
+                                println(ex.stackTrace)
+                            }
+                        }
                     }
                 )
             }
