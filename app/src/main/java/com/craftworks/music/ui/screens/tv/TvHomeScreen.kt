@@ -76,7 +76,6 @@ import coil.request.ImageRequest
 import coil.request.SuccessResult
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
-import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
@@ -87,7 +86,6 @@ import com.craftworks.music.ui.elements.tv.TvAlbumCard
 import com.craftworks.music.ui.screens.HomeItem
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable

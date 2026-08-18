@@ -28,8 +28,8 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.WideCardContainer
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
-import com.craftworks.music.data.model.id
 import com.craftworks.music.R
+import com.craftworks.music.data.model.id
 
 @Preview(showBackground = true, device = "id:tv_1080p")
 @Composable

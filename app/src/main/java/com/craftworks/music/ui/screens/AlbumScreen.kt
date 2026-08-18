@@ -37,7 +37,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.AlbumListSort
-import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
@@ -48,7 +47,6 @@ import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.TopBarWithSearch
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
-import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @ExperimentalFoundationApi

@@ -32,24 +32,18 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.StarRating
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
-import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.SongsHorizontalColumn
 import com.craftworks.music.ui.elements.TopBarWithSearch
-import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
-import kotlinx.coroutines.launch
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)

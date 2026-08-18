@@ -2,8 +2,7 @@ package com.craftworks.music.managers
 
 import android.content.Context
 import androidx.core.content.edit
-import com.craftworks.music.migrations.*
-import io.ktor.util.reflect.instanceOf
+import com.craftworks.music.migrations.ProvidersRefactorMigration
 
 object MigrationManager {
     private const val MIGRATION_VERSION = "version"

@@ -56,8 +56,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.craftworks.music.R
-import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.data.providers.media.MediaProvider
+import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.ui.elements.ProviderCard
 
 enum class OnboardingStep { OVERVIEW, PROVIDER_SELECTION, DONE }
