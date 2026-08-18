@@ -67,7 +67,7 @@ abstract class MediaModel()
                 return MediaModel.Album(
                     id = mi.mediaMetadata.id?:"",
                     providerId = mi.mediaMetadata.providerId?:"",
-                    providerType = ProviderType.entries[mi.mediaMetadata.providerType?:0],
+                    providerType = mi.mediaMetadata.providerType ?: throw Exception("Missing Provider Type"),
                     name = mi.mediaMetadata.title.toString(),
                     imageUrl = mi.mediaMetadata.artworkUri.toString(),
                     imageId = mi.mediaMetadata.extras?.getString("imageId")
@@ -347,7 +347,7 @@ abstract class MediaModel()
                         Bundle().apply {
                             putString("id", this@Song.id)
                             putString("providerId", this@Song.providerId)
-                            putInt("providerType", this@Song.providerType.ordinal)
+                            putString("providerType", this@Song.providerType.name)
                             putString("albumId", this@Song.albumId)
                             putString("imageId", this@Song.imageId)
                             putString("format", this@Song.format)
@@ -376,8 +376,8 @@ val MediaMetadata.id: String?
 val MediaMetadata.providerId: String?
     get() = extras?.getString("providerId")
 
-val MediaMetadata.providerType: Int?
-    get() = extras?.getInt("providerType")
+val MediaMetadata.providerType: ProviderType?
+    get() = extras?.getString("providerType")?.let{ ProviderType.valueOf(it) }
 
 val MediaMetadata.favorite: Boolean?
     get() = extras?.getBoolean("userFavorite")

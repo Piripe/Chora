@@ -39,9 +39,11 @@ import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.text.htmlEncode
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
@@ -52,8 +54,6 @@ import com.craftworks.music.data.model.providerType
 import com.craftworks.music.fadingEdge
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
-import androidx.core.text.htmlEncode
-import androidx.media3.common.MediaMetadata
 
 //region PREVIEWS
 @Preview(showBackground = true)
@@ -160,7 +160,7 @@ fun AddToPlaylist(
                                     onDismissRequest()
                                 }, verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val artwork = if (playlist.mediaMetadata.providerType == ProviderType.LOCAL_FOLDER.ordinal)
+                                val artwork = if (playlist.mediaMetadata.providerType == ProviderType.LOCAL_FOLDER)
                                     playlist.mediaMetadata.artworkData
                                 else
                                     playlist.mediaMetadata.artworkUri

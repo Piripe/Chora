@@ -27,7 +27,6 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.id
-import com.craftworks.music.data.model.providerId
 import com.craftworks.music.data.model.providerType
 import com.craftworks.music.ui.elements.dialogs.playlistToDelete
 import com.craftworks.music.ui.elements.dialogs.showDeletePlaylistDialog
@@ -56,7 +55,7 @@ fun PlaylistCard(playlist: MediaItem, onClick: () -> Unit) {
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(context)
                 .data(
-                    if (metadata.providerType == ProviderType.LOCAL_FOLDER.ordinal)
+                    if (metadata.providerType == ProviderType.LOCAL_FOLDER)
                         metadata.artworkData else
                         metadata.artworkUri
                 )
