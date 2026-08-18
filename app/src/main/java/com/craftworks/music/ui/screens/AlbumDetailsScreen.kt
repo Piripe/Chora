@@ -93,7 +93,10 @@ import com.craftworks.music.fadingEdge
 import com.craftworks.music.formatSeconds
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
+import com.craftworks.music.ui.elements.ActionButton
+import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.HorizontalSongCard
+import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
@@ -112,10 +115,6 @@ fun AlbumDetails(
     viewModel: AlbumDetailsViewModel = hiltViewModel()
 ) {
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
-
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-    var showBottomSheet by remember { mutableStateOf(false) }
 
     var showLoading by remember { mutableStateOf(false) }
     val currentAlbum = viewModel.songsInAlbum.collectAsStateWithLifecycle().value
@@ -277,171 +276,102 @@ fun AlbumDetails(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                             ) {
-                                val interactionSources =
-                                    remember { List(4) { MutableInteractionSource() } }
-
-                                ButtonGroup(
-                                    overflowIndicator = { menuState ->
-                                        FilledTonalIconButton(
-                                            onClick = { menuState.show() },
-                                            modifier = Modifier.height(64.dp)
-                                        ) {
-                                            Icon(
-                                                Icons.Outlined.MoreVert,
-                                                contentDescription = "More"
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .height(64.dp)
-                                        .widthIn(max = 640.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // More
-                                    customItem(
-                                        buttonGroupContent = {
-                                            FilledTonalIconButton(
-                                                onClick = { showBottomSheet = true },
-                                                interactionSource = interactionSources[3],
-                                                modifier = Modifier
-                                                    .height(64.dp)
-                                                    .animateWidth(interactionSources[3]),
-                                            ) {
-                                                Icon(
-                                                    Icons.Outlined.MoreVert,
-                                                    contentDescription = "More"
-                                                )
+                                val favoriteAction: () -> Unit = {
+                                    coroutineScope.launch {
+                                        if (isStarred)
+                                            currentAlbum[0].mediaMetadata.id?.let {
+                                                viewModel.unstarAlbum(it)
                                             }
-                                        },
-                                        menuContent = { showBottomSheet = true },
-                                    )
-
-                                    // Heart
-                                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(
-                                            ProviderFeatures.FAVORITES
-                                        ) ?: false
-                                    ) {
-                                        val heartAction: () -> Unit = {
-                                            coroutineScope.launch {
-                                                if (isStarred)
-                                                    currentAlbum[0].mediaMetadata.id?.let {
-                                                        viewModel.unstarAlbum(it)
-                                                    }
-                                                else
-                                                    currentAlbum[0].mediaMetadata.id?.let {
-                                                        viewModel.starAlbum(it)
-                                                    }
-                                                viewModel.loadAlbumDetails(
-                                                    selectedAlbumId
-                                                )
-                                                isStarred = !isStarred
+                                        else
+                                            currentAlbum[0].mediaMetadata.id?.let {
+                                                viewModel.starAlbum(it)
                                             }
-                                        }
-                                        customItem(
-                                            buttonGroupContent = {
-                                                val cornerRadius by animateDpAsState(
-                                                    targetValue = if (isStarred) 12.dp else 32.dp,
-                                                    animationSpec = spring(
-                                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                                        stiffness = Spring.StiffnessLow
-                                                    ),
-                                                    label = "Star Button Shape Animation"
-                                                )
-
-                                                FilledTonalIconButton(
-                                                    onClick = heartAction,
-                                                    interactionSource = interactionSources[1],
-                                                    modifier = Modifier
-                                                        .size(64.dp)
-                                                        .animateWidth(interactionSources[1]),
-                                                    shape = RoundedCornerShape(cornerRadius)
-                                                ) {
-                                                    Crossfade(
-                                                        targetState = isStarred
-                                                    ) {
-                                                        if (it) Icon(
-                                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
-                                                        )
-                                                        else
-                                                            Icon(
-                                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                                                contentDescription = stringResource(R.string.action_add_to_favorites)
-                                                            )
-                                                    }
-                                                }
-                                            },
-                                            menuContent = {
-                                                DropdownMenuItem(
-                                                    text = { Text(
-                                                            if (isStarred) stringResource(R.string.action_remove_from_favorites)
-                                                            else stringResource(R.string.action_add_to_favorites)
-                                                            )},
-                                                    leadingIcon = {
-                                                        Crossfade(
-                                                            targetState = isStarred
-                                                        ) {
-                                                            if (it) Icon(
-                                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                                                contentDescription = stringResource(R.string.action_remove_from_favorites)
-                                                            )
-                                                            else
-                                                                Icon(
-                                                                    imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                                                    contentDescription = stringResource(R.string.action_add_to_favorites)
-                                                                )
-                                                        }
-                                                    },
-                                                    onClick = heartAction
-                                                )
-                                            },
+                                        viewModel.loadAlbumDetails(
+                                            selectedAlbumId
                                         )
+                                        isStarred = !isStarred
                                     }
+                                }
 
-                                    // Shuffle
-                                    val shuffleAction: () -> Unit = {
-                                        coroutineScope.launch {
-                                            val random = currentAlbum.subList(
-                                                1,
-                                                currentAlbum.size
-                                            ).indices.random()
-                                            SongHelper.play(
-                                                currentAlbum.subList(
+                                SongListActionButtons(
+                                    buttons = listOf(
+                                        ActionButton(
+                                            ActionButtonType.FAVORITE,
+                                            false,
+                                            onClick = favoriteAction
+                                        ),
+                                        ActionButton(
+                                            ActionButtonType.SHUFFLE,
+                                            false
+                                        ) {
+                                            coroutineScope.launch {
+                                                val random = currentAlbum.subList(
                                                     1,
                                                     currentAlbum.size
-                                                ),
-                                                random,
-                                                mediaController
-                                            )
-                                        }
-                                    }
-                                    customItem(
-                                        buttonGroupContent = {
-                                            FilledTonalIconButton(
-                                                onClick = shuffleAction,
-                                                interactionSource = interactionSources[2],
-                                                modifier = Modifier
-                                                    .size(64.dp)
-                                                    .animateWidth(interactionSources[2]),
-                                                shape = CircleShape
-                                            ) {
-                                                Icon(
-                                                    ImageVector.vectorResource(R.drawable.round_shuffle_28),
-                                                    contentDescription = "Shuffle"
+                                                ).indices.random()
+                                                SongHelper.play(
+                                                    currentAlbum.subList(
+                                                        1,
+                                                        currentAlbum.size
+                                                    ),
+                                                    random,
+                                                    mediaController
                                                 )
                                             }
                                         },
-                                        menuContent = {
-                                            DropdownMenuItem(
-                                                text = { Text(stringResource(R.string.action_shuffle)) },
-                                                leadingIcon = { Icon(ImageVector.vectorResource(R.drawable.round_shuffle_28), contentDescription = null) },
-                                                onClick = shuffleAction
-                                            )
+                                        ActionButton(
+                                            ActionButtonType.ADD_TO_QUEUE,
+                                            true
+                                        ) {
+                                            coroutineScope.launch {
+                                                mediaController?.addMediaItems(
+                                                    currentAlbum.subList(
+                                                        1,
+                                                        currentAlbum.size
+                                                    )
+                                                )
+                                            }
                                         },
-                                    )
-
-                                    // Play pill — filled, primary
-                                    val playAction: () -> Unit = {
+                                        ActionButton(
+                                            ActionButtonType.PLAY_NEXT,
+                                            true
+                                        ) {
+                                            coroutineScope.launch {
+                                                mediaController?.addMediaItems(
+                                                    mediaController.currentMediaItemIndex + 1,
+                                                    currentAlbum.subList(
+                                                        1,
+                                                        currentAlbum.size
+                                                    )
+                                                )
+                                            }
+                                        },
+                                        ActionButton(
+                                            ActionButtonType.SEPARATOR,
+                                            true
+                                        ),
+                                        ActionButton(
+                                            ActionButtonType.FAVORITE,
+                                            true,
+                                            onClick = favoriteAction
+                                        ),
+                                        ActionButton(
+                                            ActionButtonType.ADD_TO_PLAYLIST,
+                                            true
+                                        ) {
+                                            showAddToPlaylistDialog = true
+                                        },
+                                        ActionButton(
+                                            ActionButtonType.DOWNLOAD,
+                                            true
+                                        ) {
+                                            coroutineScope.launch {
+                                                viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size))
+                                            }
+                                        },
+                                    ),
+                                    providerFeatures = currentAlbum[0].mediaMetadata.getProvider()?.featureFlags ?: ProviderFeatures(0L),
+                                    playAction = {
                                         coroutineScope.launch {
                                             SongHelper.play(
                                                 currentAlbum.subList(1, currentAlbum.size),
@@ -449,42 +379,9 @@ fun AlbumDetails(
                                                 mediaController
                                             )
                                         }
-                                    }
-                                    customItem(
-                                        buttonGroupContent = {
-                                            var isCompact by remember { mutableStateOf(false) }
-                                            val density = LocalDensity.current
-                                            val compactThresholdPx = remember(density) { with(density) { 128.dp.roundToPx() } }
-
-                                            Button(
-                                                onClick = playAction, // event callback — launch happens here, not during composition
-                                                interactionSource = interactionSources[0],
-                                                modifier = Modifier
-                                                    .height(64.dp)
-                                                    .weight(0.5f)
-                                                    .animateWidth(interactionSources[0])
-                                                    .onSizeChanged { size -> isCompact = size.width < compactThresholdPx },
-                                                shape = RoundedCornerShape(32.dp),
-                                                contentPadding = if (isCompact) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
-                                            ) {
-                                                Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
-                                                if(!isCompact) {
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Spacer(Modifier.width(8.dp))
-                                                        Text("Play")
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        menuContent = {
-                                            DropdownMenuItem(
-                                                text = { Text("Play") },
-                                                leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
-                                                onClick = playAction
-                                            )
-                                        },
-                                    )
-                                }
+                                    },
+                                    isStarred = isStarred
+                                )
                             }
                         }
                     }
@@ -572,176 +469,6 @@ fun AlbumDetails(
                 onDismissRequest = { showAddToPlaylistDialog = false },
                 mediaToAddToPlaylist = currentAlbum
             )
-        }
-
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState
-            ) {
-                // Content inside the bottom sheet
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    DropdownMenuItem(
-                        onClick = {
-                            showBottomSheet = false
-                            coroutineScope.launch {
-                                mediaController?.addMediaItems(
-                                    currentAlbum.subList(
-                                        1,
-                                        currentAlbum.size
-                                    )
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.outline_queue_add_24),
-                                contentDescription = stringResource(R.string.action_add_to_queue)
-                            )
-                        },
-                        text = { Text(stringResource(R.string.action_add_to_queue)) }
-                    )
-                    DropdownMenuItem(
-                        onClick = {
-                            showBottomSheet = false
-                            coroutineScope.launch {
-                                mediaController?.addMediaItems(
-                                    mediaController.currentMediaItemIndex + 1,
-                                    currentAlbum.subList(
-                                        1,
-                                        currentAlbum.size
-                                    )
-
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.play_next_24px),
-                                contentDescription = stringResource(R.string.action_play_next)
-                            )
-                        },
-                        text = { Text(stringResource(R.string.action_play_next)) }
-                    )
-                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.any(
-                            ProviderFeatures.FAVORITES +
-                                    ProviderFeatures.DOWNLOADS +
-                                    ProviderFeatures.PLAYLIST
-                        ) ?: false
-                    ) {
-                        HorizontalDivider()
-                    }
-                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(
-                            ProviderFeatures.FAVORITES
-                        ) ?: false
-                    ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                showBottomSheet = false
-                                coroutineScope.launch {
-                                    if (isStarred)
-                                        currentAlbum[0].mediaMetadata.id?.let {
-                                            viewModel.unstarAlbum(it)
-                                        }
-                                    else
-                                        currentAlbum[0].mediaMetadata.id?.let {
-                                            viewModel.starAlbum(it)
-                                        }
-                                    viewModel.loadAlbumDetails(
-                                        selectedAlbumId
-                                    )
-                                    isStarred = !isStarred
-                                }
-                            },
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .fillMaxWidth(),
-                            leadingIcon = {
-                                Crossfade(
-                                    targetState = isStarred
-                                ) {
-                                    if (it) Icon(
-                                        imageVector = ImageVector.vectorResource(
-                                            R.drawable.round_favorite_24
-                                        ),
-                                        contentDescription = stringResource(
-                                            R.string.action_remove_from_favorites
-                                        )
-                                    )
-                                    else
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(
-                                                R.drawable.round_favorite_border_24
-                                            ),
-                                            contentDescription = stringResource(
-                                                R.string.action_add_to_favorites
-                                            )
-                                        )
-                                }
-                            },
-                            text = {
-                                Text(
-                                    if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(
-                                        R.string.action_add_to_favorites
-                                    )
-                                )
-                            }
-                        )
-                    }
-                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(
-                            ProviderFeatures.PLAYLIST
-                        ) ?: false
-                    ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                showBottomSheet = false
-                                showAddToPlaylistDialog = true
-                            },
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .fillMaxWidth(),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = stringResource(R.string.action_add_to_playlist)
-                                )
-                            },
-                            text = { Text(stringResource(R.string.action_add_to_playlist)) }
-                        )
-                    }
-
-                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS)?:false) {
-                        DropdownMenuItem(
-                            onClick = {
-                                coroutineScope.launch {
-                                    viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size))
-                                }
-                                showBottomSheet = false
-                            },
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp).fillMaxWidth(),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-                                    contentDescription = stringResource(R.string.action_download)
-                                )
-                            },
-                            text = {Text(stringResource(R.string.action_download))}
-                        )
-                    }
-
-                    // TODO : Add Share buttons
-                }
-            }
         }
     }
 }
