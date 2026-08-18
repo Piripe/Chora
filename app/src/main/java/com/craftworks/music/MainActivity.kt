@@ -1,9 +1,6 @@
 package com.craftworks.music
 
-import android.app.Activity
-import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -119,7 +116,6 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.dialogs.tv.OnboardingDialog
 import com.craftworks.music.ui.playing.NowPlayingContent
@@ -144,9 +140,6 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val serviceIntent = Intent(applicationContext, ChoraMediaLibraryService::class.java)
-        this@MainActivity.startService(serviceIntent)
 
         enableEdgeToEdge()
 
@@ -401,27 +394,6 @@ class MainActivity : ComponentActivity() {
             R.string.notification_download_desc,
             IMPORTANCE_LOW
         )
-
-        // SAVE SETTINGS ON APP EXIT
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
-                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) { }
-                override fun onActivityStarted(activity: Activity) { }
-                override fun onActivityResumed(activity: Activity) { }
-                override fun onActivityPaused(activity: Activity) { }
-                override fun onActivityPreStopped(activity: Activity) { }
-                override fun onActivityStopped(activity: Activity) { }
-                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) { }
-
-                @androidx.annotation.OptIn(UnstableApi::class)
-                override fun onActivityDestroyed(activity: Activity) {
-                    ChoraMediaLibraryService.getInstance()?.saveState()
-
-                    this@MainActivity.stopService(serviceIntent)
-                    println("Destroyed, Goodbye :(")
-                }
-            })
-        }
     }
 }
 
@@ -495,9 +467,9 @@ fun TvSideNavigation(
                             navController.navigate(Screen.Search) {
                                 launchSingleTop = true
                                 restoreState = true
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
+//                                popUpTo(navController.graph.startDestinationId) {
+//                                    saveState = true
+//                                }
                             }
                         }
                     },
@@ -537,9 +509,9 @@ fun TvSideNavigation(
                                 navController.navigate(item.screenRoute) {
                                     launchSingleTop = true
                                     restoreState = true
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
+//                                    popUpTo(navController.graph.startDestinationId) {
+//                                        saveState = true
+//                                    }
                                 }
                             }
                         },
@@ -572,9 +544,9 @@ fun TvSideNavigation(
                                 navController.navigate(Screen.NowPlayingLandscape) {
                                     launchSingleTop = true
                                     restoreState = true
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
+//                                    popUpTo(navController.graph.startDestinationId) {
+//                                        saveState = true
+//                                    }
                                 }
                             }
                         },
@@ -604,9 +576,9 @@ fun TvSideNavigation(
                                 navController.navigate(Screen.Settings) {
                                     launchSingleTop = true
                                     restoreState = true
-                                    popUpTo(navController.graph.startDestinationId) {
-                                        saveState = true
-                                    }
+//                                    popUpTo(navController.graph.startDestinationId) {
+//                                        saveState = true
+//                                    }
                                 }
                         },
                         leadingContent = {
