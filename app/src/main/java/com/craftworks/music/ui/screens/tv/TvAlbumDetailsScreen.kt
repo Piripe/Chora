@@ -346,6 +346,9 @@ fun TvAlbumDetails(
                     rating = rating
                 )
             },
+            onDownload = {
+                viewModel.downloadSong(it)
+            },
             setShowDialog = { showSongDialog = it }
         )
 }

@@ -1,6 +1,5 @@
 package com.craftworks.music.ui.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -28,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SongsScreenViewModel @Inject constructor(
     private val songRepository: SongRepository,
-    private val localDataSettingsManager: LocalDataSettingsManager
+    private val localDataSettingsManager: LocalDataSettingsManager,
+    private val miscSettingsManager: MiscSettingsManager
 ) : ViewModel() {
 
     private val _allSongs = MutableStateFlow<List<MediaItem>>(emptyList())
@@ -130,9 +130,9 @@ class SongsScreenViewModel @Inject constructor(
             localDataSettingsManager.saveShowFavoriteSong(showFavorites)
         }
     }
-    fun downloadSong(song: MediaItem, context: Context) {
+    fun downloadSong(song: MediaItem) {
         viewModelScope.launch {
-            songRepository.downloadSong(song, context, MiscSettingsManager(context).downloadTemplateFlow.first())
+            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 

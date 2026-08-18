@@ -3,8 +3,6 @@ package com.craftworks.music.data.repository
 import android.app.DownloadManager
 import android.content.Context
 import android.os.Environment
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import com.craftworks.music.R
@@ -14,15 +12,16 @@ import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.managers.settings.MiscSettingsManager
 import com.craftworks.music.utils.StringUtils
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SongRepository @Inject constructor() {
+class SongRepository @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     suspend fun getSongs(query: MediaQuery.SongListQuery): List<MediaItem> = coroutineScope {
         MediaProviderManager.currentProvider.value?.getSongList(query)?.map { it.toMediaItem() } ?: listOf()
@@ -52,7 +51,7 @@ class SongRepository @Inject constructor() {
         )
     }
 
-    fun downloadSong(song: MediaItem, context: Context, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
+    fun downloadSong(song: MediaItem, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
         val values = mapOf(
             "title" to StringUtils.makeValidFilename(song.mediaMetadata.title.toString()),
             "album" to StringUtils.makeValidFilename(song.mediaMetadata.albumTitle.toString()),

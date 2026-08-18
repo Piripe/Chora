@@ -40,6 +40,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.text.htmlEncode
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
@@ -62,7 +65,6 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
-import kotlinx.coroutines.launch
 
 private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING }
 
@@ -75,6 +77,7 @@ private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING 
 fun SongDialog(
     song: MediaItem = MediaItem.EMPTY,
     onSetRating: (Int) -> Unit = { },
+    onDownload: (MediaItem) -> Unit = { },
     setShowDialog: (Boolean) -> Unit = { }
 ) {
     val context = LocalContext.current
@@ -162,12 +165,8 @@ fun SongDialog(
                             selected = false,
                             headlineContent = { Text(stringResource(R.string.action_download)) },
                             onClick = {
-                                coroutineScope.launch {
-                                    TODO("Download song")
-                                    //downloadNavidromeSong(context, song.mediaMetadata)
-
-                                    setShowDialog(false)
-                                }
+                                onDownload(song)
+                                setShowDialog(false)
                             }
                         )
 
@@ -175,8 +174,12 @@ fun SongDialog(
                             selected = false,
                             headlineContent = {
                                 Text(
-                                    stringResource(R.string.add_to_playlist_title)
-                                        .replace("/", song.mediaMetadata.title.toString())
+                                    text = AnnotatedString.fromHtml(
+                                        stringResource(
+                                            R.string.add_to_playlist_title,
+                                            song.mediaMetadata.title.toString().htmlEncode()
+                                        )
+                                    )
                                 )
                             },
                             onClick = {

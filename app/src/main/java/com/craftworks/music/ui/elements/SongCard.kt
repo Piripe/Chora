@@ -289,7 +289,7 @@ fun HorizontalSongCard(
                             },
                             onClick = {
                                 coroutineScope.launch {
-                                    viewModel.downloadSong(song, context)
+                                    viewModel.downloadSong(song)
                                 }
                                 expanded = false
                             },

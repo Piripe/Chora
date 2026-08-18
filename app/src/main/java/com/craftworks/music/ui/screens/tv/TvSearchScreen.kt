@@ -52,7 +52,6 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.craftworks.music.R
-import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
@@ -64,7 +63,6 @@ import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
 
 @Preview
 @Composable
@@ -258,6 +256,9 @@ fun TvSearchScreen(
                     songId = selectedSong.mediaMetadata.id ?: "",
                     rating = rating
                 )
+            },
+            onDownload = {
+                songsViewModel.downloadSong(it)
             },
             setShowDialog = { showSongDialog = it }
         )

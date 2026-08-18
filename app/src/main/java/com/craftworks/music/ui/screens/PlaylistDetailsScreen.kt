@@ -196,7 +196,7 @@ fun PlaylistDetails(
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    viewModel.downloadPlaylist(playlistSongs, playlistMetadata.title.toString(), context)
+                                    viewModel.downloadPlaylist(playlistSongs, playlistMetadata.title.toString())
                                 }
                             },
                             shape = RoundedCornerShape(12.dp),

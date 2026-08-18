@@ -76,7 +76,7 @@ fun TvPlaylistDetails(
     selectedPlaylistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = rememberManagedMediaController().value,
-    viewModel: PlaylistScreenViewModel = hiltViewModel()
+    viewModel: PlaylistScreenViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(selectedPlaylistId) {
         if (selectedPlaylistId != null) viewModel.loadPlaylistDetails(selectedPlaylistId)
@@ -261,6 +261,9 @@ fun TvPlaylistDetails(
                     songId = selectedSong.mediaMetadata.id ?: "",
                     rating = rating
                 )
+            },
+            onDownload = {
+                viewModel.downloadSong(it)
             },
             setShowDialog = { showSongDialog = it }
         )

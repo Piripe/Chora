@@ -30,6 +30,7 @@ import javax.inject.Inject
 class PlaylistScreenViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
+    private val miscSettingsManager: MiscSettingsManager
 ) : ViewModel() {
     private val _allPlaylists = MutableStateFlow<List<MediaItem>>(emptyList())
     val allPlaylists: StateFlow<List<MediaItem>> = _allPlaylists.asStateFlow()
@@ -173,13 +174,19 @@ class PlaylistScreenViewModel @Inject constructor(
             songRepository.setSongRating(songId, rating)
         }
     }
-    fun downloadPlaylist(songs: List<MediaItem>, playlistName: String, context: Context) {
+
+    fun downloadSong(song: MediaItem) {
+        viewModelScope.launch {
+            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
+        }
+    }
+
+    fun downloadPlaylist(songs: List<MediaItem>, playlistName: String) {
         viewModelScope.launch {
             songs.forEachIndexed { index, song ->
                 songRepository.downloadSong(
                     song,
-                    context,
-                    MiscSettingsManager(context).playlistDownloadTemplateFlow.first(),
+                    miscSettingsManager.playlistDownloadTemplateFlow.first(),
                     playlistName,
                     (index + 1).toString()
                 )

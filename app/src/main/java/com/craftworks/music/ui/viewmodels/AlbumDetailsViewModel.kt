@@ -1,6 +1,5 @@
 package com.craftworks.music.ui.viewmodels
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -23,7 +22,8 @@ import javax.inject.Inject
 class AlbumDetailsViewModel @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val starredRepository: StarredRepository
+    private val starredRepository: StarredRepository,
+    private val miscSettingsManager: MiscSettingsManager
 ) : ViewModel() {
     private val _songsInAlbum = MutableStateFlow<List<MediaItem>>(listOf())
     val songsInAlbum: StateFlow<List<MediaItem>> = _songsInAlbum.asStateFlow()
@@ -80,11 +80,18 @@ class AlbumDetailsViewModel @Inject constructor(
             songRepository.setSongRating(songId, rating)
         }
     }
-    fun downloadAlbum(songs: List<MediaItem>, context: Context) {
+
+    fun downloadSong(song: MediaItem) {
         viewModelScope.launch {
-            val template = MiscSettingsManager(context).downloadTemplateFlow.first()
+            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
+        }
+    }
+
+    fun downloadAlbum(songs: List<MediaItem>) {
+        viewModelScope.launch {
+            val template = miscSettingsManager.downloadTemplateFlow.first()
             songs.forEach { song ->
-                songRepository.downloadSong(song, context, template)
+                songRepository.downloadSong(song, template)
             }
         }
     }
