@@ -9,6 +9,7 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,13 +24,16 @@ class AlbumDetailsViewModel @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
-    private val miscSettingsManager: MiscSettingsManager
+    private val miscSettingsManager: MiscSettingsManager,
+    private val appearanceSettingsManager: AppearanceSettingsManager,
 ) : ViewModel() {
     private val _songsInAlbum = MutableStateFlow<List<MediaItem>>(listOf())
     val songsInAlbum: StateFlow<List<MediaItem>> = _songsInAlbum.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    val actionButtons = appearanceSettingsManager.albumDetailsButtons
 
     fun loadAlbumDetails(albumId: String) {
         viewModelScope.launch {

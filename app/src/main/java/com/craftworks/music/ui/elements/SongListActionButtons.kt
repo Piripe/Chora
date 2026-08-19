@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeatures
 import kotlinx.coroutines.launch
+import kotlin.experimental.and
+import kotlin.experimental.or
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -343,20 +345,23 @@ private fun getButtonIconText(type: ActionButtonType): Pair<ImageVector, String>
         else -> ImageVector.vectorResource(R.drawable.placeholder) to ""
     }
 
-enum class ActionButtonType {
-    SEPARATOR,
-    SHUFFLE,
-    FAVORITE,
-    ADD_TO_QUEUE,
-    PLAY_NEXT,
-    ADD_TO_PLAYLIST,
-    DOWNLOAD
+@JvmInline
+value class ActionButtonType(val id: Byte) {
+    companion object {
+        val SEPARATOR = ActionButtonType(0)
+        val SHUFFLE = ActionButtonType(1)
+        val FAVORITE = ActionButtonType(2)
+        val ADD_TO_QUEUE = ActionButtonType(3)
+        val PLAY_NEXT = ActionButtonType(4)
+        val ADD_TO_PLAYLIST = ActionButtonType(5)
+        val DOWNLOAD = ActionButtonType(6)
+    }
 }
 
 data class ActionButton(
-    val type: ActionButtonType,
-    val inMenu: Boolean,
-    val onClick: () -> Unit = {}
+    var type: ActionButtonType,
+    var inMenu: Boolean,
+    var onClick: () -> Unit = {}
 ) {
     fun isCompatible(flags: ProviderFeatures) : Boolean =
         when (type) {
@@ -365,4 +370,10 @@ data class ActionButton(
             ActionButtonType.DOWNLOAD -> flags.has(ProviderFeatures.DOWNLOADS)
             else -> true
         }
+
+    fun toByte() : Byte = type.id or (if (inMenu) -0x80 else 0)
+
+    companion object {
+        fun fromByte(value: Byte) = ActionButton(ActionButtonType(value and 0x7f), value < 0)
+    }
 }

@@ -96,6 +96,7 @@ fun AlbumDetails(
 
     var showLoading by remember { mutableStateOf(false) }
     val currentAlbum = viewModel.songsInAlbum.collectAsStateWithLifecycle().value
+    val actionButtons = viewModel.actionButtons.collectAsStateWithLifecycle(emptyList()).value
     val showTrackNumbers by AppearanceSettingsManager(LocalContext.current).showTrackNumbersFlow.collectAsStateWithLifecycle(false)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
@@ -254,99 +255,71 @@ fun AlbumDetails(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                             ) {
-                                val favoriteAction: () -> Unit = {
-                                    coroutineScope.launch {
-                                        if (isStarred)
-                                            currentAlbum[0].mediaMetadata.id?.let {
-                                                viewModel.unstarAlbum(it)
-                                            }
-                                        else
-                                            currentAlbum[0].mediaMetadata.id?.let {
-                                                viewModel.starAlbum(it)
-                                            }
-                                        viewModel.loadAlbumDetails(
-                                            selectedAlbumId
-                                        )
-                                        isStarred = !isStarred
-                                    }
-                                }
-
-                                SongListActionButtons(
-                                    buttons = listOf(
-                                        ActionButton(
-                                            ActionButtonType.FAVORITE,
-                                            false,
-                                            onClick = favoriteAction
-                                        ),
-                                        ActionButton(
-                                            ActionButtonType.SHUFFLE,
-                                            false
-                                        ) {
-                                            coroutineScope.launch {
-                                                val random = currentAlbum.subList(
+                                val actions: Map<ActionButtonType, ()->Unit> = mapOf(
+                                    ActionButtonType.SHUFFLE to {
+                                        coroutineScope.launch {
+                                            val random = currentAlbum.subList(
+                                                1,
+                                                currentAlbum.size
+                                            ).indices.random()
+                                            SongHelper.play(
+                                                currentAlbum.subList(
                                                     1,
                                                     currentAlbum.size
-                                                ).indices.random()
-                                                SongHelper.play(
-                                                    currentAlbum.subList(
-                                                        1,
-                                                        currentAlbum.size
-                                                    ),
-                                                    random,
-                                                    mediaController
-                                                )
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.ADD_TO_QUEUE,
-                                            true
-                                        ) {
-                                            coroutineScope.launch {
-                                                SongHelper.enqueue(
-                                                    currentAlbum.subList(
-                                                        1,
-                                                        currentAlbum.size
-                                                    ), mediaController
-                                                )
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.PLAY_NEXT,
-                                            true
-                                        ) {
-                                            coroutineScope.launch {
-                                                SongHelper.enqueue(
-                                                    currentAlbum.subList(
-                                                        1,
-                                                        currentAlbum.size
-                                                    ), mediaController
-                                                )
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.SEPARATOR,
-                                            true
-                                        ),
-                                        ActionButton(
-                                            ActionButtonType.FAVORITE,
-                                            true,
-                                            onClick = favoriteAction
-                                        ),
-                                        ActionButton(
-                                            ActionButtonType.ADD_TO_PLAYLIST,
-                                            true
-                                        ) {
-                                            showAddToPlaylistDialog = true
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.DOWNLOAD,
-                                            true
-                                        ) {
-                                            coroutineScope.launch {
-                                                viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size))
-                                            }
-                                        },
-                                    ),
+                                                ),
+                                                random,
+                                                mediaController
+                                            )
+                                        }
+                                    },
+                                    ActionButtonType.FAVORITE to {
+                                        coroutineScope.launch {
+                                            if (isStarred)
+                                                currentAlbum[0].mediaMetadata.id?.let {
+                                                    viewModel.unstarAlbum(it)
+                                                }
+                                            else
+                                                currentAlbum[0].mediaMetadata.id?.let {
+                                                    viewModel.starAlbum(it)
+                                                }
+                                            viewModel.loadAlbumDetails(
+                                                selectedAlbumId
+                                            )
+                                            isStarred = !isStarred
+                                        }
+                                    },
+                                    ActionButtonType.ADD_TO_QUEUE to {
+                                        coroutineScope.launch {
+                                            SongHelper.enqueue(
+                                                currentAlbum.subList(
+                                                    1,
+                                                    currentAlbum.size
+                                                ), mediaController
+                                            )
+                                        }
+                                    },
+                                    ActionButtonType.PLAY_NEXT to {
+                                        coroutineScope.launch {
+                                            SongHelper.enqueue(
+                                                currentAlbum.subList(
+                                                    1,
+                                                    currentAlbum.size
+                                                ), mediaController
+                                            )
+                                        }
+                                    },
+                                    ActionButtonType.ADD_TO_PLAYLIST to {
+                                        showAddToPlaylistDialog = true
+                                    },
+                                    ActionButtonType.DOWNLOAD to {
+                                        coroutineScope.launch {
+                                            viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size))
+                                        }
+                                    },
+                                )
+
+                                SongListActionButtons(
+                                    buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
                                     providerFeatures = currentAlbum[0].mediaMetadata.getProvider()?.featureFlags ?: ProviderFeatures(0L),
                                     playAction = {
                                         coroutineScope.launch {

@@ -3,6 +3,7 @@ package com.craftworks.music.managers.settings
 import android.content.Context
 import android.os.Build
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -10,6 +11,8 @@ import com.craftworks.music.R
 import com.craftworks.music.data.BottomNavItem
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.dataStore
+import com.craftworks.music.ui.elements.ActionButton
+import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
 import com.craftworks.music.ui.screens.HomeItem
@@ -53,6 +56,7 @@ class AppearanceSettingsManager @Inject constructor(
 
         private val OLED_PROTECTION_MODE = stringPreferencesKey("oled_protection")
         private val DISABLE_SCREEN_STANDBY = booleanPreferencesKey("disable_screen_standby")
+        private val ALBUM_DETAILS_BUTTONS = byteArrayPreferencesKey("album_details_buttons")
     }
 
     val usernameFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -308,6 +312,27 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[DISABLE_SCREEN_STANDBY] = enabled
+            }
+        }
+    }
+
+    val albumDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
+        preferences[ALBUM_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+            ActionButton(ActionButtonType.FAVORITE,false),
+            ActionButton(ActionButtonType.SHUFFLE,false),
+            ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
+            ActionButton(ActionButtonType.PLAY_NEXT,true),
+            ActionButton(ActionButtonType.SEPARATOR,true),
+            ActionButton(ActionButtonType.FAVORITE,true),
+            ActionButton(ActionButtonType.ADD_TO_PLAYLIST,true),
+            ActionButton(ActionButtonType.DOWNLOAD,true)
+        )
+    }
+
+    suspend fun setAlbumDetailsButtons(buttons: List<ActionButton>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[ALBUM_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
             }
         }
     }
