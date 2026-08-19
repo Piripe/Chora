@@ -93,6 +93,7 @@ fun PlaylistDetails(
     val playlistMetadata =
         viewModel.selectedPlaylist.collectAsStateWithLifecycle().value?.mediaMetadata
     val playlistSongs = viewModel.selectedPlaylistSongs.collectAsStateWithLifecycle().value
+    val actionButtons = viewModel.actionButtons.collectAsStateWithLifecycle(emptyList()).value
     val isLoading = viewModel.isLoading.collectAsStateWithLifecycle().value
 
     val playlistDuration =
@@ -214,50 +215,37 @@ fun PlaylistDetails(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                             ) {
+
+                                val actions: Map<ActionButtonType, ()->Unit> = mapOf(
+                                    ActionButtonType.SHUFFLE to {
+                                        mediaController?.shuffleModeEnabled = true
+                                        coroutineScope.launch {
+                                            val random = playlistSongs.indices.random()
+                                            SongHelper.play(playlistSongs, random, mediaController)
+                                        }
+                                    },
+                                    ActionButtonType.ADD_TO_QUEUE to {
+                                        coroutineScope.launch {
+                                            SongHelper.enqueue(playlistSongs, mediaController)
+                                        }
+                                    },
+                                    ActionButtonType.PLAY_NEXT to {
+                                        coroutineScope.launch {
+                                            SongHelper.enqueue(playlistSongs, mediaController)
+                                        }
+                                    },
+                                    ActionButtonType.DOWNLOAD to {
+                                        coroutineScope.launch {
+                                            viewModel.downloadPlaylist(
+                                                playlistSongs,
+                                                playlistMetadata?.title.toString()
+                                            )
+                                        }
+                                    },
+                                )
+
                                 SongListActionButtons(
-                                    buttons = listOf(
-                                        ActionButton(
-                                            ActionButtonType.ADD_TO_QUEUE,
-                                            false
-                                        ) {
-                                            coroutineScope.launch {
-                                                SongHelper.enqueue(playlistSongs, mediaController)
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.SHUFFLE,
-                                            false
-                                        ) {
-                                            mediaController?.shuffleModeEnabled = true
-                                            coroutineScope.launch {
-                                                val random = playlistSongs.indices.random()
-                                                SongHelper.play(playlistSongs, random, mediaController)
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.PLAY_NEXT,
-                                            true
-                                        ) {
-                                            coroutineScope.launch {
-                                                SongHelper.enqueue(playlistSongs, mediaController)
-                                            }
-                                        },
-                                        ActionButton(
-                                            ActionButtonType.SEPARATOR,
-                                            true
-                                        ),
-                                        ActionButton(
-                                            ActionButtonType.DOWNLOAD,
-                                            true
-                                        ) {
-                                            coroutineScope.launch {
-                                                viewModel.downloadPlaylist(
-                                                    playlistSongs,
-                                                    playlistMetadata?.title.toString()
-                                                )
-                                            }
-                                        },
-                                    ),
+                                    buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
                                     providerFeatures = playlistMetadata?.getProvider()?.featureFlags
                                         ?: ProviderFeatures(0L),
                                     playAction = {

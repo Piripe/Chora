@@ -96,6 +96,7 @@ fun ArtistDetails(
     val showLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val artist = viewModel.selectedArtist.collectAsStateWithLifecycle().value
     val artistAlbums = viewModel.artistAlbums.collectAsStateWithLifecycle().value
+    val actionButtons = viewModel.actionButtons.collectAsStateWithLifecycle(emptyList()).value
     val context = LocalContext.current
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
 
@@ -284,85 +285,57 @@ fun ArtistDetails(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                         ) {
-                            val favoriteAction: () -> Unit = {
-                                coroutineScope.launch {
-                                    artist?.id?.let {
-                                        if (isStarred)
-                                            viewModel.unstarArtist(it)
-                                        else
-                                            viewModel.starArtist(it)
+                            val actions: Map<ActionButtonType, ()->Unit> = mapOf(
+                                ActionButtonType.SHUFFLE to {
+                                    coroutineScope.launch {
+                                        val allArtistSongsList = getArtistSongs()
+
+                                        mediaController?.shuffleModeEnabled = true
+                                        val random = allArtistSongsList.indices.random()
+                                        SongHelper.play(
+                                            allArtistSongsList,
+                                            random,
+                                            mediaController
+                                        )
                                     }
-                                    if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId)
-                                    isStarred = !isStarred
-                                }
-                            }
+                                },
+                                ActionButtonType.FAVORITE to {
+                                    coroutineScope.launch {
+                                        artist?.id?.let {
+                                            if (isStarred)
+                                                viewModel.unstarArtist(it)
+                                            else
+                                                viewModel.starArtist(it)
+                                        }
+                                        if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId)
+                                        isStarred = !isStarred
+                                    }
+                                },
+                                ActionButtonType.ADD_TO_QUEUE to {
+                                    coroutineScope.launch {
+                                        SongHelper.enqueue(getArtistSongs(), mediaController)
+                                    }
+                                },
+                                ActionButtonType.PLAY_NEXT to {
+                                    coroutineScope.launch {
+                                        SongHelper.playNext(getArtistSongs(), mediaController)
+                                    }
+                                },
+                                ActionButtonType.ADD_TO_PLAYLIST to {
+                                    coroutineScope.launch {
+                                        addToPlaylistSongs = getArtistSongs()
+                                        showAddToPlaylistDialog = true
+                                    }
+                                },
+                                ActionButtonType.DOWNLOAD to {
+                                    coroutineScope.launch {
+                                        viewModel.downloadArtist(getArtistSongs())
+                                    }
+                                },
+                            )
 
                             SongListActionButtons(
-                                buttons = listOf(
-                                    ActionButton(
-                                        ActionButtonType.FAVORITE,
-                                        false,
-                                        onClick = favoriteAction
-                                    ),
-                                    ActionButton(
-                                        ActionButtonType.SHUFFLE,
-                                        false
-                                    ) {
-                                        coroutineScope.launch {
-                                            val allArtistSongsList = getArtistSongs()
-
-                                            mediaController?.shuffleModeEnabled = true
-                                            val random = allArtistSongsList.indices.random()
-                                            SongHelper.play(
-                                                allArtistSongsList,
-                                                random,
-                                                mediaController
-                                            )
-                                        }
-                                    },
-                                    ActionButton(
-                                        ActionButtonType.ADD_TO_QUEUE,
-                                        true
-                                    ) {
-                                        coroutineScope.launch {
-                                            SongHelper.enqueue(getArtistSongs(), mediaController)
-                                        }
-                                    },
-                                    ActionButton(
-                                        ActionButtonType.PLAY_NEXT,
-                                        true
-                                    ) {
-                                        coroutineScope.launch {
-                                            SongHelper.playNext(getArtistSongs(), mediaController)
-                                        }
-                                    },
-                                    ActionButton(
-                                        ActionButtonType.SEPARATOR,
-                                        true
-                                    ),
-                                    ActionButton(
-                                        ActionButtonType.FAVORITE,
-                                        true,
-                                        onClick = favoriteAction
-                                    ),
-                                    ActionButton(
-                                        ActionButtonType.ADD_TO_PLAYLIST,
-                                        true
-                                    ) {
-                                        coroutineScope.launch {
-                                            addToPlaylistSongs = getArtistSongs()
-                                            showAddToPlaylistDialog = true
-                                        }
-                                    },
-                                    ActionButton(
-                                        ActionButtonType.DOWNLOAD,
-                                        true
-                                    ) {
-                                        coroutineScope.launch {
-                                            viewModel.downloadArtist(getArtistSongs())
-                                        }
-                                    },
-                                ),
+                                buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
                                 providerFeatures = artist?.getProvider()?.featureFlags ?: ProviderFeatures(0L),
                                 playAction = {
                                     coroutineScope.launch {

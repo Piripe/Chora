@@ -57,6 +57,8 @@ class AppearanceSettingsManager @Inject constructor(
         private val OLED_PROTECTION_MODE = stringPreferencesKey("oled_protection")
         private val DISABLE_SCREEN_STANDBY = booleanPreferencesKey("disable_screen_standby")
         private val ALBUM_DETAILS_BUTTONS = byteArrayPreferencesKey("album_details_buttons")
+        private val ARTIST_DETAILS_BUTTONS = byteArrayPreferencesKey("artist_details_buttons")
+        private val PLAYLIST_DETAILS_BUTTONS = byteArrayPreferencesKey("playlist_details_buttons")
     }
 
     val usernameFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -333,6 +335,46 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[ALBUM_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
+            }
+        }
+    }
+
+    val artistDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
+        preferences[ARTIST_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+            ActionButton(ActionButtonType.FAVORITE,false),
+            ActionButton(ActionButtonType.SHUFFLE,false),
+            ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
+            ActionButton(ActionButtonType.PLAY_NEXT,true),
+            ActionButton(ActionButtonType.SEPARATOR,true),
+            ActionButton(ActionButtonType.FAVORITE,true),
+            ActionButton(ActionButtonType.ADD_TO_PLAYLIST,true),
+            ActionButton(ActionButtonType.DOWNLOAD,true)
+        )
+    }
+
+    suspend fun setArtistDetailsButtons(buttons: List<ActionButton>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[ARTIST_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
+            }
+        }
+    }
+
+    val playlistDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
+        preferences[PLAYLIST_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+            ActionButton(ActionButtonType.ADD_TO_QUEUE,false),
+            ActionButton(ActionButtonType.SHUFFLE,false),
+            ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
+            ActionButton(ActionButtonType.PLAY_NEXT,true),
+            ActionButton(ActionButtonType.SEPARATOR,true),
+            ActionButton(ActionButtonType.DOWNLOAD,true)
+        )
+    }
+
+    suspend fun setPlaylistDetailsButtons(buttons: List<ActionButton>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[PLAYLIST_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
             }
         }
     }

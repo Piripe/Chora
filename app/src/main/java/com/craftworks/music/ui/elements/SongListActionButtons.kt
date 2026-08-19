@@ -80,7 +80,7 @@ fun SongListActionButtons(
             ) {
                 Icon(
                     Icons.Outlined.MoreVert,
-                    contentDescription = "More"
+                    contentDescription = "More" // TODO : Translate
                 )
             }
         },
@@ -101,7 +101,7 @@ fun SongListActionButtons(
                 ) {
                     Icon(
                         Icons.Outlined.MoreVert,
-                        contentDescription = "More"
+                        contentDescription = "More" // TODO : Translate
                     )
                 }
             },
@@ -177,7 +177,7 @@ fun SongListActionButtons(
                 else -> {
                     customItem(
                         buttonGroupContent = {
-                            val (icon, text) = getButtonIconText(button.type)
+                            val (icon, text) = getActionButtonIconText(button.type)
                             FilledTonalIconButton(
                                 onClick = button.onClick,
                                 interactionSource = interactionSource,
@@ -193,7 +193,7 @@ fun SongListActionButtons(
                             }
                         },
                         menuContent = {
-                            val (icon, text) = getButtonIconText(button.type)
+                            val (icon, text) = getActionButtonIconText(button.type)
                             DropdownMenuItem(
                                 text = { Text(text) },
                                 leadingIcon = { Icon(icon, contentDescription = text) },
@@ -229,18 +229,18 @@ fun SongListActionButtons(
                     shape = RoundedCornerShape(32.dp),
                     contentPadding = if (isCompact) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
                 ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = "Play")
+                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.action_play))
                     if(!isCompact) {
                         Row (verticalAlignment = Alignment.CenterVertically) {
                             Spacer(Modifier.width(8.dp))
-                            Text("Play")
+                            Text(stringResource(R.string.action_play))
                         }
                     }
                 }
             },
             menuContent = {
                 DropdownMenuItem(
-                    text = { Text("Play") },
+                    text = { Text("Play") }, // TODO : Translate
                     leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
                     onClick = playAction
                 )
@@ -305,7 +305,7 @@ fun SongListActionButtons(
                             )
                         }
                         else -> {
-                            val (icon, text) = getButtonIconText(button.type)
+                            val (icon, text) = getActionButtonIconText(button.type)
                             DropdownMenuItem(
                                 onClick = {
                                     scope.launch { sheetState.hide() }
@@ -335,9 +335,11 @@ fun SongListActionButtons(
 }
 
 @Composable
-private fun getButtonIconText(type: ActionButtonType): Pair<ImageVector, String> =
+fun getActionButtonIconText(type: ActionButtonType): Pair<ImageVector, String> =
     when (type) {
+        ActionButtonType.SEPARATOR -> ImageVector.vectorResource(R.drawable.horizontal_rule_24px) to "Separator" // TODO : Translate
         ActionButtonType.SHUFFLE -> ImageVector.vectorResource(R.drawable.round_shuffle_28) to stringResource(R.string.action_shuffle)
+        ActionButtonType.FAVORITE -> ImageVector.vectorResource(R.drawable.round_favorite_24) to stringResource(R.string.action_add_to_favorites)
         ActionButtonType.ADD_TO_QUEUE -> ImageVector.vectorResource(R.drawable.outline_queue_add_24) to stringResource(R.string.action_add_to_queue)
         ActionButtonType.PLAY_NEXT -> ImageVector.vectorResource(R.drawable.play_next_24px) to stringResource(R.string.action_play_next)
         ActionButtonType.ADD_TO_PLAYLIST -> ImageVector.vectorResource(R.drawable.rounded_add_24) to stringResource(R.string.action_add_to_playlist)

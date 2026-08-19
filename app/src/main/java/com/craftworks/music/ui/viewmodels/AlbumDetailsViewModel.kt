@@ -25,7 +25,7 @@ class AlbumDetailsViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
     private val miscSettingsManager: MiscSettingsManager,
-    private val appearanceSettingsManager: AppearanceSettingsManager,
+    appearanceSettingsManager: AppearanceSettingsManager,
 ) : ViewModel() {
     private val _songsInAlbum = MutableStateFlow<List<MediaItem>>(listOf())
     val songsInAlbum: StateFlow<List<MediaItem>> = _songsInAlbum.asStateFlow()

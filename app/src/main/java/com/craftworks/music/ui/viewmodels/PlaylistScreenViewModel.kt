@@ -15,6 +15,7 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.PlaylistRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -30,7 +31,8 @@ import javax.inject.Inject
 class PlaylistScreenViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
-    private val miscSettingsManager: MiscSettingsManager
+    private val miscSettingsManager: MiscSettingsManager,
+    appearanceSettingsManager: AppearanceSettingsManager
 ) : ViewModel() {
     private val _allPlaylists = MutableStateFlow<List<MediaItem>>(emptyList())
     val allPlaylists: StateFlow<List<MediaItem>> = _allPlaylists.asStateFlow()
@@ -43,6 +45,8 @@ class PlaylistScreenViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    val actionButtons = appearanceSettingsManager.playlistDetailsButtons
 
     init {
         loadPlaylists()

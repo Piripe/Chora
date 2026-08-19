@@ -13,6 +13,7 @@ import com.craftworks.music.data.repository.ArtistRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,8 @@ class ArtistsScreenViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
     private val localDataSettingsManager: LocalDataSettingsManager,
-    private val miscSettingsManager: MiscSettingsManager
+    private val miscSettingsManager: MiscSettingsManager,
+    appearanceSettingsManager: AppearanceSettingsManager
 ) : ViewModel() {
     private val _allArtists = MutableStateFlow<List<MediaModel.Artist>>(emptyList())
     val allArtists: StateFlow<List<MediaModel.Artist>> = _allArtists.asStateFlow()
@@ -64,6 +66,8 @@ class ArtistsScreenViewModel @Inject constructor(
 
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
+
+    val actionButtons = appearanceSettingsManager.artistDetailsButtons
 
     init {
         viewModelScope.launch {

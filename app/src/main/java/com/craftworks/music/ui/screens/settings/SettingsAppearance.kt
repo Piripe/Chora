@@ -67,11 +67,13 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
+import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.dialogs.BackgroundDialog
 import com.craftworks.music.ui.elements.dialogs.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.NameDialog
 import com.craftworks.music.ui.elements.dialogs.NavbarItemsDialog
 import com.craftworks.music.ui.elements.dialogs.NowPlayingTitleAlignmentDialog
+import com.craftworks.music.ui.elements.dialogs.SongListActionButtonsDialog
 import com.craftworks.music.ui.elements.dialogs.ThemeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
@@ -91,6 +93,9 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
     var showHomeItemsDialog by remember { mutableStateOf(false) }
     var showNowPlayingTitleAlignmentDialog by remember { mutableStateOf(false) }
     var showNowPlayingLyricsAlignmentDialog by remember { mutableStateOf(false) }
+    var showAlbumDetailsActionButtonsDialog by remember { mutableStateOf(false) }
+    var showArtistDetailsActionButtonsDialog by remember { mutableStateOf(false) }
+    var showPlaylistDetailsActionButtonsDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -110,6 +115,10 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         NowPlayingAlignment.CENTER to R.string.alignment_setting_center,
         NowPlayingAlignment.RIGHT to R.string.alignment_setting_right
     )
+
+    val albumDetailsActionButtons by AppearanceSettingsManager(context).albumDetailsButtons.collectAsState(emptyList())
+    val artistDetailsActionButtons by AppearanceSettingsManager(context).artistDetailsButtons.collectAsState(emptyList())
+    val playlistDetailsActionButtons by AppearanceSettingsManager(context).playlistDetailsButtons.collectAsState(emptyList())
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -517,6 +526,35 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
                 }
+                Column(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    SettingsDialogButton(
+                        stringResource(R.string.appearance_album_details_action_buttons),
+                        "",
+                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        toggleEvent = {
+                            showAlbumDetailsActionButtonsDialog = true
+                        }
+                    )
+                    SettingsDialogButton(
+                        stringResource(R.string.appearance_artist_details_action_buttons),
+                        "",
+                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        toggleEvent = {
+                            showArtistDetailsActionButtonsDialog = true
+                        }
+                    )
+                    SettingsDialogButton(
+                        stringResource(R.string.appearance_playlist_details_action_buttons),
+                        "",
+                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        toggleEvent = {
+                            showPlaylistDetailsActionButtonsDialog = true
+                        }
+                    )
+                }
             }
         }
 
@@ -555,6 +593,70 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     runBlocking {
                         AppearanceSettingsManager(context).setNowPlayingLyricsAlignment(it)
                     }
+                }
+            )
+        if (showAlbumDetailsActionButtonsDialog)
+            SongListActionButtonsDialog(
+                title = stringResource(R.string.appearance_action_buttons_editor_title),
+                actionButtons = albumDetailsActionButtons,
+                supportedButtonTypes = listOf(
+                    ActionButtonType.SEPARATOR,
+                    ActionButtonType.SHUFFLE,
+                    ActionButtonType.FAVORITE,
+                    ActionButtonType.ADD_TO_QUEUE,
+                    ActionButtonType.PLAY_NEXT,
+                    ActionButtonType.ADD_TO_PLAYLIST,
+                    ActionButtonType.DOWNLOAD,
+                ),
+                onSet = {
+                    runBlocking {
+                        AppearanceSettingsManager(context).setAlbumDetailsButtons(it)
+                    }
+                },
+                onDismissRequest = {
+                    showAlbumDetailsActionButtonsDialog = false
+                }
+            )
+        if (showArtistDetailsActionButtonsDialog)
+            SongListActionButtonsDialog(
+                title = stringResource(R.string.appearance_action_buttons_editor_title),
+                actionButtons = artistDetailsActionButtons,
+                supportedButtonTypes = listOf(
+                    ActionButtonType.SEPARATOR,
+                    ActionButtonType.SHUFFLE,
+                    ActionButtonType.FAVORITE,
+                    ActionButtonType.ADD_TO_QUEUE,
+                    ActionButtonType.PLAY_NEXT,
+                    ActionButtonType.ADD_TO_PLAYLIST,
+                    ActionButtonType.DOWNLOAD,
+                ),
+                onSet = {
+                    runBlocking {
+                        AppearanceSettingsManager(context).setArtistDetailsButtons(it)
+                    }
+                },
+                onDismissRequest = {
+                    showArtistDetailsActionButtonsDialog = false
+                }
+            )
+        if (showPlaylistDetailsActionButtonsDialog)
+            SongListActionButtonsDialog(
+                title = stringResource(R.string.appearance_action_buttons_editor_title),
+                actionButtons = playlistDetailsActionButtons,
+                supportedButtonTypes = listOf(
+                    ActionButtonType.SEPARATOR,
+                    ActionButtonType.SHUFFLE,
+                    ActionButtonType.ADD_TO_QUEUE,
+                    ActionButtonType.PLAY_NEXT,
+                    ActionButtonType.DOWNLOAD,
+                ),
+                onSet = {
+                    runBlocking {
+                        AppearanceSettingsManager(context).setPlaylistDetailsButtons(it)
+                    }
+                },
+                onDismissRequest = {
+                    showPlaylistDetailsActionButtonsDialog = false
                 }
             )
     }
