@@ -89,7 +89,7 @@ class LocalDataSettingsManager @Inject constructor(
                         val song = MediaModel.Song(
                             id = it.mediaMetadata.extras?.getString("id") ?: "",
                             providerId = it.mediaMetadata.extras?.getString("providerId") ?: "",
-                            providerType = ProviderType.valueOf(it.mediaMetadata.extras?.getString("providerType") ?: ""),
+                            providerType = ProviderType(it.mediaMetadata.extras?.getInt("providerType") ?: 0),
                             albumArtistName = it.mediaMetadata.artist.toString(),
                             albumId = it.mediaMetadata.extras?.getString("albumId") ?: "",
                             artistName = it.mediaMetadata.artist.toString(),

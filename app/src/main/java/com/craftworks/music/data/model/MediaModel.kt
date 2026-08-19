@@ -99,7 +99,7 @@ abstract class MediaModel()
                         Bundle().apply {
                             putString("id", this@Album.id)
                             putString("providerId", this@Album.providerId)
-                            putInt("providerType", this@Album.providerType.ordinal)
+                            putInt("providerType", this@Album.providerType.id)
                             putBoolean("userFavorite", this@Album.userFavorite == true)
                             putParcelableArrayList("artists", ArrayList(this@Album.artists))
                             putString("imageId", this@Album.imageId)
@@ -208,7 +208,7 @@ abstract class MediaModel()
                         Bundle().apply {
                             putString("id", this@InternetRadioStation.id)
                             putString("providerId", this@InternetRadioStation.providerId)
-                            putInt("providerType", this@InternetRadioStation.providerType.ordinal)
+                            putInt("providerType", this@InternetRadioStation.providerType.id)
                             putString("homepage", this@InternetRadioStation.homepageUrl ?: "")
                             putString("imageId", this@InternetRadioStation.imageId)
                         }
@@ -258,7 +258,7 @@ abstract class MediaModel()
                         Bundle().apply {
                             putString("id", this@Playlist.id)
                             putString("providerId", this@Playlist.providerId)
-                            putInt("providerType", this@Playlist.providerType.ordinal)
+                            putInt("providerType", this@Playlist.providerType.id)
                             putString("imageId", this@Playlist.imageId)
                         }
                     )
@@ -349,7 +349,7 @@ abstract class MediaModel()
                         Bundle().apply {
                             putString("id", this@Song.id)
                             putString("providerId", this@Song.providerId)
-                            putString("providerType", this@Song.providerType.name)
+                            putInt("providerType", this@Song.providerType.id)
                             putString("albumId", this@Song.albumId)
                             putString("imageId", this@Song.imageId)
                             putString("format", this@Song.format)
@@ -381,7 +381,7 @@ val MediaMetadata.providerId: String?
     get() = extras?.getString("providerId")
 
 val MediaMetadata.providerType: ProviderType?
-    get() = extras?.getString("providerType")?.let{ ProviderType.valueOf(it) }
+    get() = extras?.getInt("providerType")?.let{ ProviderType(it) }
 
 val MediaMetadata.favorite: Boolean?
     get() = extras?.getBoolean("userFavorite")
