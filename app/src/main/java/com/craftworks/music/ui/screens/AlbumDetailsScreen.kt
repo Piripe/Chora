@@ -66,8 +66,6 @@ import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.fadingEdge
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.ActionButtonType
@@ -76,6 +74,8 @@ import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
+import com.craftworks.music.utils.StringUtils
+import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -228,7 +228,7 @@ fun AlbumDetails(
                                         }
                                         append(" • ")
                                     }
-                                    append("${currentAlbum[0].mediaMetadata.recordingYear.toString()} • ${formatSeconds(currentAlbum[0].mediaMetadata.durationMs?.div(1000)?.toInt() ?: 0)}")
+                                    append("${currentAlbum[0].mediaMetadata.recordingYear.toString()} • ${StringUtils.formatSeconds(currentAlbum[0].mediaMetadata.durationMs?.div(1000)?.toInt() ?: 0)}")
                                 },
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
                                 style = MaterialTheme.typography.titleMedium,

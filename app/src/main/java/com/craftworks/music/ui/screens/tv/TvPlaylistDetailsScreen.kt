@@ -60,12 +60,12 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.dialogs.tv.SongDialog
 import com.craftworks.music.ui.elements.tv.TvHorizontalSongCard
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
+import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.launch
 
 
@@ -155,7 +155,7 @@ fun TvPlaylistDetails(
 
                     // duration
                     Text(
-                        text = formatSeconds((playlistDuration / 1000).toInt()),
+                        text = StringUtils.formatSeconds((playlistDuration / 1000).toInt()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,

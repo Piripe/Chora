@@ -79,12 +79,12 @@ import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.tv.TvAlbumCard
 import com.craftworks.music.ui.screens.HomeItem
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
+import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -280,7 +280,7 @@ private fun CarouselItem(
     val title = album.mediaMetadata.title?.toString() ?: ""
     val artist = album.mediaMetadata.artist?.toString() ?: ""
     val genre = album.mediaMetadata.genre?.toString() ?: ""
-    val duration = formatSeconds(
+    val duration = StringUtils.formatSeconds(
         album.mediaMetadata.durationMs?.div(1000)?.toInt() ?: 0
     )
     val subtitle = listOf(genre, artist, duration)

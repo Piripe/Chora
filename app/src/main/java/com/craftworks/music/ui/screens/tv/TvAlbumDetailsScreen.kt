@@ -67,12 +67,12 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.id
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.tv.SongDialog
 import com.craftworks.music.ui.elements.tv.TvHorizontalSongCard
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
+import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -184,7 +184,7 @@ fun TvAlbumDetails(
                     Text(
                         text = (currentAlbum[0].mediaMetadata.artist?.toString() ?: "") +
                                 " · " +
-                                formatSeconds(
+                                StringUtils.formatSeconds(
                                     currentAlbum[0].mediaMetadata.durationMs
                                         ?.div(1000)?.toInt() ?: 0
                                 ),

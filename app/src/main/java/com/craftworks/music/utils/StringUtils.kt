@@ -1,6 +1,7 @@
 package com.craftworks.music.utils
 
 import java.security.MessageDigest
+import java.util.Locale
 
 object StringUtils {
     fun md5Hash(input: String): String {
@@ -28,5 +29,9 @@ object StringUtils {
             .trim()
             .trimEnd('.', ' ')
             .ifBlank { "_" }
+    }
+
+    fun formatSeconds(seconds: Int): String {
+        return String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60)
     }
 }

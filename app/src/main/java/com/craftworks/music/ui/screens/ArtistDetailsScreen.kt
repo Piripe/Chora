@@ -69,7 +69,6 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
-import com.craftworks.music.fadingEdge
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.AlbumCard
@@ -78,6 +77,7 @@ import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
 import com.craftworks.music.utils.bleedHorizontal
+import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)

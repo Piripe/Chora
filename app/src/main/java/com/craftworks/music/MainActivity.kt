@@ -785,14 +785,3 @@ fun AnimatedBottomNavBar(
 private fun NavDestination?.isRouteSelected(route: Screen): Boolean =
     this?.hierarchy?.any { it.hasRoute(route::class) } == true
 
-// TODO("Move these utils funtions to a separated utils package")
-fun formatSeconds(seconds: Int): String {
-    return String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60)
-}
-
-fun Modifier.fadingEdge(brush: Brush) = this
-    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-    .drawWithContent {
-        drawContent()
-        drawRect(brush = brush, blendMode = BlendMode.DstIn)
-    }

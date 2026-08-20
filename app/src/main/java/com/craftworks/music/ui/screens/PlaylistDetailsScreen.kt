@@ -58,8 +58,6 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.fadingEdge
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.ActionButtonType
@@ -67,6 +65,8 @@ import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
+import com.craftworks.music.utils.StringUtils
+import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -199,7 +199,7 @@ fun PlaylistDetails(
                             )
 
                             Text(
-                                text = formatSeconds((playlistDuration / 1000).toInt()),
+                                text = StringUtils.formatSeconds((playlistDuration / 1000).toInt()),
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
                                 style = MaterialTheme.typography.titleMedium,
                                 textAlign = TextAlign.Left

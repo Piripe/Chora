@@ -55,11 +55,11 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
+import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.launch
 
 @Composable
@@ -179,7 +179,7 @@ fun HorizontalSongCard(
             }
             val formattedDuration by remember(song.mediaMetadata.durationMs) {
                 derivedStateOf {
-                    formatSeconds((song.mediaMetadata.durationMs?.div(1000))?.toInt() ?: 0)
+                    StringUtils.formatSeconds((song.mediaMetadata.durationMs?.div(1000))?.toInt() ?: 0)
                 }
             }
             Text(

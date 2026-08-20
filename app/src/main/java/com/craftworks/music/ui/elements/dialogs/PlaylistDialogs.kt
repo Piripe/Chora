@@ -51,9 +51,9 @@ import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.model.providerId
 import com.craftworks.music.data.model.providerType
-import com.craftworks.music.fadingEdge
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
+import com.craftworks.music.utils.fadingEdge
 
 //region PREVIEWS
 @Preview(showBackground = true)
