@@ -5,34 +5,33 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,22 +39,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeature
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import java.util.EnumSet
-import kotlin.experimental.and
-import kotlin.experimental.or
 
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Stable
 @Composable
 fun SongListActionButtons(
     buttons: List<ActionButton>,
@@ -70,38 +66,27 @@ fun SongListActionButtons(
     val menuButtons = buttons.filter { it.inMenu && it.isCompatible(providerFeatures) }
 
     var showBottomSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     val scope = rememberCoroutineScope()
 
-    val interactionSources =
-        remember { List(rowButtons.size + 2) { MutableInteractionSource() } }
+    val interactionSources = remember(buttons) {
+        List(rowButtons.size + 2) { MutableInteractionSource() }
+    }
 
     ButtonGroup(
-        overflowIndicator = { menuState ->
-            FilledTonalIconButton(
-                onClick = { menuState.show() },
-                modifier = Modifier.height(64.dp)
-            ) {
-                Icon(
-                    Icons.Outlined.MoreVert,
-                    contentDescription = "More" // TODO : Translate
-                )
-            }
-        },
+        overflowIndicator = {},
         modifier = Modifier
             .height(64.dp)
             .widthIn(max = 640.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // More
         customItem(
             buttonGroupContent = {
                 FilledTonalIconButton(
                     onClick = { showBottomSheet = true },
-                    interactionSource = interactionSources[rowButtons.size + 1],
                     modifier = Modifier
                         .height(64.dp)
-                        .animateWidth(interactionSources[rowButtons.size + 1]),
+                        .animateWidth(interactionSources[1]),
                 ) {
                     Icon(
                         Icons.Outlined.MoreVert,
@@ -109,20 +94,22 @@ fun SongListActionButtons(
                     )
                 }
             },
-            menuContent = { showBottomSheet = true },
+            menuContent = {}
         )
 
-        fun rowButton(button: ActionButton, interactionSource: MutableInteractionSource) : Unit {
-            when(button.type) {
+        for ((index, button) in rowButtons.withIndex()) {
+            val interactionSource = interactionSources[index + 2]
+            when (button.type) {
                 ActionButtonType.SEPARATOR -> {}
                 ActionButtonType.FAVORITE -> {
                     customItem(
                         buttonGroupContent = {
+                            val isPressed by interactionSource.collectIsPressedAsState()
                             val cornerRadius by animateDpAsState(
-                                targetValue = if (isStarred) 12.dp else 32.dp,
+                                targetValue = if (isStarred || isPressed) 12.dp else 32.dp,
                                 animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
                                 ),
                                 label = "Star Button Shape Animation"
                             )
@@ -150,34 +137,10 @@ fun SongListActionButtons(
                                 }
                             }
                         },
-                        menuContent = {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        if (isStarred) stringResource(R.string.action_remove_from_favorites)
-                                        else stringResource(R.string.action_add_to_favorites)
-                                    )
-                                },
-                                leadingIcon = {
-                                    Crossfade(
-                                        targetState = isStarred
-                                    ) {
-                                        if (it) Icon(
-                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
-                                        )
-                                        else
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                                contentDescription = stringResource(R.string.action_add_to_favorites)
-                                            )
-                                    }
-                                },
-                                onClick = button.onClick
-                            )
-                        },
+                        menuContent = { },
                     )
                 }
+
                 else -> {
                     customItem(
                         buttonGroupContent = {
@@ -196,59 +159,37 @@ fun SongListActionButtons(
                                 )
                             }
                         },
-                        menuContent = {
-                            val (icon, text) = getActionButtonIconText(button.type)
-                            DropdownMenuItem(
-                                text = { Text(text) },
-                                leadingIcon = { Icon(icon, contentDescription = text) },
-                                onClick = button.onClick
-                            )
-                        },
+                        menuContent = { },
                     )
                 }
             }
         }
 
-        for ((index, button) in rowButtons.withIndex()) {
-            rowButton(button, interactionSources[index + 1])
-        }
-
-
-
-        // Play pill — filled, primary
         customItem(
             buttonGroupContent = {
-                var isCompact by remember { mutableStateOf(false) }
-                val density = LocalDensity.current
-                val compactThresholdPx = remember(density) { with(density) { 128.dp.roundToPx() } }
-
                 Button(
-                    onClick = playAction, // event callback — launch happens here, not during composition
+                    onClick = playAction,
                     interactionSource = interactionSources[0],
                     modifier = Modifier
                         .height(64.dp)
-                        .weight(0.5f)
                         .animateWidth(interactionSources[0])
-                        .onSizeChanged { size -> isCompact = size.width < compactThresholdPx },
+                        .weight(1f),
                     shape = RoundedCornerShape(32.dp),
-                    contentPadding = if (isCompact) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
+                    contentPadding = ButtonDefaults.TextButtonWithIconContentPadding
                 ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = stringResource(R.string.action_play))
-                    if(!isCompact) {
-                        Row (verticalAlignment = Alignment.CenterVertically) {
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.action_play))
-                        }
-                    }
+                    Icon(
+                        Icons.Rounded.PlayArrow,
+                        contentDescription = stringResource(R.string.action_play)
+                    )
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    Text(
+                        text = stringResource(R.string.action_play),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             },
-            menuContent = {
-                DropdownMenuItem(
-                    text = { Text("Play") }, // TODO : Translate
-                    leadingIcon = { Icon(Icons.Filled.PlayArrow, contentDescription = null) },
-                    onClick = playAction
-                )
-            },
+            menuContent = { },
         )
     }
 
@@ -257,26 +198,25 @@ fun SongListActionButtons(
             onDismissRequest = { showBottomSheet = false },
             sheetState = sheetState
         ) {
-            // Content inside the bottom sheet
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-
-                @Composable
-                fun menuButton(button: ActionButton) {
-                    when(button.type) {
+                for (button in menuButtons) {
+                    when (button.type) {
                         ActionButtonType.SEPARATOR -> HorizontalDivider()
                         ActionButtonType.FAVORITE -> {
-                            DropdownMenuItem(
+                            ListItem (
                                 onClick = {
                                     scope.launch { sheetState.hide() }
                                     button.onClick()
                                 },
                                 modifier = Modifier
-                                    .padding(horizontal = 12.dp)
                                     .fillMaxWidth(),
-                                leadingIcon = {
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                ),
+                                leadingContent = {
                                     Crossfade(
                                         targetState = isStarred
                                     ) {
@@ -299,7 +239,7 @@ fun SongListActionButtons(
                                             )
                                     }
                                 },
-                                text = {
+                                content = {
                                     Text(
                                         if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(
                                             R.string.action_add_to_favorites
@@ -308,30 +248,29 @@ fun SongListActionButtons(
                                 }
                             )
                         }
+
                         else -> {
                             val (icon, text) = getActionButtonIconText(button.type)
-                            DropdownMenuItem(
+                            ListItem(
                                 onClick = {
                                     scope.launch { sheetState.hide() }
                                     button.onClick()
                                 },
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp),
-                                leadingIcon = {
+                                    .fillMaxWidth(),
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                ),
+                                leadingContent = {
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = text
                                     )
                                 },
-                                text = { Text(text) }
+                                content = { Text(text) }
                             )
                         }
                     }
-                }
-
-                for (button in menuButtons) {
-                    menuButton(button)
                 }
             }
         }
@@ -339,47 +278,44 @@ fun SongListActionButtons(
 }
 
 @Composable
-fun getActionButtonIconText(type: ActionButtonType): Pair<ImageVector, String> =
-    when (type) {
-        ActionButtonType.SEPARATOR -> ImageVector.vectorResource(R.drawable.horizontal_rule_24px) to "Separator" // TODO : Translate
-        ActionButtonType.SHUFFLE -> ImageVector.vectorResource(R.drawable.round_shuffle_28) to stringResource(R.string.action_shuffle)
-        ActionButtonType.FAVORITE -> ImageVector.vectorResource(R.drawable.round_favorite_24) to stringResource(R.string.action_add_to_favorites)
-        ActionButtonType.ADD_TO_QUEUE -> ImageVector.vectorResource(R.drawable.outline_queue_add_24) to stringResource(R.string.action_add_to_queue)
-        ActionButtonType.PLAY_NEXT -> ImageVector.vectorResource(R.drawable.play_next_24px) to stringResource(R.string.action_play_next)
-        ActionButtonType.ADD_TO_PLAYLIST -> ImageVector.vectorResource(R.drawable.rounded_add_24) to stringResource(R.string.action_add_to_playlist)
-        ActionButtonType.DOWNLOAD -> ImageVector.vectorResource(R.drawable.rounded_download_24) to stringResource(R.string.action_download)
-        else -> ImageVector.vectorResource(R.drawable.placeholder) to ""
-    }
+fun getActionButtonIconText(type: ActionButtonType): Pair<ImageVector, String> = when (type) {
+    ActionButtonType.SEPARATOR -> ImageVector.vectorResource(R.drawable.horizontal_rule_24px) to
+            "Separator" // TODO : Translate
 
-@JvmInline
-value class ActionButtonType(val id: Byte) {
-    companion object {
-        val SEPARATOR = ActionButtonType(0)
-        val SHUFFLE = ActionButtonType(1)
-        val FAVORITE = ActionButtonType(2)
-        val ADD_TO_QUEUE = ActionButtonType(3)
-        val PLAY_NEXT = ActionButtonType(4)
-        val ADD_TO_PLAYLIST = ActionButtonType(5)
-        val DOWNLOAD = ActionButtonType(6)
-    }
+    ActionButtonType.SHUFFLE -> ImageVector.vectorResource(R.drawable.round_shuffle_28) to
+            stringResource(R.string.action_shuffle)
+
+    ActionButtonType.FAVORITE -> ImageVector.vectorResource(R.drawable.round_favorite_24) to
+            stringResource(R.string.action_add_to_favorites)
+
+    ActionButtonType.ADD_TO_QUEUE -> ImageVector.vectorResource(R.drawable.outline_queue_add_24) to
+            stringResource(R.string.action_add_to_queue)
+
+    ActionButtonType.PLAY_NEXT -> ImageVector.vectorResource(R.drawable.play_next_24px) to
+            stringResource(R.string.action_play_next)
+
+    ActionButtonType.ADD_TO_PLAYLIST -> ImageVector.vectorResource(R.drawable.rounded_add_24) to
+            stringResource(R.string.action_add_to_playlist)
+
+    ActionButtonType.DOWNLOAD -> ImageVector.vectorResource(R.drawable.rounded_download_24) to
+            stringResource(R.string.action_download)
 }
 
+enum class ActionButtonType {
+    SHUFFLE, FAVORITE, PLAY_NEXT, ADD_TO_QUEUE, ADD_TO_PLAYLIST, DOWNLOAD, SEPARATOR
+}
+
+@Serializable
 data class ActionButton(
     var type: ActionButtonType,
     var inMenu: Boolean,
     var onClick: () -> Unit = {}
 ) {
-    fun isCompatible(flags: EnumSet<ProviderFeature>) : Boolean =
+    fun isCompatible(flags: EnumSet<ProviderFeature>): Boolean =
         when (type) {
             ActionButtonType.FAVORITE -> flags.contains(ProviderFeature.FAVORITES)
             ActionButtonType.ADD_TO_PLAYLIST -> flags.contains(ProviderFeature.PLAYLISTS)
             ActionButtonType.DOWNLOAD -> flags.contains(ProviderFeature.DOWNLOADS)
             else -> true
         }
-
-    fun toByte() : Byte = type.id or (if (inMenu) -0x80 else 0)
-
-    companion object {
-        fun fromByte(value: Byte) = ActionButton(ActionButtonType(value and 0x7f), value < 0)
-    }
 }

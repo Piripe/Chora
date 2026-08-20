@@ -3,7 +3,6 @@ package com.craftworks.music.managers.settings
 import android.content.Context
 import android.os.Build
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.byteArrayPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -56,9 +55,9 @@ class AppearanceSettingsManager @Inject constructor(
 
         private val OLED_PROTECTION_MODE = stringPreferencesKey("oled_protection")
         private val DISABLE_SCREEN_STANDBY = booleanPreferencesKey("disable_screen_standby")
-        private val ALBUM_DETAILS_BUTTONS = byteArrayPreferencesKey("album_details_buttons")
-        private val ARTIST_DETAILS_BUTTONS = byteArrayPreferencesKey("artist_details_buttons")
-        private val PLAYLIST_DETAILS_BUTTONS = byteArrayPreferencesKey("playlist_details_buttons")
+        private val ALBUM_DETAILS_BUTTONS = stringPreferencesKey("album_details_buttons")
+        private val ARTIST_DETAILS_BUTTONS = stringPreferencesKey("artist_details_buttons")
+        private val PLAYLIST_DETAILS_BUTTONS = stringPreferencesKey("playlist_details_buttons")
     }
 
     val usernameFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -319,7 +318,7 @@ class AppearanceSettingsManager @Inject constructor(
     }
 
     val albumDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
-        preferences[ALBUM_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+        preferences[ALBUM_DETAILS_BUTTONS]?.let { Json.decodeFromString(it) } ?: listOf(
             ActionButton(ActionButtonType.FAVORITE,false),
             ActionButton(ActionButtonType.SHUFFLE,false),
             ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
@@ -334,13 +333,13 @@ class AppearanceSettingsManager @Inject constructor(
     suspend fun setAlbumDetailsButtons(buttons: List<ActionButton>) {
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
-                preferences[ALBUM_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
+                preferences[ALBUM_DETAILS_BUTTONS] = Json.encodeToString(buttons)
             }
         }
     }
 
     val artistDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
-        preferences[ARTIST_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+        preferences[ARTIST_DETAILS_BUTTONS]?.let { Json.decodeFromString(it) } ?: listOf(
             ActionButton(ActionButtonType.FAVORITE,false),
             ActionButton(ActionButtonType.SHUFFLE,false),
             ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
@@ -355,13 +354,13 @@ class AppearanceSettingsManager @Inject constructor(
     suspend fun setArtistDetailsButtons(buttons: List<ActionButton>) {
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
-                preferences[ARTIST_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
+                preferences[ARTIST_DETAILS_BUTTONS] = Json.encodeToString(buttons)
             }
         }
     }
 
     val playlistDetailsButtons: Flow<List<ActionButton>> = context.dataStore.data.map { preferences ->
-        preferences[PLAYLIST_DETAILS_BUTTONS]?.map { ActionButton.fromByte(it) } ?: listOf(
+        preferences[PLAYLIST_DETAILS_BUTTONS]?.let { Json.decodeFromString(it) } ?: listOf(
             ActionButton(ActionButtonType.ADD_TO_QUEUE,false),
             ActionButton(ActionButtonType.SHUFFLE,false),
             ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
@@ -374,7 +373,7 @@ class AppearanceSettingsManager @Inject constructor(
     suspend fun setPlaylistDetailsButtons(buttons: List<ActionButton>) {
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
-                preferences[PLAYLIST_DETAILS_BUTTONS] = buttons.map { it.toByte() }.toByteArray()
+                preferences[PLAYLIST_DETAILS_BUTTONS] = Json.encodeToString(buttons)
             }
         }
     }
