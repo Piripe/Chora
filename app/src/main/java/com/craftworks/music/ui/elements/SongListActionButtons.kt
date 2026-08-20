@@ -47,8 +47,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import kotlinx.coroutines.launch
+import java.util.EnumSet
 import kotlin.experimental.and
 import kotlin.experimental.or
 
@@ -58,10 +59,13 @@ import kotlin.experimental.or
 @Composable
 fun SongListActionButtons(
     buttons: List<ActionButton>,
-    providerFeatures: ProviderFeatures,
+    providerFeatures: EnumSet<ProviderFeature>?,
     playAction: () -> Unit,
     isStarred: Boolean = false
 ) {
+    if (providerFeatures == null)
+        return
+
     val rowButtons = buttons.filter { !it.inMenu && it.isCompatible(providerFeatures) }
     val menuButtons = buttons.filter { it.inMenu && it.isCompatible(providerFeatures) }
 
@@ -365,11 +369,11 @@ data class ActionButton(
     var inMenu: Boolean,
     var onClick: () -> Unit = {}
 ) {
-    fun isCompatible(flags: ProviderFeatures) : Boolean =
+    fun isCompatible(flags: EnumSet<ProviderFeature>) : Boolean =
         when (type) {
-            ActionButtonType.FAVORITE -> flags.has(ProviderFeatures.FAVORITES)
-            ActionButtonType.ADD_TO_PLAYLIST -> flags.has(ProviderFeatures.PLAYLIST)
-            ActionButtonType.DOWNLOAD -> flags.has(ProviderFeatures.DOWNLOADS)
+            ActionButtonType.FAVORITE -> flags.contains(ProviderFeature.FAVORITES)
+            ActionButtonType.ADD_TO_PLAYLIST -> flags.contains(ProviderFeature.PLAYLISTS)
+            ActionButtonType.DOWNLOAD -> flags.contains(ProviderFeature.DOWNLOADS)
             else -> true
         }
 

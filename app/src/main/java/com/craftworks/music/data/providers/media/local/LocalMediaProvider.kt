@@ -23,7 +23,7 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.MusicFolder
 import com.craftworks.music.data.model.PlaylistListSort
 import com.craftworks.music.data.model.PlaylistRules
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.ProviderInfo
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.ScrobbleEvent
@@ -38,6 +38,7 @@ import com.craftworks.music.utils.PagingUtils
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.util.EnumSet
 
 @Serializable
 @SerialName("local")
@@ -68,12 +69,11 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         get() = true
     override val providerName: Int
         get() = R.string.source_local_folder
-    @Transient
-    private val _featureFlags: ProviderFeatures =
-        ProviderFeatures.OFFLINE_PLAYBACK
 
     @Transient
-    override val featureFlags: ProviderFeatures = _featureFlags
+    override val featureFlags: EnumSet<ProviderFeature> = EnumSet.of(
+        ProviderFeature.OFFLINE_PLAYBACK
+    )
 
     @Transient
     override val supportedAlbumSort: List<AlbumListSort> = listOf(

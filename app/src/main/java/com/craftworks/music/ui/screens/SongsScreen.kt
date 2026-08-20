@@ -35,7 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.craftworks.music.R
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.managers.MediaProviderManager
@@ -125,7 +125,7 @@ fun SongsScreen(
                     },
                     extraAction = {
                         Row {
-                            if (currentProvider?.featureFlags?.has(ProviderFeatures.FAVORITES) ?: false) {
+                            if (currentProvider?.featureFlags?.contains(ProviderFeature.FAVORITES) ?: false) {
                                 Box {
                                     IconButton(
                                         onClick = { viewModel.setShowFavoritesOnly(!showFavoritesOnly) }

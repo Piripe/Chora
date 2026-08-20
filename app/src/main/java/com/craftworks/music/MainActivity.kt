@@ -111,7 +111,7 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.rememberDrawerState
 import com.craftworks.music.data.BottomNavItem
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppTheme
@@ -658,9 +658,9 @@ fun AnimatedBottomNavBar(
     ).value
 
     orderedNavItems.first {it.screenRoute == Screen.Radios}.enabled =
-        currentProvider?.featureFlags?.has(ProviderFeatures.INTERNET_RADIO) ?: false
+        currentProvider?.featureFlags?.contains(ProviderFeature.INTERNET_RADIO) ?: false
     orderedNavItems.first {it.screenRoute == Screen.Playlists}.enabled =
-        currentProvider?.featureFlags?.has(ProviderFeatures.PLAYLIST) ?: false
+        currentProvider?.featureFlags?.contains(ProviderFeature.PLAYLISTS) ?: false
 
     if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
         val expanded by remember { derivedStateOf { scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded } }

@@ -37,7 +37,7 @@ import com.craftworks.music.data.model.AlbumArtistListSort
 import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.PlaylistListSort
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.SongListSort
@@ -274,8 +274,8 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             .setSeekParameters(SeekParameters.EXACT)
             .setMediaSourceFactory(DefaultMediaSourceFactory(resolvingDataSourceFactory))
             .setWakeMode(
-                if (MediaProviderManager.currentProvider.value?.featureFlags?.has(
-                        ProviderFeatures.OFFLINE_PLAYBACK
+                if (MediaProviderManager.currentProvider.value?.featureFlags?.contains(
+                        ProviderFeature.OFFLINE_PLAYBACK
                     ) ?: false)
                     C.WAKE_MODE_NETWORK
                 else

@@ -20,7 +20,7 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.MusicFolder
 import com.craftworks.music.data.model.PlaylistListSort
 import com.craftworks.music.data.model.PlaylistRules
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.ProviderInfo
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.ScrobbleEvent
@@ -51,6 +51,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Year
+import java.util.EnumSet
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -81,16 +82,15 @@ open class SubsonicMediaProvider : MediaProvider() {
         get() = R.string.source_open_subsonic
 
     @Transient
-    private val _featureFlags: ProviderFeatures =
-                ProviderFeatures.REPORT_PLAYBACK +
-                ProviderFeatures.DOWNLOADS +
-                ProviderFeatures.FAVORITES +
-                ProviderFeatures.INTERNET_RADIO +
-                ProviderFeatures.PLAYLIST +
-                ProviderFeatures.RATING
+    override val featureFlags: EnumSet<ProviderFeature> = EnumSet.of(
+        ProviderFeature.REPORT_PLAYBACK,
+        ProviderFeature.DOWNLOADS,
+        ProviderFeature.FAVORITES,
+        ProviderFeature.INTERNET_RADIO,
+        ProviderFeature.PLAYLISTS,
+        ProviderFeature.RATINGS
+    )
 
-    @Transient
-    override val featureFlags: ProviderFeatures = _featureFlags
     @Transient
     override val supportedAlbumSort: List<AlbumListSort> = listOf(
         AlbumListSort.ALBUM_ARTIST,

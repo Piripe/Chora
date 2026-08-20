@@ -56,14 +56,12 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
-import com.craftworks.music.data.model.ProviderFeatures
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.fadingEdge
 import com.craftworks.music.formatSeconds
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
-import com.craftworks.music.ui.elements.ActionButton
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
@@ -246,8 +244,7 @@ fun PlaylistDetails(
 
                                 SongListActionButtons(
                                     buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
-                                    providerFeatures = playlistMetadata?.getProvider()?.featureFlags
-                                        ?: ProviderFeatures(0L),
+                                    providerFeatures = playlistMetadata?.getProvider()?.featureFlags,
                                     playAction = {
                                         coroutineScope.launch {
                                             SongHelper.play(playlistSongs, 0, mediaController)

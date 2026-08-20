@@ -52,7 +52,7 @@ import androidx.media3.session.MediaController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.formatSeconds
@@ -263,7 +263,7 @@ fun HorizontalSongCard(
                             )
                         }
                     )
-                    if (song.mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.PLAYLIST) ?: false) {
+                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) ?: false) {
                         DropdownMenuItem(
                             text = {
                                 Text(stringResource(R.string.action_add_to_playlist))
@@ -281,10 +281,10 @@ fun HorizontalSongCard(
                             }
                         )
                     }
-                    if (song.mediaMetadata.getProvider()?.featureFlags?.has(ProviderFeatures.DOWNLOADS) ?: false) {
+                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.DOWNLOADS) ?: false) {
                         DropdownMenuItem(
-                            enabled = (song.mediaMetadata.getProvider()?.featureFlags?.has(
-                                ProviderFeatures.DOWNLOADS)?:false),
+                            enabled = (song.mediaMetadata.getProvider()?.featureFlags?.contains(
+                                ProviderFeature.DOWNLOADS)?:false),
                             text = {
                                 Text(stringResource(R.string.action_download))
                             },

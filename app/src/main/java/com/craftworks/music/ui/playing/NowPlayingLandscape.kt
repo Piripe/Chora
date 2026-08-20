@@ -58,7 +58,7 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.providerId
@@ -292,7 +292,7 @@ fun NowPlayingLandscape(
                     32.dp,
                     metadata,
                     MediaProviderManager.getProvider(metadata?.providerId?:"")
-                        ?.featureFlags?.has(ProviderFeatures.DOWNLOADS)?:false
+                        ?.featureFlags?.contains(ProviderFeature.DOWNLOADS)?:false
                 )
                 SleepTimerButton(iconTextColor, 32.dp, sleepTimerMinutes, onOpenSleepTimer)
                 PlayQueueButton(iconTextColor, 32.dp, onToggleQueue)

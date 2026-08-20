@@ -19,7 +19,7 @@ data class GetQueueResponse(
     val username: String
 )
 data class ProviderInfo(
-    val features: ProviderFeatures,
+    val features: ProviderFeature,
     val id: String? = null,
     val version: String
 )

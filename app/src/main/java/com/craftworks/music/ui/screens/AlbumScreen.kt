@@ -37,7 +37,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.AlbumListSort
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.id
@@ -125,7 +125,7 @@ fun AlbumScreen(
                         },
                         extraAction = {
                             Row {
-                                if (currentProvider?.featureFlags?.has(ProviderFeatures.FAVORITES) ?: false) {
+                                if (currentProvider?.featureFlags?.contains(ProviderFeature.FAVORITES) ?: false) {
                                     Box {
                                         IconButton(
                                             onClick = { viewModel.setShowFavoritesOnly(!showFavoritesOnly) }

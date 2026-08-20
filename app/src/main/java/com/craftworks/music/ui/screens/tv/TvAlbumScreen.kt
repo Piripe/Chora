@@ -44,7 +44,7 @@ import androidx.tv.material3.IconButton
 import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.data.model.AlbumListSort
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.id
@@ -127,7 +127,7 @@ fun TvAlbumScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (currentProvider?.featureFlags?.has(ProviderFeatures.FAVORITES) ?: false) {
+                if (currentProvider?.featureFlags?.contains(ProviderFeature.FAVORITES) ?: false) {
                     IconButton(
                         onClick = {
                             viewModel.setShowFavoritesOnly(!showFavoritesOnly)

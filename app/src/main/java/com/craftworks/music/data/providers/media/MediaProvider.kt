@@ -19,7 +19,7 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.MusicFolder
 import com.craftworks.music.data.model.PlaylistListSort
 import com.craftworks.music.data.model.PlaylistRules
-import com.craftworks.music.data.model.ProviderFeatures
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.ProviderInfo
 import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.ScrobbleMediaType
@@ -36,6 +36,7 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import java.util.EnumSet
 
 @Serializable
 abstract class MediaProvider {
@@ -54,7 +55,7 @@ abstract class MediaProvider {
     abstract val providerIcon: Int
     abstract val providerMonochromeIcon: Boolean
     abstract val providerName: Int
-    abstract val featureFlags: ProviderFeatures
+    abstract val featureFlags: EnumSet<ProviderFeature>
     abstract val supportedAlbumSort: List<AlbumListSort>
     abstract val supportAlbumSortOrder: Boolean
     abstract val supportedAlbumArtistSort: List<AlbumArtistListSort>
