@@ -13,7 +13,7 @@ data class NavidromeLoginRequest(
 
 @Serializable
 data class NavidromeLoginResponse(
-    var token: String
+    var token: String? = null
 )
 
 @Serializable

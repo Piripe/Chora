@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -48,6 +51,7 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderFeature
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.util.EnumSet
 
 
@@ -69,7 +73,12 @@ fun SongListActionButtons(
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     val scope = rememberCoroutineScope()
 
-    val interactionSources = remember(buttons) {
+    val density = LocalDensity.current
+    val buttonSizePx = remember(density) { with(density) { 72.dp.roundToPx() } }
+
+    var availableButtons by remember { mutableIntStateOf(0) }
+
+    val interactionSources = remember(rowButtons) {
         List(rowButtons.size + 2) { MutableInteractionSource() }
     }
 
@@ -77,7 +86,16 @@ fun SongListActionButtons(
         overflowIndicator = {},
         modifier = Modifier
             .height(64.dp)
-            .widthIn(max = 640.dp),
+            .widthIn(max = 640.dp)
+            .onSizeChanged { size ->
+                val availableSpace =
+                    size.width - buttonSizePx * 2 // Remove the more and play buttons
+                val newAvailableButtons =
+                    0.coerceAtLeast(availableSpace / buttonSizePx).coerceAtMost(rowButtons.size)
+                if (newAvailableButtons != availableButtons) {
+                    availableButtons = newAvailableButtons
+                }
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         customItem(
@@ -114,26 +132,29 @@ fun SongListActionButtons(
                                 label = "Star Button Shape Animation"
                             )
 
-                            FilledTonalIconButton(
-                                onClick = button.onClick,
-                                interactionSource = interactionSource,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .animateWidth(interactionSource),
-                                shape = RoundedCornerShape(cornerRadius)
-                            ) {
-                                Crossfade(
-                                    targetState = isStarred
-                                ) {
-                                    if (it) Icon(
-                                        imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                        contentDescription = stringResource(R.string.action_remove_from_favorites)
-                                    )
-                                    else
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                            contentDescription = stringResource(R.string.action_add_to_favorites)
+                            if (index >= rowButtons.size - availableButtons) {
+                                FilledTonalIconButton(
+                                    onClick = button.onClick,
+                                    interactionSource = interactionSource,
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .animateWidth(interactionSource),
+                                    shape = RoundedCornerShape(cornerRadius),
+
+                                    ) {
+                                    Crossfade(
+                                        targetState = isStarred
+                                    ) {
+                                        if (it) Icon(
+                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
                                         )
+                                        else
+                                            Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                                contentDescription = stringResource(R.string.action_add_to_favorites)
+                                            )
+                                    }
                                 }
                             }
                         },
@@ -145,18 +166,21 @@ fun SongListActionButtons(
                     customItem(
                         buttonGroupContent = {
                             val (icon, text) = getActionButtonIconText(button.type)
-                            FilledTonalIconButton(
-                                onClick = button.onClick,
-                                interactionSource = interactionSource,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .animateWidth(interactionSource),
-                                shape = CircleShape
-                            ) {
-                                Icon(
-                                    icon,
-                                    contentDescription = text
-                                )
+
+                            if (index >= rowButtons.size - availableButtons) {
+                                FilledTonalIconButton(
+                                    onClick = button.onClick,
+                                    interactionSource = interactionSource,
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .animateWidth(interactionSource),
+                                    shape = CircleShape
+                                ) {
+                                    Icon(
+                                        icon,
+                                        contentDescription = text
+                                    )
+                                }
                             }
                         },
                         menuContent = { },
@@ -202,7 +226,8 @@ fun SongListActionButtons(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                for (button in menuButtons) {
+                @Composable
+                fun menuButton(button: ActionButton) {
                     when (button.type) {
                         ActionButtonType.SEPARATOR -> HorizontalDivider()
                         ActionButtonType.FAVORITE -> {
@@ -272,6 +297,17 @@ fun SongListActionButtons(
                         }
                     }
                 }
+
+                if (availableButtons < rowButtons.size) {
+                    for (button in rowButtons.slice(0..<rowButtons.size-availableButtons)) {
+                        menuButton(button)
+                    }
+                    HorizontalDivider()
+                }
+
+                for (button in menuButtons) {
+                    menuButton(button)
+                }
             }
         }
     }
@@ -309,6 +345,7 @@ enum class ActionButtonType {
 data class ActionButton(
     var type: ActionButtonType,
     var inMenu: Boolean,
+    @Transient
     var onClick: () -> Unit = {}
 ) {
     fun isCompatible(flags: EnumSet<ProviderFeature>): Boolean =
