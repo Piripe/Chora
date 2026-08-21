@@ -31,7 +31,7 @@ class CryptoData {
 
     private fun createKey(): SecretKey {
         // Generates a new key if not already present
-        return KeyGenerator.getInstance(ALGORITHM).apply {
+        return KeyGenerator.getInstance(ALGORITHM, "AndroidKeyStore").apply {
             init(
                 KeyGenParameterSpec.Builder(
                     "secret",

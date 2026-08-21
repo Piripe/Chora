@@ -3,6 +3,7 @@ package com.craftworks.music.ui.elements.dialogs
 import android.content.Context
 import android.util.Patterns
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -169,6 +174,7 @@ fun CreateMediaProviderDialog(
     context: Context = LocalContext.current
 ) {
     var isError: Boolean by remember { mutableStateOf(false) }
+    var errorMessage: String? by remember { mutableStateOf(null) }
     var url: String by remember { mutableStateOf("") }
     var username: String by remember { mutableStateOf("") }
     var password: String by remember { mutableStateOf("") }
@@ -360,23 +366,36 @@ fun CreateMediaProviderDialog(
                     }
 
                     // TODO("Check error")
-                    /*
-                    if (navidromeStatus.value != "") {
-                        Column(
+
+                    if (errorMessage != null) {
+                        AlertDialog(
+                            onDismissRequest = { errorMessage = null },
+                            title = { Text("Auth error") },
+                            text = {
+                                // Wrap content in a scrollable Column
+                                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                    Text(errorMessage!!)
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { errorMessage = null }) { Text("Ok") }
+                            }
+                        )
+                        /*Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .animateContentSize(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Status: ${navidromeStatus.value}",
+                                text = errorMessage ?: "Unknown error",
                                 fontWeight = FontWeight.Medium,
                                 fontSize = MaterialTheme.typography.bodyMedium.fontSize,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.padding(vertical = 6.dp)
                             )
-                        }
-                    }*/
+                        }*/
+                    }
 
                     Crossfade(
                         true//navidromeStatus.value == "ok" TODO("Check error")
@@ -411,6 +430,7 @@ fun CreateMediaProviderDialog(
                                         catch (ex: Exception) {
                                             println(ex.message)
                                             println(ex.stackTrace)
+                                            errorMessage = "${ex.message}\n\n${ex.stackTrace}"
                                             isError = true
                                         }
                                     }

@@ -36,6 +36,7 @@ import com.craftworks.music.utils.StringUtils
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -171,6 +172,10 @@ open class SubsonicMediaProvider : MediaProvider() {
                 json(Json {
                     ignoreUnknownKeys = true
                 })
+            }
+
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60000
             }
 
             engine {
