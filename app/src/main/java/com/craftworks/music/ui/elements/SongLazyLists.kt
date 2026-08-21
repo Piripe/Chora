@@ -52,22 +52,20 @@ fun SongsHorizontalColumn(
     val scope = rememberCoroutineScope()
 
     // Load more songs at scroll
-        LaunchedEffect(listState) {
-            if (songList.size % 100 != 0) return@LaunchedEffect
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            val totalItemsCount = listState.layoutInfo.totalItemsCount
 
-            snapshotFlow {
-                val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                val totalItemsCount = listState.layoutInfo.totalItemsCount
-
-                lastVisibleItemIndex != null && totalItemsCount > 0 &&
-                        (totalItemsCount - lastVisibleItemIndex) <= 25
-            }
-                .filter { it }
-                .collect {
-                    if (viewModel == null) return@collect
-                    viewModel.getMoreSongs(100)
-                }
+            lastVisibleItemIndex != null && totalItemsCount > 0 &&
+                    (totalItemsCount - lastVisibleItemIndex) <= 25
         }
+            .filter { it }
+            .collect {
+                if (viewModel == null) return@collect
+                viewModel.getMoreSongs(100)
+            }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -112,21 +110,21 @@ fun AlbumGrid(
         it.mediaMetadata.providerId
     }
 
-        LaunchedEffect(gridState) {
-            if (albums.size % 50 != 0) return@LaunchedEffect
+    LaunchedEffect(gridState) {
+        if (albums.size % 50 != 0) return@LaunchedEffect
 
-            snapshotFlow {
-                val lastVisibleItemIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-                val totalItemsCount = gridState.layoutInfo.totalItemsCount
+        snapshotFlow {
+            val lastVisibleItemIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            val totalItemsCount = gridState.layoutInfo.totalItemsCount
 
-                lastVisibleItemIndex != null && totalItemsCount > 0 &&
-                        (totalItemsCount - lastVisibleItemIndex) <= 10
-            }
-                .filter { it }
-                .collect {
-                    viewModel.getMoreAlbums(50)
-                }
+            lastVisibleItemIndex != null && totalItemsCount > 0 &&
+                    (totalItemsCount - lastVisibleItemIndex) <= 10
         }
+            .filter { it }
+            .collect {
+                viewModel.getMoreAlbums(50)
+            }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(96.dp),

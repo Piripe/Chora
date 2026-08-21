@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-abstract class MediaModel()
+abstract class MediaModel
 {
     abstract val providerId: String
     abstract val providerType: ProviderType
@@ -64,23 +64,10 @@ abstract class MediaModel()
         val userRating: Int? = null,
         val version: String? = null
     ) : MediaModel() {
-        companion object {
-            fun fromMediaItem(mi: MediaItem): MediaModel.Album {
-                return MediaModel.Album(
-                    id = mi.mediaMetadata.id?:"",
-                    providerId = mi.mediaMetadata.providerId?:"",
-                    providerType = mi.mediaMetadata.providerType ?: throw Exception("Missing Provider Type"),
-                    name = mi.mediaMetadata.title.toString(),
-                    imageUrl = mi.mediaMetadata.artworkUri.toString(),
-                    imageId = mi.mediaMetadata.extras?.getString("imageId")
-                    // TODO : Complete that
-                )
-            }
-        }
-        fun toMediaItem(): androidx.media3.common.MediaItem {
+        fun toMediaItem(): MediaItem {
             return toMediaItem(getProvider())
         }
-        fun toMediaItem(provider: MediaProvider?): androidx.media3.common.MediaItem {
+        fun toMediaItem(provider: MediaProvider?): MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setTitle(this.name)
@@ -88,7 +75,7 @@ abstract class MediaModel()
                     .setAlbumTitle(this.name)
                     .setDisplayTitle(this.name)
                     .setAlbumArtist(this.albumArtistName)
-                    .setArtworkUri(this.imageId?.let { provider?.getImageUrl(it, LibraryType.ALBUM)?.toUri() })
+                    .setArtworkUri(this.imageId?.let { provider?.getImageUrl(it, LibraryType.ALBUM, 300)?.toUri() })
                     .setRecordingYear(this.releaseYear)
                     .setDurationMs(this.durationMs.toLong())
                     .setIsBrowsable(true)
@@ -107,7 +94,7 @@ abstract class MediaModel()
                     )
                     .build()
 
-            return androidx.media3.common.MediaItem.Builder()
+            return MediaItem.Builder()
                 .setMediaId(this.id)
                 .setMediaMetadata(mediaMetadata)
                 .build()
@@ -136,17 +123,18 @@ abstract class MediaModel()
         val userFavorite: Boolean? = null,
         val userRating: Int? = null
     ) : MediaModel(), Parcelable {
-        fun toMediaItem(): androidx.media3.common.MediaItem {
+        fun toMediaItem(): MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setTitle(this.name)
                     .setMediaType(MediaMetadata.MEDIA_TYPE_ARTIST)
-                    .setArtworkUri(this.imageUrl?.toUri()) // TODO("Call provider's getImageUrl")
+                    .setArtworkUri(this.imageUrl?.toUri())
                     .setIsBrowsable(true)
                     .setIsPlayable(false)
                     .build()
 
-            return androidx.media3.common.MediaItem.Builder()
+            return MediaItem.Builder()
+                .setMediaMetadata(mediaMetadata)
                 .setMediaId(this.id)
                 .setUri(this.id)
                 .build()
@@ -193,7 +181,7 @@ abstract class MediaModel()
         val streamUrl: String,
         val uploadedImage: String? = null
     ) : MediaModel() {
-        fun toMediaItem(): androidx.media3.common.MediaItem {
+        fun toMediaItem(): MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setStation(this.name)
@@ -215,7 +203,7 @@ abstract class MediaModel()
                     )
                     .build()
 
-            return androidx.media3.common.MediaItem.Builder()
+            return MediaItem.Builder()
                 .setMediaId(this.id)
                 .setMediaMetadata(mediaMetadata)
                 .build()
@@ -241,10 +229,10 @@ abstract class MediaModel()
         val sync: Boolean? = null,
         val uploadedImage: String? = null
     ) : MediaModel() {
-        fun toMediaItem(): androidx.media3.common.MediaItem {
+        fun toMediaItem(): MediaItem {
             return toMediaItem(getProvider())
         }
-        fun toMediaItem(provider: MediaProvider?): androidx.media3.common.MediaItem {
+        fun toMediaItem(provider: MediaProvider?): MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setTitle(this.name)
@@ -264,7 +252,7 @@ abstract class MediaModel()
                     )
                     .build()
 
-            return androidx.media3.common.MediaItem.Builder()
+            return MediaItem.Builder()
                 .setMediaId(this.id)
                 .setMediaMetadata(mediaMetadata)
                 .build()
@@ -321,17 +309,17 @@ abstract class MediaModel()
         val userFavorite: Boolean? = null,
         val userRating: Int? = null
     ) : MediaModel() {
-        fun toMediaItem(): androidx.media3.common.MediaItem {
+        fun toMediaItem(): MediaItem {
             return toMediaItem(getProvider())
         }
-        fun toMediaItem(provider: MediaProvider?): androidx.media3.common.MediaItem {
+        fun toMediaItem(provider: MediaProvider?): MediaItem {
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setTitle(this.name)
                     .setArtist(this.artistName)
                     .setAlbumTitle(this.album)
                     .setAlbumArtist(this.albumArtistName)
-                    .setArtworkUri(this.imageId?.let { provider?.getImageUrl(it, LibraryType.SONG)?.toUri() })
+                    .setArtworkUri(this.imageId?.let { provider?.getImageUrl(it, LibraryType.SONG,  600)?.toUri() })
                     .setRecordingYear(this.releaseYear)
                     .setDiscNumber(this.discNumber)
                     .setTrackNumber(this.trackNumber)
@@ -363,7 +351,7 @@ abstract class MediaModel()
                     )
                     .build()
 
-            return androidx.media3.common.MediaItem.Builder()
+            return MediaItem.Builder()
                 .setMediaId(provider?.getStreamUrl(this.id, false).toString())
                 .setUri(provider?.getStreamUrl(this.id, false)?.toUri())
                 .setMediaMetadata(mediaMetadata)

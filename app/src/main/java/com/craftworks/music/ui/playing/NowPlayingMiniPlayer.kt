@@ -40,6 +40,7 @@ import androidx.compose.ui.zIndex
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
@@ -76,9 +77,9 @@ fun NowPlayingMiniPlayer(
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(metadata?.artworkUri)
-                .diskCacheKey(
-                    metadata?.id
-                )
+                .diskCacheKey(metadata?.id)
+                .diskCachePolicy(CachePolicy.READ_ONLY)
+                .placeholderMemoryCacheKey(metadata?.id)
                 .crossfade(true)
                 .build(),
             contentDescription = "Album Cover",

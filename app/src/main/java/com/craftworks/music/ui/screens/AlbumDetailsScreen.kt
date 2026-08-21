@@ -59,6 +59,7 @@ import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
@@ -166,6 +167,7 @@ fun AlbumDetails(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(selectedAlbumImage)
                             .diskCacheKey(selectedAlbumId)
+                            .diskCachePolicy(CachePolicy.READ_ONLY)
                             .placeholderMemoryCacheKey(selectedAlbumId)
                             .crossfade(true)
                             .build(),

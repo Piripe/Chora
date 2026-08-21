@@ -27,8 +27,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 
 @Stable
@@ -46,11 +48,11 @@ fun ArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
     ) {
         SubcomposeAsyncImage (
             model = ImageRequest.Builder(LocalContext.current)
-                .data(artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)})
+                .data(artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it, LibraryType.ALBUM_ARTIST, 300)})
                 .crossfade(true)
-                .diskCacheKey(
-                    artist.id
-                )
+                .diskCacheKey(artist.id)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .placeholderMemoryCacheKey(artist.id)
                 .build(),
             contentScale = ContentScale.Crop,
             contentDescription = "Album Image",

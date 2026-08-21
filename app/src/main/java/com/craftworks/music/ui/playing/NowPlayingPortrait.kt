@@ -76,6 +76,7 @@ import coil.request.ImageRequest
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.artists
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.model.providerId
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.MediaProviderManager
@@ -236,8 +237,7 @@ fun NowPlayingPortrait(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Crossfade(
-                                targetState = metadata?.artworkUri.toString()
-                                    .replace("size=128", "size=500"),
+                                targetState = metadata?.artworkUri.toString(),
                                 animationSpec = tween(
                                     durationMillis = 400,
                                     easing = FastOutSlowInEasing
@@ -247,7 +247,7 @@ fun NowPlayingPortrait(
                                 SubcomposeAsyncImage(
                                     model = ImageRequest.Builder(context)
                                         .data(artworkUri)
-                                        .placeholderMemoryCacheKey(metadata?.artworkUri.toString())
+                                        .placeholderMemoryCacheKey(metadata?.id)
                                         .diskCachePolicy(CachePolicy.DISABLED)
                                         .build(),
                                     contentDescription = "Album Cover Art",

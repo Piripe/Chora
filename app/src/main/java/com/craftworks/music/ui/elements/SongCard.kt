@@ -50,8 +50,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
 import androidx.media3.session.MediaController
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
@@ -112,12 +114,15 @@ fun HorizontalSongCard(
             else {
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(song.mediaMetadata.artworkUri)
+                        .data(song.mediaMetadata.getProvider()?.getImageUrl(
+                            id = song.mediaMetadata.id ?: "",
+                            itemType = LibraryType.SONG,
+                            size = 128
+                        ))
                         .crossfade(true)
-                        .size(64)
-                        .diskCacheKey(
-                            song.mediaMetadata.id ?: song.mediaId
-                        )
+                        .diskCacheKey(song.mediaMetadata.id)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .placeholderMemoryCacheKey(song.mediaMetadata.id)
                         .build(),
                     contentDescription = "Album Image",
                     contentScale = ContentScale.FillHeight,
@@ -328,7 +333,7 @@ fun HorizontalSongCard(
 
 @Preview(showSystemUi = false, showBackground = true)
 @Composable
-fun PReviewHorizontalSongCard() {
+fun PreviewHorizontalSongCard() {
     HorizontalSongCard(
         song = MediaItem.Builder()
             .setMediaMetadata(

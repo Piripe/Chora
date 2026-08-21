@@ -10,6 +10,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -101,8 +102,16 @@ fun SetupNavGraph(
     LyricsState.useNetEase =
         MediaProviderSettingsManager(context).netEaseLyricsFlow.collectAsStateWithLifecycle(false).value
 
-    val leftPadding = if (LocalConfiguration.current.orientation != Configuration.ORIENTATION_LANDSCAPE || isTv) 0.dp else 80.dp + WindowInsets.safeDrawing.asPaddingValues().calculateLeftPadding(
-        LayoutDirection.Ltr)
+    val orientation = LocalConfiguration.current.orientation
+
+    val insets = WindowInsets.safeDrawing.asPaddingValues()
+    val leftPadding = remember(LocalConfiguration.current.orientation, isTv) {
+        if (orientation != Configuration.ORIENTATION_LANDSCAPE || isTv) {
+            0.dp
+        } else {
+            80.dp + insets.calculateLeftPadding(LayoutDirection.Ltr)
+        }
+    }
 
     val animationSpec = MaterialTheme.LocalMaterialTheme.current.motionScheme.slowSpatialSpec<Float>()
 
@@ -110,6 +119,7 @@ fun SetupNavGraph(
         navController = navController,
         startDestination = Screen.MainGraph,
         modifier = Modifier
+            .fillMaxSize()
             .padding(bottom = bottomPadding, start = leftPadding),
         enterTransition = {
             fadeIn(animationSpec)

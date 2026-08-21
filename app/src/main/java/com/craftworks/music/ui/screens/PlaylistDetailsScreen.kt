@@ -30,8 +30,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -54,6 +57,7 @@ import androidx.media3.session.MediaController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.getProvider
@@ -67,7 +71,9 @@ import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.utils.StringUtils
 import com.craftworks.music.utils.fadingEdge
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
@@ -103,9 +109,20 @@ fun PlaylistDetails(
 
     println("artwork uri: ${playlistMetadata?.artworkUri}; artwork data: ${playlistMetadata?.artworkData}")
 
+    var showLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            delay(500.milliseconds)
+            showLoading = true
+        } else {
+            showLoading = false
+        }
+    }
+
     // Loading spinner
     AnimatedVisibility(
-        visible = isLoading,
+        visible = showLoading,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -152,6 +169,7 @@ fun PlaylistDetails(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(selectedPlaylistImage)
                             .diskCacheKey(selectedPlaylistId)
+                            .diskCachePolicy(CachePolicy.READ_ONLY)
                             .crossfade(true)
                             .build(),
                         fallback = painterResource(R.drawable.placeholder),

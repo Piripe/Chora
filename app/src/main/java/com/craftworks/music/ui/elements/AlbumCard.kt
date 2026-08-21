@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.data.model.id
 
@@ -65,9 +66,9 @@ fun AlbumCard(
                 model = ImageRequest.Builder(context)
                     .data(album.mediaMetadata.artworkUri)
                     .crossfade(true)
-                    .diskCacheKey(
-                        album.mediaMetadata.id ?: album.mediaId
-                    )
+                    .diskCacheKey(album.mediaMetadata.id)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .placeholderMemoryCacheKey(album.mediaMetadata.id)
                     .build(),
                 contentDescription = "Album Image",
                 contentScale = ContentScale.Crop,
