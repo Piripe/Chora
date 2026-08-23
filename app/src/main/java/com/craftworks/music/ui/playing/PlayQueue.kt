@@ -117,7 +117,7 @@ fun PlayQueueContent(
         itemsIndexed(currentList, key = { _, item -> item.mediaMetadata.uuid ?: item.mediaId }) { index, item ->
             ReorderableItem(
                 state = reorderableState,
-                key = item.mediaId,
+                key = item.mediaMetadata.uuid ?: item.mediaId,
                 animateItemModifier = Modifier.animateItem(
                     placementSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow)
                 )
@@ -126,7 +126,7 @@ fun PlayQueueContent(
                     targetValue = if (draggingThis) 6.dp else 0.dp,
                     label = "queue_item_elevation"
                 )
-                val isCurrentItem = item == currentMediaItem
+                val isCurrentItem = item.mediaMetadata.uuid == currentMediaItem?.mediaMetadata?.uuid
 
                 Surface(
                     tonalElevation = elevation,
