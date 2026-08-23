@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.ui.util.fastFilter
 import androidx.core.math.MathUtils.clamp
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -245,22 +246,26 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             object : ResolvingDataSource.Resolver {
                 override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
                     val uri = dataSpec.uri
+                    val scheme = dataSpec.uri.scheme
 
-                    if (uri.path?.contains("stream") == true) {
-                        val bitrate = runBlocking { transcodeManager.currentBitrateFlow.first() }
-                        if (bitrate == "No Transcoding")
-                            return dataSpec
+                    if (scheme != "media")
+                        return dataSpec
 
+                    val providerId = uri.authority ?: throw Exception("No provider for MediaItem")
+                    val songId = uri.lastPathSegment ?: throw Exception("No ID for MediaItem")
+
+                    val provider = MediaProviderManager.getProvider(providerId)
+                    var actualStreamUrl = provider?.getStreamUrl(songId, false)
+                        ?: throw Exception("Can't get streamUrl for mediaitem $songId")
+
+                    val bitrate = runBlocking { transcodeManager.currentBitrateFlow.first() }
+                    if (bitrate != "No Transcoding") {
                         val format = runBlocking { transcodeManager.currentFormatFlow.first() }
 
-                        val newUri = uri.buildUpon()
-                            .appendQueryParameter("format", format)
-                            .appendQueryParameter("maxBitRate", bitrate)
-                            .build()
-
-                        return dataSpec.withUri(newUri)
+                        actualStreamUrl = provider.getStreamUrl(songId, true, bitrate.toInt(), format)
                     }
-                    return dataSpec
+
+                    return dataSpec.withUri(actualStreamUrl.toUri())
                 }
             }
         )
@@ -415,74 +420,6 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             super.onPostConnect(session, controller)
         }
 
-        /*
-        @OptIn(UnstableApi::class)
-        override fun onSetMediaItems(
-            mediaSession: MediaSession,
-            controller: MediaSession.ControllerInfo,
-            mediaItems: List<MediaItem>,
-            startIndex: Int,
-            startPositionMs: Long
-        ): ListenableFuture<MediaItemsWithStartPosition> {
-            // We need to use URI from requestMetaData because of https://github.com/androidx/media/issues/282
-            val updatedStartIndex =
-                SongHelper.currentTracklist.indexOfFirst { it.mediaId == mediaItems[0].mediaId }
-
-            val currentTracklist =
-                if (updatedStartIndex != -1) {
-                    SongHelper.currentTracklist
-                } else {
-                    SongHelper.currentTracklist = mediaItems.toMutableList()
-                    mediaItems
-                }
-
-            val connectivityManager =
-                this@ChoraMediaLibraryService.baseContext.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
-
-            val networkCapabilities =
-                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-
-            val bitrate: String = runBlocking {
-                when {
-                    networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> {
-                        Log.d("NetworkCheck", "Device is on Wi-Fi")
-                        playbackSettingsManager.wifiTranscodingBitrateFlow.first()
-                    }
-                    networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> {
-                        Log.d("NetworkCheck", "Device is on Mobile Data")
-                        playbackSettingsManager.mobileDataTranscodingBitrateFlow.first()
-                    }
-                    else -> {
-                        Log.d("NetworkCheck", "Device is on another network type")
-                        playbackSettingsManager.wifiTranscodingBitrateFlow.first()
-                    }
-                }
-            }
-
-            val bitrateOptions = if (bitrate != "No Transcoding" && bitrate.isNotEmpty()) {
-                runBlocking {
-                    "&maxBitRate=$bitrate&format=${playbackSettingsManager.transcodingFormatFlow.first()}"
-                }
-            } else {
-                ""
-            }
-
-            val result = MediaItemsWithStartPosition(
-                currentTracklist.map { mediaItem ->
-                    MediaItem.Builder()
-                        .setMediaId(mediaItem.mediaId)
-                        .setMediaMetadata(mediaItem.mediaMetadata)
-                        .setUri(mediaItem.mediaId + if (mediaItem.mediaMetadata.extras?.getString("navidromeID")?.startsWith("Local_") == false) bitrateOptions else "")
-                        .build()
-                },
-                if (updatedStartIndex != -1) updatedStartIndex else startIndex,
-                startPositionMs
-            )
-
-            return Futures.immediateFuture(result)
-        }
-        */
-
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -497,11 +434,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 val fullItem = aFolderSongs.find { it.mediaId == requestedId }
                 if (fullItem != null) {
                     val startIndex = aFolderSongs.indexOf(fullItem)
-                    val folderQueue = aFolderSongs.subList(startIndex, aFolderSongs.size).map { item ->
-                        item.buildUpon()
-                            .setUri(item.mediaId)
-                            .build()
-                    }
+                    val folderQueue = aFolderSongs.subList(startIndex, aFolderSongs.size)
                     return Futures.immediateFuture(folderQueue)
                 }
 
@@ -512,19 +445,11 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                     ?: aArtistsScreenItems.find { it.mediaId == requestedId }
 
                 if (cachedItem != null) {
-                    val enrichedItem = cachedItem.buildUpon()
-                        .setUri(cachedItem.mediaId)
-                        .build()
-                    return Futures.immediateFuture(listOf(enrichedItem))
+                    return Futures.immediateFuture(listOf(cachedItem))
                 }
             }
 
-            val updatedMediaItems = mediaItems.map { item ->
-                item.buildUpon()
-                    .setUri(item.mediaId)
-                    .build()
-            }
-            return Futures.immediateFuture(updatedMediaItems)
+            return Futures.immediateFuture(mediaItems)
         }
 
         override fun onSetRating(
@@ -800,8 +725,8 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         println("GETTING ANDROID AUTO SCREEN ITEMS")
         runBlocking {
             if (aHomeScreenItems.isEmpty()) {
-                val recentlyPlayedAlbums = async { albumRepository.getAlbums(MediaQuery.AlbumListQuery(sortBy = AlbumListSort.RECENTLY_PLAYED, sortOrder = SortOrder.ASC, limit = 6, startIndex = 0)) }.await()
-                val mostPlayedAlbums = async { albumRepository.getAlbums(MediaQuery.AlbumListQuery(sortBy = AlbumListSort.PLAY_COUNT, sortOrder = SortOrder.ASC, limit = 6, startIndex = 0)) }.await()
+                val recentlyPlayedAlbums = async { albumRepository.getAlbums(MediaQuery.AlbumListQuery(sortBy = AlbumListSort.RECENTLY_PLAYED, sortOrder = SortOrder.DESC, limit = 6, startIndex = 0)) }.await()
+                val mostPlayedAlbums = async { albumRepository.getAlbums(MediaQuery.AlbumListQuery(sortBy = AlbumListSort.PLAY_COUNT, sortOrder = SortOrder.DESC, limit = 6, startIndex = 0)) }.await()
 
                 recentlyPlayedAlbums.forEach { album ->
                     aHomeScreenItems.add(

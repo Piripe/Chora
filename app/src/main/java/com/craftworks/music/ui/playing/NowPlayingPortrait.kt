@@ -273,35 +273,6 @@ fun NowPlayingPortrait(
                                 Modifier.padding(horizontal = 24.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-//                                Crossfade(
-//                                    targetState = metadata?.title.toString(),
-//                                    animationSpec = tween(
-//                                        durationMillis = 400,
-//                                        easing = FastOutSlowInEasing
-//                                    ),
-//                                    label = "Animated Song Title",
-//                                    modifier = Modifier
-//                                ) { title ->
-//                                    Text(
-//                                        text = title,
-//                                        style = MaterialTheme.typography.headlineMediumEmphasized,
-//                                        fontWeight = FontWeight.Bold,
-//                                        color = iconTextColor,
-//                                        maxLines = 1,
-//                                        overflow = TextOverflow.Visible,
-//                                        softWrap = false,
-//                                        textAlign = when (titleAlignment) {
-//                                            NowPlayingAlignment.LEFT -> TextAlign.Start
-//                                            NowPlayingAlignment.CENTER -> TextAlign.Center
-//                                            NowPlayingAlignment.RIGHT -> TextAlign.End
-//                                        },
-//                                        modifier = Modifier
-//                                            .fillMaxWidth()
-//                                            .marqueeHorizontalFadingEdges(
-//                                                marqueeProvider = { Modifier.basicMarquee() })
-//                                    )
-//                                }
-
                                 CompositionLocalProvider(
                                     LocalLayoutDirection provides
                                             if (titleAlignment == NowPlayingAlignment.RIGHT)

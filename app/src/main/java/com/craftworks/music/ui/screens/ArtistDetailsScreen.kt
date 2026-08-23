@@ -186,7 +186,7 @@ fun ArtistDetails(
                     //Image and Name
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(selectedArtistImage ?: artist?.imageUrl)
+                            .data(selectedArtistImage)
                             .diskCacheKey(selectedArtistId)
                             .diskCachePolicy(CachePolicy.READ_ONLY)
                             .placeholderMemoryCacheKey(selectedArtistId)

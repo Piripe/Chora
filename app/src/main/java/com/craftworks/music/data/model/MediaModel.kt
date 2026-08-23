@@ -1,5 +1,6 @@
 package com.craftworks.music.data.model
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
@@ -14,7 +15,6 @@ import com.craftworks.music.managers.MediaProviderManager
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 abstract class MediaModel
 {
@@ -205,6 +205,7 @@ abstract class MediaModel
 
             return MediaItem.Builder()
                 .setMediaId(this.id)
+                .setUri(streamUrl.toUri())
                 .setMediaMetadata(mediaMetadata)
                 .build()
         }
@@ -312,7 +313,14 @@ abstract class MediaModel
         fun toMediaItem(): MediaItem {
             return toMediaItem(getProvider())
         }
+        @OptIn(ExperimentalUuidApi::class)
         fun toMediaItem(provider: MediaProvider?): MediaItem {
+            val mediaUri = Uri.Builder()
+                .scheme("media")
+                .authority(this.providerId)
+                .appendPath(this.id)
+                .build()
+
             val mediaMetadata =
                 MediaMetadata.Builder()
                     .setTitle(this.name)
@@ -352,8 +360,8 @@ abstract class MediaModel
                     .build()
 
             return MediaItem.Builder()
-                .setMediaId(provider?.getStreamUrl(this.id, false).toString())
-                .setUri(provider?.getStreamUrl(this.id, false)?.toUri())
+                .setMediaId(this@Song.id)
+                .setUri(mediaUri)
                 .setMediaMetadata(mediaMetadata)
                 .build()
         }
@@ -362,8 +370,6 @@ abstract class MediaModel
 
 val MediaMetadata.id: String?
     get() = extras?.getString("id")
-val MediaMetadata.uuid: String?
-    get() = extras?.getString("uuid")
 
 val MediaMetadata.providerId: String?
     get() = extras?.getString("providerId")
@@ -387,13 +393,3 @@ val MediaMetadata.artists: List<MediaModel.Artist>?
 fun MediaMetadata.getProvider(): MediaProvider? {
     return MediaProviderManager.getProvider(extras?.getString("providerId")?:"")
 }
-
-@OptIn(ExperimentalUuidApi::class)
-fun MediaItem.makeUnique(): MediaItem =
-    buildUpon().setMediaMetadata(
-        mediaMetadata.buildUpon().setExtras(
-            (mediaMetadata.extras?.let { Bundle(it) } ?:Bundle()).apply {
-                putString("uuid", Uuid.generateV7().toString())
-            }
-        ).build()
-    ).build()

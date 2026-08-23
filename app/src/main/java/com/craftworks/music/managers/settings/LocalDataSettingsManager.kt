@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
@@ -86,20 +87,28 @@ class LocalDataSettingsManager @Inject constructor(
             context.dataStore.edit { preferences ->
                 preferences[MEDIA_RESUMPTION_PLAYLIST] =
                     Json.encodeToString(playlist.map {
-                        val song = MediaModel.Song(
-                            id = it.mediaMetadata.extras?.getString("id") ?: "",
+                        MediaModel.Song(
+                            id = it.mediaId,
                             providerId = it.mediaMetadata.extras?.getString("providerId") ?: "",
                             providerType = ProviderType(it.mediaMetadata.extras?.getInt("providerType") ?: 0),
-                            albumArtistName = it.mediaMetadata.artist.toString(),
+                            album = it.mediaMetadata.albumTitle?.toString(),
+                            albumArtistName = it.mediaMetadata.albumArtist?.toString(),
                             albumId = it.mediaMetadata.extras?.getString("albumId") ?: "",
-                            artistName = it.mediaMetadata.artist.toString(),
+                            artistName = it.mediaMetadata.artist?.toString() ?: "",
                             discNumber = it.mediaMetadata.discNumber ?: 0,
                             durationMs = it.mediaMetadata.durationMs?.toInt() ?: 0,
-                            name = it.mediaMetadata.title.toString(),
+                            name = it.mediaMetadata.title?.toString() ?: "",
                             trackNumber = it.mediaMetadata.trackNumber ?: 0,
                             userFavorite = it.mediaMetadata.extras?.getBoolean("userFavorite") ?: false,
+                            imageId = it.mediaMetadata.extras?.getString("imageId"),
+                            imageUrl = it.mediaMetadata.artworkUri?.toString(),
+                            releaseYear = it.mediaMetadata.releaseYear,
+                            format = it.mediaMetadata.extras?.getString("format"),
+                            bitRate = it.mediaMetadata.extras?.getLong("bitrate")?.toInt(),
+                            explicit = it.mediaMetadata.extras?.getBoolean(METADATA_KEY_IS_EXPLICIT),
+                            artists = it.mediaMetadata.extras?.getParcelableArrayList("artists") ?: emptyList(),
+                            genres = it.mediaMetadata.genre?.split(", ")?.map { MediaModel.Genre(name = it) } ?: emptyList()
                         )
-                        song
                     })
                 preferences[MEDIA_RESUMPTION_INDEX] = currentPos
                 preferences[MEDIA_RESUMPTION_TIME] = currentTime
@@ -110,7 +119,7 @@ class LocalDataSettingsManager @Inject constructor(
     val playbackResumptionPlaylistWithStartPosition: Flow<MediaSession.MediaItemsWithStartPosition> = context.dataStore.data.map { preferences ->
         withContext(NonCancellable) {
             MediaSession.MediaItemsWithStartPosition(
-                Json.decodeFromString<List<com.craftworks.music.data.model.MediaModel.Song>>(
+                Json.decodeFromString<List<MediaModel.Song>>(
                     preferences[MEDIA_RESUMPTION_PLAYLIST] ?: "[]"
                 ).map { it.toMediaItem() },
                 preferences[MEDIA_RESUMPTION_INDEX] ?: 0,

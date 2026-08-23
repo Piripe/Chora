@@ -639,6 +639,16 @@ open class SubsonicMediaProvider : MediaProvider() {
             ?.addPathSegments("rest/stream.view")
             ?.addQueryParameter("id", id)
 
+        if (transcode) {
+            urlBuilder
+                ?.addQueryParameter("maxBitRate", bitrate.toString())
+                ?.addQueryParameter("format", format)
+
+            offset?.let {
+                urlBuilder?.addQueryParameter("timeOffset", it.toString())
+            }
+        }
+
         urlBuilder?.addQueryParameter("u", providerData.username ?: "")
         urlBuilder?.addQueryParameter("t", _token ?: "")
         urlBuilder?.addQueryParameter("s", _salt ?: "")
