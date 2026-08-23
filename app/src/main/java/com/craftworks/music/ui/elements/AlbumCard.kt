@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.elements
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -69,6 +70,11 @@ fun AlbumCard(
                     .diskCacheKey(album.mediaMetadata.id)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .placeholderMemoryCacheKey(album.mediaMetadata.id)
+                    .listener(
+                        onError = { request, result ->
+                            Log.e("AlbumCard", "Failed for ${request.data}", result.throwable)
+                        }
+                    )
                     .build(),
                 contentDescription = "Album Image",
                 contentScale = ContentScale.Crop,
