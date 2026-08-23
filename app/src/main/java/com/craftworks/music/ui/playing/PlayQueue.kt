@@ -91,17 +91,17 @@ fun PlayQueueContent(
         val listener = object : Player.Listener {
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 syncList()
-                currentMediaItem = currentList.find { it.mediaItem == mediaController.currentMediaItem }
+                currentMediaItem = currentList[mediaController.currentMediaItemIndex]
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                currentMediaItem = currentList.find { it.mediaItem == mediaController.currentMediaItem }
+                currentMediaItem = currentList[mediaController.currentMediaItemIndex]
             }
         }
 
         // Initial load
         syncList()
-        currentMediaItem = currentList.find { it.mediaItem == mediaController.currentMediaItem }
+        currentMediaItem = currentList[mediaController.currentMediaItemIndex]
         mediaController.addListener(listener)
 
         onDispose { mediaController.removeListener(listener) }
@@ -110,8 +110,8 @@ fun PlayQueueContent(
     val lazyListState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
-        if (currentList.any { it.mediaItem == currentMediaItem } ) {
-            lazyListState.scrollToItem(currentList.indexOfFirst { it.mediaItem == currentMediaItem })
+        if (currentList.any { it.queueItemId == currentMediaItem?.queueItemId } ) {
+            lazyListState.scrollToItem(mediaController.currentMediaItemIndex)
         }
     }
 
