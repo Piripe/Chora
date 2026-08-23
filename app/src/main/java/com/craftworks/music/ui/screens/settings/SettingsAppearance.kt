@@ -68,13 +68,7 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
-import com.craftworks.music.ui.elements.dialogs.BackgroundDialog
-import com.craftworks.music.ui.elements.dialogs.HomeItemsDialog
-import com.craftworks.music.ui.elements.dialogs.NameDialog
-import com.craftworks.music.ui.elements.dialogs.NavbarItemsDialog
-import com.craftworks.music.ui.elements.dialogs.NowPlayingTitleAlignmentDialog
-import com.craftworks.music.ui.elements.dialogs.SongListActionButtonsDialog
-import com.craftworks.music.ui.elements.dialogs.ThemeDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.*
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground

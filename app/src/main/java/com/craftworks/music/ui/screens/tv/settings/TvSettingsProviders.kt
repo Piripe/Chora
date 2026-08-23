@@ -32,8 +32,7 @@ import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
-import com.craftworks.music.ui.elements.dialogs.tv.ModifyLrcLibProviderDialog
-import com.craftworks.music.ui.elements.dialogs.tv.TvCreateMediaProviderDialog
+import com.craftworks.music.ui.elements.dialogs.tv.provider.*
 import com.craftworks.music.ui.elements.tv.LrcLibProviderCard
 import com.craftworks.music.ui.elements.tv.NetEaseProviderCard
 import com.craftworks.music.ui.elements.tv.TvProviderCard
