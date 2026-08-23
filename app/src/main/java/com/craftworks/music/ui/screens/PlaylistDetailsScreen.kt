@@ -247,7 +247,7 @@ fun PlaylistDetails(
                                     },
                                     ActionButtonType.PLAY_NEXT to {
                                         coroutineScope.launch {
-                                            SongHelper.enqueue(playlistSongs, mediaController)
+                                            SongHelper.playNext(playlistSongs, mediaController)
                                         }
                                     },
                                     ActionButtonType.DOWNLOAD to {

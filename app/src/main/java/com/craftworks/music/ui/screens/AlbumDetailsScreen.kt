@@ -300,7 +300,7 @@ fun AlbumDetails(
                                     },
                                     ActionButtonType.PLAY_NEXT to {
                                         coroutineScope.launch {
-                                            SongHelper.enqueue(
+                                            SongHelper.playNext(
                                                 currentAlbum.subList(
                                                     1,
                                                     currentAlbum.size
