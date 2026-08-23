@@ -413,6 +413,7 @@ fun CreateMediaProviderDialog(
                                             )
                                         }
 
+                                        provider.init(context)
 
                                         try {
                                             val res = provider.authenticate(username, password)
