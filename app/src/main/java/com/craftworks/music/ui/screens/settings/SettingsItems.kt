@@ -76,15 +76,16 @@ fun SettingsSwitch(
             modifier = Modifier
                 .padding(vertical = 20.dp)
                 .weight(1f),
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Start
         )
+
         Switch(
             checked = selected,
             onCheckedChange = { toggleEvent() },
             enabled = enabled,
-            modifier = Modifier.padding(end = 20.dp)
+            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
         )
     }
 }
@@ -125,12 +126,14 @@ fun SettingsDialogButton(
                 .size(32.dp)
         )
         Column(
-            modifier = Modifier.padding(vertical = 10.dp)
+            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp, end = 8.dp)
         ) {
             Text(
                 text = settingsName,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Normal,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 color = if (enabled == true)
                     MaterialTheme.colorScheme.onBackground
                 else
@@ -145,6 +148,8 @@ fun SettingsDialogButton(
                     else
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Normal,
             )
         }
@@ -196,7 +201,7 @@ fun SettingsSlider(
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 6.dp).padding(top = 10.dp),
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Start
         )

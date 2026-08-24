@@ -199,7 +199,7 @@ private fun OverviewStep(
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_banner_foreground),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
         )
 
@@ -267,7 +267,7 @@ private fun OverviewStep(
                     )
                 ) {
                     Text(
-                        text = "Skip for now",
+                        text = stringResource(R.string.action_skip_for_now),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -291,7 +291,7 @@ private fun DoneStep(onFinish: () -> Unit) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_banner_foreground),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            tint = MaterialTheme.colorScheme.primary,
         )
 
         Text(

@@ -22,7 +22,7 @@
 
     // Playlists
     <string name="action_more">Plus</string>
-    <string name="action_create_playlist">Créer une playlist</string>
+    <string name="action_create_playlist">Créer la playlist</string>
     <string name="action_remove_from_playlist">Retirer de la playlist</string>
 
     // Favorites
@@ -32,4 +32,6 @@
     <string name="button_toggle_sort_order">Changer l\'ordre de tri</string>
     <string name="action_close">Fermer</string>
     <string name="action_add_to_favorites">Ajouter aux favoris</string>
+    <string name="action_add_radio">Ajouter la radio</string>
+    <string name="action_skip_for_now">Passer pour l\'instant</string>
 </resources>

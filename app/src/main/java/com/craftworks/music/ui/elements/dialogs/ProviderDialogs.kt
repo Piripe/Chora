@@ -3,7 +3,6 @@ package com.craftworks.music.ui.elements.dialogs
 import android.content.Context
 import android.util.Patterns
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -202,7 +201,8 @@ fun CreateMediaProviderDialog(
         ) {
             Text(
                 text = stringResource(R.string.settings_media_providers),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             var expanded by remember { mutableStateOf(false) }

@@ -114,7 +114,7 @@ fun AddRadioDialog(
                                 .height(50.dp)
                                 .bounceClick()
                         ) {
-                            Text(stringResource(R.string.action_done))
+                            Text(stringResource(R.string.action_add_radio))
                         }
                     }
                 }

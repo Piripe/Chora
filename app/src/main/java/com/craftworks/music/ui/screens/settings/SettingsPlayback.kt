@@ -81,7 +81,7 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Previous Song",
+                            contentDescription = stringResource(R.string.settings_playback),
                             modifier = Modifier
                                 .size(24.dp)
                         )
@@ -114,7 +114,7 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
 
                     SettingsDialogButton(
                         settingsName = stringResource(R.string.playback_max_bitrate_wifi),
-                        settingsSubtitle = if (transcodingBitrateWifi != "No Transcoding") "$transcodingBitrateWifi Kbps" else transcodingBitrateWifi,
+                        settingsSubtitle = if (transcodingBitrateWifi != "No Transcoding") "$transcodingBitrateWifi Kbps" else stringResource(R.string.playback_no_transcoding),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
                         toggleEvent = { showWifiTranscodingDialog = true },
                         enabled = currentProvider != null
@@ -128,7 +128,7 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
 
                     SettingsDialogButton(
                         settingsName = stringResource(R.string.playback_max_bitrate_mobile_data),
-                        settingsSubtitle = if (transcodingBitrateData != "No Transcoding") "$transcodingBitrateData Kbps" else transcodingBitrateData,
+                        settingsSubtitle = if (transcodingBitrateData != "No Transcoding") "$transcodingBitrateData Kbps" else stringResource(R.string.playback_no_transcoding),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
                         toggleEvent = { showDataTranscodingDialog = true },
                         enabled = currentProvider != null
