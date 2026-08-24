@@ -31,6 +31,7 @@
         <string name="appearance_provider_logo">Afficher le logo du fournisseur de médias</string>
         <string name="appearance_refresh_animation">Afficher l\'animation d\'actualisation</string>
         <string name="appearance_track_numbers_in_album_view">Afficher les numéros de piste de l\'album</string>
+    <string name="appearance_action_buttons_editor_title">Modifier les boutons</string>
     <string name="settings_media_providers">Fournisseurs de médias</string>
         <string name="media_providers_lrclib_url">URL LRCLIB</string>
         <string name="media_providers_media_source">Source de médias</string>
@@ -52,4 +53,30 @@
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Pourcentage minimum pour scrobbler</string>
+    <string name="appearance_album_details_action_buttons">Boutons des détails d\'album</string>
+    <string name="appearance_artist_details_action_buttons">Boutons des détails d\'artiste</string>
+    <string name="appearance_playlist_details_action_buttons">Boutons des détails de playlist</string>
+    <string name="settings_misc">Divers</string>
+    <string name="misc_download_template">Pattern de téléchargement</string>
+    <string name="misc_download_template_description">
+        {title} - Title de la musique\n
+        {album} - Title de l\'album\n
+        {artist} - Artiste de la musique\n
+        {album_artist} - Artiste de l\'album\n
+        {ext} - Extension\n
+        {track} - Numéro de piste\n
+        {disc} - Numéro de disque
+    </string>
+    <string name="misc_playlist_download_template">Pattern de téléchargement de playlist</string>
+    <string name="misc_playlist_download_template_description">
+        {title} - Title de la musique\n
+        {album} - Title de l\'album\n
+        {artist} - Artiste de la musique\n
+        {album_artist} - Artiste de l\'album\n
+        {ext} - Extension\n
+        {track} - Numéro de piste\n
+        {disc} - Numéro de disque\n
+        {playlist} - Titre de la playlist\n
+        {playlist_index} - Index de la piste de la playlist
+    </string>
 </resources>

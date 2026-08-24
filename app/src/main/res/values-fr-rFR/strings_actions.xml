@@ -2,6 +2,7 @@
 <resources>
     <!-- Common -->
     <string name="action_done">Fait</string>
+    <string name="action_save">Sauvegarder</string>
     <string name="action_remove">Supprimer</string>
     <string name="action_reset">Réinitialiser</string>
 
@@ -12,12 +13,15 @@
 
     <string name="action_add">Ajouter</string>
     <string name="action_add_to_queue">Ajouter à la queue</string>
+    <string name="action_play_next">Lire après</string>
     <string name="action_add_to_playlist">Ajouter à la playlist</string>
+    <string name="action_remove_from_favorites">Retirer des favoris</string>
     <string name="action_set_rating">Définir la note</string>
     <string name="action_next">Suivant</string>
     <string name="action_download">Téléchargement</string>
 
     // Playlists
+    <string name="action_more">Plus</string>
     <string name="action_create_playlist">Créer une playlist</string>
     <string name="action_remove_from_playlist">Retirer de la playlist</string>
 
@@ -26,4 +30,6 @@
 
     // Sort order
     <string name="button_toggle_sort_order">Changer l\'ordre de tri</string>
+    <string name="action_close">Fermer</string>
+    <string name="action_add_to_favorites">Ajouter aux favoris</string>
 </resources>
