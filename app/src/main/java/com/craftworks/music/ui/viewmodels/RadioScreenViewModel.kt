@@ -59,13 +59,13 @@ class RadioScreenViewModel @Inject constructor(
         }
     }
 
-    fun modifyRadioStation(providerId: String, id: String, name: String, url: String, homepage: String) {
+    fun modifyRadioStation(providerId: String, providerType: ProviderType, id: String, name: String, url: String, homepage: String) {
         viewModelScope.launch {
             _isLoading.value = true
             val modifiedRadio = MediaModel.InternetRadioStation(
                 id = id,
                 providerId = providerId,
-                providerType = ProviderType.LOCAL_FOLDER, // TODO GET PROVIDER TYPE
+                providerType = providerType,
                 name = name,
                 streamUrl =  url,
                 homepageUrl = homepage

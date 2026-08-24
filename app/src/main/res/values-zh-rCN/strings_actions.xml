@@ -13,9 +13,12 @@
     <string name="action_add">Add</string>
     <string name="action_add_to_queue">Add To Queue</string>
     <string name="action_next">Next</string>
+    <string name="action_download">下载</string>
 
     // Playlists
     <string name="action_create_playlist">Create Playlist</string>
 
-    <string name="action_download">下载</string>
+    // Favorites
+
+    // Sort order
 </resources>

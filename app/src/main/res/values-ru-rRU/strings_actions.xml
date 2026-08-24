@@ -12,9 +12,12 @@
 
     <string name="action_add">Добавить</string>
     <string name="action_next">Следующий</string>
+    <string name="action_download">Скачать</string>
 
     // Playlists
     <string name="action_create_playlist">Создать Плейлист</string>
 
-    <string name="action_download">Скачать</string>
+    // Favorites
+
+    // Sort order
 </resources>

@@ -151,7 +151,7 @@ class SongsScreenViewModel @Inject constructor(
     }
     fun downloadSong(song: MediaItem) {
         viewModelScope.launch {
-            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
+            songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 

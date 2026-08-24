@@ -9,8 +9,4 @@
 
     // Media Providers
     <string name="source_local_folder">Cartella Locale</string>
-
-    // Favorites
-
-    // Sort order
 </resources>

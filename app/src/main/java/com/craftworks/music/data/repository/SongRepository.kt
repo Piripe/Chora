@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Environment
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
@@ -51,15 +52,15 @@ class SongRepository @Inject constructor(
         )
     }
 
-    fun downloadSong(song: MediaItem, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
+    fun downloadSong(song: MediaMetadata, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
         val values = mapOf(
-            "title" to StringUtils.makeValidFilename(song.mediaMetadata.title.toString()),
-            "album" to StringUtils.makeValidFilename(song.mediaMetadata.albumTitle.toString()),
-            "artist" to StringUtils.makeValidFilename(song.mediaMetadata.artist.toString()),
-            "album_artist" to StringUtils.makeValidFilename(song.mediaMetadata.albumArtist.toString()),
-            "ext" to (song.mediaMetadata.extras?.getString("format") ?: "mp3"),
-            "track" to song.mediaMetadata.trackNumber.toString(),
-            "disc" to song.mediaMetadata.discNumber.toString(),
+            "title" to StringUtils.makeValidFilename(song.title.toString()),
+            "album" to StringUtils.makeValidFilename(song.albumTitle.toString()),
+            "artist" to StringUtils.makeValidFilename(song.artist.toString()),
+            "album_artist" to StringUtils.makeValidFilename(song.albumArtist.toString()),
+            "ext" to (song.extras?.getString("format") ?: "mp3"),
+            "track" to song.trackNumber.toString(),
+            "disc" to song.discNumber.toString(),
             "playlist" to StringUtils.makeValidFilename(playlistName),
             "playlist_index" to playlistIndex
         )
@@ -67,8 +68,8 @@ class SongRepository @Inject constructor(
             val key = match.groupValues[1]
             values[key] ?: match.value
         })
-        val request = DownloadManager.Request(song.mediaMetadata.getProvider()?.getStreamUrl(song.mediaMetadata.id?:"", false)?.toUri())
-            .setTitle("${context.getString(R.string.notification_download_name)} ${song.mediaMetadata.title}")
+        val request = DownloadManager.Request(song.getProvider()?.getStreamUrl(song.id?:"", false)?.toUri())
+            .setTitle("${context.getString(R.string.notification_download_name)} ${song.title}")
             .setDescription(context.getString(R.string.notification_download_desc))
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, fileName)

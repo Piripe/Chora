@@ -181,7 +181,7 @@ class PlaylistScreenViewModel @Inject constructor(
 
     fun downloadSong(song: MediaItem) {
         viewModelScope.launch {
-            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
+            songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 
@@ -189,7 +189,7 @@ class PlaylistScreenViewModel @Inject constructor(
         viewModelScope.launch {
             songs.forEachIndexed { index, song ->
                 songRepository.downloadSong(
-                    song,
+                    song.mediaMetadata,
                     miscSettingsManager.playlistDownloadTemplateFlow.first(),
                     playlistName,
                     (index + 1).toString()

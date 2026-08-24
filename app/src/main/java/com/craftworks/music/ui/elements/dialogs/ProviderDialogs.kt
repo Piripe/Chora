@@ -413,8 +413,6 @@ fun CreateMediaProviderDialog(
                                             )
                                         }
 
-                                        provider.init(context)
-
                                         try {
                                             val res = provider.authenticate(username, password)
 
@@ -422,8 +420,9 @@ fun CreateMediaProviderDialog(
                                                 provider = NavidromeMediaProvider().apply {
                                                     this.providerData = provider.providerData
                                                 }
-                                                provider.init(context)
                                             }
+
+                                            provider.init(context)
 
                                             MediaProviderManager.addProvider(provider)
                                             AppearanceSettingsManager(context).setUsername(username)

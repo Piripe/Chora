@@ -15,10 +15,15 @@
     <string name="action_add_to_playlist">Ajouter à la playlist</string>
     <string name="action_set_rating">Définir la note</string>
     <string name="action_next">Suivant</string>
+    <string name="action_download">Téléchargement</string>
 
     // Playlists
     <string name="action_create_playlist">Créer une playlist</string>
     <string name="action_remove_from_playlist">Retirer de la playlist</string>
 
-    <string name="action_download">Téléchargement</string>
+    // Favorites
+    <string name="button_toggle_favorites">Afficher les favoris</string>
+
+    // Sort order
+    <string name="button_toggle_sort_order">Changer l\'ordre de tri</string>
 </resources>

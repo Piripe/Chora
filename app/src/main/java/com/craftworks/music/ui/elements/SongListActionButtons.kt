@@ -108,7 +108,7 @@ fun SongListActionButtons(
                 ) {
                     Icon(
                         Icons.Outlined.MoreVert,
-                        contentDescription = "More" // TODO : Translate
+                        contentDescription = stringResource(R.string.action_more)
                     )
                 }
             },
@@ -316,7 +316,7 @@ fun SongListActionButtons(
 @Composable
 fun getActionButtonIconText(type: ActionButtonType): Pair<ImageVector, String> = when (type) {
     ActionButtonType.SEPARATOR -> ImageVector.vectorResource(R.drawable.horizontal_rule_24px) to
-            "Separator" // TODO : Translate
+            stringResource(R.string.label_separator)
 
     ActionButtonType.SHUFFLE -> ImageVector.vectorResource(R.drawable.round_shuffle_28) to
             stringResource(R.string.action_shuffle)

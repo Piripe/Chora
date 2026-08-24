@@ -229,7 +229,7 @@ class ArtistsScreenViewModel @Inject constructor(
         viewModelScope.launch {
             val template = miscSettingsManager.downloadTemplateFlow.first()
             songs.forEach { song ->
-                songRepository.downloadSong(song, template)
+                songRepository.downloadSong(song.mediaMetadata, template)
             }
         }
     }

@@ -104,7 +104,8 @@ fun NowPlayingContent(
             onArtistNav = { artist ->
                 onHide()
                 navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)}))
-            }
+            },
+            onDownload = { metadata?.let { viewModel.downloadSong(it) } }
         )
     } else {
         NowPlayingPortrait(
@@ -121,7 +122,8 @@ fun NowPlayingContent(
             onArtistNav = { artist ->
                 onHide()
                 navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)}))
-            }
+            },
+            onDownload = { metadata?.let { viewModel.downloadSong(it) } }
         )
     }
 

@@ -9,8 +9,4 @@
 
     // Media Providers
     <string name="source_local_folder">本地目录</string>
-
-    // Favorites
-
-    // Sort order
 </resources>

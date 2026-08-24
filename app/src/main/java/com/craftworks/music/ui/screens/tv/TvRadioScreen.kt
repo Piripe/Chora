@@ -38,7 +38,9 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.StandardCardContainer
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.Screen
+import com.craftworks.music.data.model.providerType
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.tv.AddRadioDialog
 import com.craftworks.music.ui.elements.dialogs.tv.ModifyRadioDialog
@@ -142,7 +144,13 @@ fun TvRadioScreen(
             setShowDialog = { showRadioModifyDialog = it },
             radio = selectedRadio,
             onModified = { providerId, id, name, url, homepage ->
-                viewModel.modifyRadioStation(providerId, id, name, url, homepage)
+                viewModel.modifyRadioStation(
+                    providerId,
+                    selectedRadio?.mediaMetadata?.providerType?: ProviderType.LOCAL_FOLDER,
+                    id,
+                    name,
+                    url,
+                    homepage)
             },
             onDeleted = { providerId, id ->
                 viewModel.deleteRadioStation(providerId, id)

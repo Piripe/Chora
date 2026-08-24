@@ -82,7 +82,8 @@ fun NowPlayingLandscape(
     onOpenSleepTimer: () -> Unit = {},
     onToggleQueue: () -> Unit = {},
     onRefreshLyrics: () -> Unit = {},
-    onArtistNav: (MediaModel.Artist) -> Unit = {}
+    onArtistNav: (MediaModel.Artist) -> Unit = {},
+    onDownload: () -> Unit = {}
 ) {
     val iconTextColor by animateColorAsState(
         targetValue = iconColor,
@@ -296,7 +297,9 @@ fun NowPlayingLandscape(
                     metadata,
                     MediaProviderManager.getProvider(metadata?.providerId?:"")
                         ?.featureFlags?.contains(ProviderFeature.DOWNLOADS)?:false
-                )
+                ) {
+
+                }
                 SleepTimerButton(iconTextColor, 32.dp, sleepTimerMinutes, onOpenSleepTimer)
                 PlayQueueButton(iconTextColor, 32.dp, onToggleQueue)
             }

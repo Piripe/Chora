@@ -106,7 +106,8 @@ fun NowPlayingPortrait(
     onToggleDetails: () -> Unit = {},
     onOpenSleepTimer: () -> Unit = {},
     onRefreshLyrics: () -> Unit = {},
-    onArtistNav: (MediaModel.Artist) -> Unit = {}
+    onArtistNav: (MediaModel.Artist) -> Unit = {},
+    onDownload: () -> Unit = {},
 ) {
     val iconTextColor by animateColorAsState(
         targetValue = iconColor,
@@ -432,9 +433,13 @@ fun NowPlayingPortrait(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DownloadButton(iconTextColor, 32.dp, metadata,
+            DownloadButton(
+                iconTextColor,
+                32.dp,
+                metadata,
                 MediaProviderManager.getProvider(metadata?.providerId?:"")
-                ?.featureFlags?.contains(ProviderFeature.DOWNLOADS)?:false)
+                ?.featureFlags?.contains(ProviderFeature.DOWNLOADS)?:false,
+                onDownload)
             SleepTimerButton(iconTextColor, 32.dp, sleepTimerMinutes,onOpenSleepTimer)
             LyricsButton(iconTextColor, 32.dp, lyricsOpen, onToggleLyrics)
             PlayQueueButton(iconTextColor, 32.dp, onToggleQueue)

@@ -20,10 +20,16 @@
     <string name="action_remove_from_favorites">Remove From Favorites</string>
     <string name="action_set_rating">Set Rating</string>
     <string name="action_next">Next</string>
+    <string name="action_download">Download</string>
+    <string name="action_more">More</string>
 
     // Playlists
     <string name="action_create_playlist">Create Playlist</string>
     <string name="action_remove_from_playlist">Remove From Playlist</string>
 
-    <string name="action_download">Download</string>
+    // Favorites
+    <string name="button_toggle_favorites">Toggle Favorites</string>
+
+    // Sort order
+    <string name="button_toggle_sort_order">Toggle Sort Order</string>
 </resources>

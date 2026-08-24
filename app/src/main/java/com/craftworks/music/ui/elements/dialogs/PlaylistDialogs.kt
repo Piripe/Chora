@@ -54,6 +54,7 @@ import com.craftworks.music.data.model.providerType
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.utils.fadingEdge
+import kotlinx.coroutines.flow.any
 
 //region PREVIEWS
 @Preview(showBackground = true)
@@ -259,8 +260,7 @@ fun NewPlaylist(
                         val context = LocalContext.current
                         Button(
                             onClick = {
-                                //TODO("Return if the playlist already exists")
-                                //if (playlistList.firstOrNull { it.name == name } != null) return@Button
+                                if (viewModel.allPlaylists.value.any { it.mediaMetadata.title == name }) return@Button
 
                                 viewModel.createPlaylist(
                                     name,
@@ -268,7 +268,6 @@ fun NewPlaylist(
                                     context
                                 )
 
-                                //showAddSongToPlaylistDialog.value = false
                                 onDismissRequest()
                             },
                             modifier = Modifier

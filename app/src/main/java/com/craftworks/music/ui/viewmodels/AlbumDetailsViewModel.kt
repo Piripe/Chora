@@ -87,7 +87,7 @@ class AlbumDetailsViewModel @Inject constructor(
 
     fun downloadSong(song: MediaItem) {
         viewModelScope.launch {
-            songRepository.downloadSong(song, miscSettingsManager.downloadTemplateFlow.first())
+            songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 
@@ -95,7 +95,7 @@ class AlbumDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val template = miscSettingsManager.downloadTemplateFlow.first()
             songs.forEach { song ->
-                songRepository.downloadSong(song, template)
+                songRepository.downloadSong(song.mediaMetadata, template)
             }
         }
     }

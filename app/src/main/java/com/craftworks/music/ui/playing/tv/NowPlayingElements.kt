@@ -312,19 +312,12 @@ fun PlayQueueButton(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun DownloadButton(size: Dp, metadata: MediaMetadata?, enabled: Boolean) {
+fun DownloadButton(size: Dp, metadata: MediaMetadata?, enabled: Boolean, onDownload: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     Button(
-        onClick = {
-            coroutineScope.launch {
-                metadata?.let {
-                    TODO("Download song")
-                    //downloadNavidromeSong(context, it)
-                }
-            }
-        },
+        onClick = onDownload,
         enabled = enabled,
         modifier = if (enabled) // Disable bounce click if song is local
             Modifier

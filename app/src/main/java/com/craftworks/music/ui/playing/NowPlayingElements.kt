@@ -51,6 +51,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -364,19 +365,12 @@ fun PlayQueueButton(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-fun DownloadButton(color: Color, size: Dp, metadata: MediaMetadata?, enabled: Boolean) {
+fun DownloadButton(color: Color, size: Dp, metadata: MediaMetadata?, enabled: Boolean, onDownload: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     Button(
-        onClick = {
-            coroutineScope.launch {
-                metadata?.let {
-                    TODO("Download song")
-                    //downloadNavidromeSong(context, it)
-                }
-            }
-        },
+        onClick = onDownload,
         enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         modifier = if (enabled)
@@ -396,7 +390,7 @@ fun DownloadButton(color: Color, size: Dp, metadata: MediaMetadata?, enabled: Bo
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-            contentDescription = "Download Song",
+            contentDescription = stringResource(R.string.action_download),
             modifier = Modifier
                 .size(size)
         )

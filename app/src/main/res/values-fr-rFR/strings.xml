@@ -10,10 +10,4 @@
 
     // Media Providers
     <string name="source_local_folder">Fichiers locaux</string>
-
-    // Favorites
-    <string name="button_toggle_favorites">Afficher les favoris</string>
-
-    // Sort order
-    <string name="button_toggle_sort_order">Changer l\'ordre de tri</string>
 </resources>

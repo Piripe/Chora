@@ -13,9 +13,12 @@
     <string name="action_add">Aggiungi</string>
     <string name="action_add_to_queue">Aggiungi Alla Coda</string>
     <string name="action_next">Avanti</string>
+    <string name="action_download">Scarica</string>
 
     // Playlists
     <string name="action_create_playlist">Crea Playlist</string>
 
-    <string name="action_download">Scarica</string>
+    // Favorites
+
+    // Sort order
 </resources>

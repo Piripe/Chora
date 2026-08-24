@@ -16,9 +16,6 @@
     <string name="source_open_subsonic" translatable="false">OpenSubsonic</string>
     <string name="source_local_folder">Local Folder</string>
 
-    // Favorites
-    <string name="button_toggle_favorites">Toggle Favorites</string>
-
-    // Sort order
-    <string name="button_toggle_sort_order">Toggle Sort Order</string>
+    // Misc
+    <string name="label_separator">Separator</string>
 </resources>

@@ -45,6 +45,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.session.MediaController
 import com.craftworks.music.R
+import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.model.providerType
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.RadioCard
 import com.craftworks.music.ui.elements.RippleEffect
@@ -171,7 +173,14 @@ fun RadioScreen(
             setShowDialog = { showRadioModifyDialog = it },
             radio = selectedRadio,
             onModified = { providerId, id, name, url, homepage ->
-                viewModel.modifyRadioStation(providerId, id, name, url, homepage)
+                viewModel.modifyRadioStation(
+                    providerId,
+                    selectedRadio?.mediaMetadata?.providerType?: ProviderType.LOCAL_FOLDER,
+                    id,
+                    name,
+                    url,
+                    homepage
+                )
                 onRefresh.invoke()
             },
             onDeleted = { providerId, id ->
