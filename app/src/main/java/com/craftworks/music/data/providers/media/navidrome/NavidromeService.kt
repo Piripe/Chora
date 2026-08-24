@@ -11,6 +11,7 @@ interface NavidromeService {
     @Headers("Content-Type: application/json")
     @POST("auth/login")
     suspend fun authenticate(@Body body: NavidromeLoginRequest, @Tag isPublic: Boolean = true): NavidromeLoginResponse
+
     @GET("api/album")
     suspend fun getAlbumList(
         @Query("_end") end: Int? = null,
@@ -30,6 +31,7 @@ interface NavidromeService {
         @Query starred: Boolean? = null,
         @Query year: Int? = null
     ): List<NavidromeAlbum>
+
     @GET("api/artist")
     suspend fun getAlbumArtistList(
         @Query("_end") end: Int? = null,
@@ -43,6 +45,7 @@ interface NavidromeService {
         @Query role: String? = null,
         @Query starred: Boolean? = null,
     ): List<NavidromeArtist>
+
     @GET("api/song")
     suspend fun getSongList(
         @Query("_end") end: Int? = null,

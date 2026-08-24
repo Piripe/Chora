@@ -71,8 +71,7 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
-import com.craftworks.music.data.model.LibraryType
-import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.OLEDProtectionMode
@@ -197,13 +196,9 @@ fun TvNowPlaying(
                             ) {
                                 AsyncImage(
                                     model = ImageRequest.Builder(LocalContext.current)
-                                        .data(metadata?.getProvider()?.getImageUrl(
-                                            metadata.extras?.getString("imageId")?:"",
-                                            LibraryType.SONG,
-                                            500
-                                        ))
+                                        .data(metadata?.artworkUri)
+                                        .placeholderMemoryCacheKey(metadata?.id)
                                         .diskCachePolicy(CachePolicy.DISABLED)
-                                        .placeholderMemoryCacheKey(metadata?.artworkUri.toString())
                                         .crossfade(true)
                                         .build(),
                                     contentDescription = "Album Cover Art",

@@ -63,6 +63,9 @@ class SongsScreenViewModel @Inject constructor(
                     _showFavoritesOnly.value = showFavorites
                     getSongs()
                 }
+        }
+
+        viewModelScope.launch {
             DataRefreshManager.dataSourceChangedEvent.collect {
                 getSongs()
             }
@@ -81,7 +84,7 @@ class SongsScreenViewModel @Inject constructor(
                         sortBy = _sort.value,
                         sortOrder = _sortOrder.value,
                         startIndex = 0,
-                        favorite = _showFavoritesOnly.value
+                        favorite = if (_showFavoritesOnly.value) true else null
                     )
                 )
             }
@@ -96,7 +99,15 @@ class SongsScreenViewModel @Inject constructor(
             _isLoading.value = true
             coroutineScope {
                 val songOffset = _allSongs.value.size
-                _allSongs.value += songRepository.getSongs(MediaQuery.SongListQuery(sortBy = _sort.value, sortOrder = _sortOrder.value, limit = size, startIndex = songOffset, favorite = _showFavoritesOnly.value))
+                _allSongs.value += songRepository.getSongs(
+                    MediaQuery.SongListQuery(
+                        sortBy = _sort.value,
+                        sortOrder = _sortOrder.value,
+                        limit = size,
+                        startIndex = songOffset,
+                        favorite = if (_showFavoritesOnly.value) true else null
+                    )
+                )
             }
             _isLoading.value = false
         }
@@ -110,7 +121,15 @@ class SongsScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
-                _searchResults.value = songRepository.getSongs(MediaQuery.SongListQuery(sortBy = _sort.value, sortOrder = _sortOrder.value, searchTerm = query, startIndex = 0))
+                _searchResults.value = songRepository.getSongs(
+                    MediaQuery.SongListQuery(
+                        sortBy = _sort.value,
+                        sortOrder = _sortOrder.value,
+                        searchTerm = query,
+                        startIndex = 0,
+                        favorite = if (_showFavoritesOnly.value) true else null
+                    )
+                )
             }
             _isLoading.value = false
         }

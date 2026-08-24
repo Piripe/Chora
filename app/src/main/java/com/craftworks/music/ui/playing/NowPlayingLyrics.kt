@@ -357,7 +357,6 @@ fun LyricsView(
     }
 }
 
-// Calculate the amount of blur for each lyrics item depending on it's distance to the current lyric.
 @Stable
 fun calculateLyricBlur(
     index: Int,
@@ -370,12 +369,9 @@ fun calculateLyricBlur(
     }
 }
 
-// Calculate next update delay based on lyrics timestamps
 private fun getNextUpdateDelay(currentTime: Int, lyrics: List<Lyric>): Long {
-    // 1. Gather all future timestamps (both starts and ends) into a single sequence
     val nextTimestamp = lyrics.asSequence()
         .flatMap { lyric ->
-            // Build a list of valid timestamps for each lyric item
             val timestamps = mutableListOf(lyric.startMs)
             lyric.endMs?.let { timestamps.add(it) }
             lyric.words?.forEach { word ->
@@ -384,12 +380,9 @@ private fun getNextUpdateDelay(currentTime: Int, lyrics: List<Lyric>): Long {
             }
             timestamps
         }
-        // 2. Filter for events that happen strictly in the future
         .filter { it > currentTime }
-        // 3. Find the nearest upcoming event
         .minOrNull()
-        ?: return 1000L // Fallback if we reached the very end of the song
+        ?: return 1000L
 
-    // 4. Return the precise time remaining until that next event
     return (nextTimestamp - currentTime).toLong()
 }

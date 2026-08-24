@@ -254,7 +254,7 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
 
     override suspend fun getAlbumArtistList(query: MediaQuery.AlbumArtistListQuery): List<MediaModel.Artist> {
         return service.getAlbumArtistList(
-            end = query.startIndex + (query.limit ?: 0),
+            end = query.startIndex + (query.limit ?: 50),
             order = query.sortOrder.name,
             start = query.startIndex,
             sort = ALBUM_ARTIST_SORT_BINDING[query.sortBy],
@@ -264,9 +264,10 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
             starred = query.favorite,
         ).map { it.toMediaModel(id) }
     }
+
     override suspend fun getAlbumList(query: MediaQuery.AlbumListQuery): List<MediaModel.Album> {
         return service.getAlbumList(
-            end = query.startIndex + (query.limit ?: 0),
+            end = query.startIndex + (query.limit ?: 50),
             order = query.sortOrder.name,
             start = query.startIndex,
             sort = ALBUM_SORT_BINDING[query.sortBy],
@@ -283,7 +284,7 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
 
     override suspend fun getArtistList(query: MediaQuery.ArtistListQuery): List<MediaModel.Artist> {
         return service.getAlbumArtistList(
-            end = query.startIndex + (query.limit ?: 0),
+            end = query.startIndex + (query.limit ?: 50),
             order = query.sortOrder.name,
             start = query.startIndex,
             sort = ARTIST_SORT_BINDING[query.sortBy],

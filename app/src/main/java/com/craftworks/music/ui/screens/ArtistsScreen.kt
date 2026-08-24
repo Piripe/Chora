@@ -79,7 +79,6 @@ fun ArtistsScreen(
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-
     val sortTranslationBindings = mapOf(
         AlbumArtistListSort.ALBUM_COUNT to R.string.sort_by_album_count,
         AlbumArtistListSort.DURATION to R.string.sort_by_duration,
@@ -104,7 +103,7 @@ fun ArtistsScreen(
                 TopBarWithSearch(
                     headerText = stringResource(R.string.nav_artists),
                     scrollBehavior = scrollBehavior,
-                    onSearch = { query -> viewModel.onSearchQueryChange(query) },
+                    onSearch = { query -> viewModel.search(query) },
                     searchResults = {
                         ArtistsGrid(searchResults, onArtistSelected = { artist ->
                             navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {

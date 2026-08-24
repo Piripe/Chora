@@ -137,7 +137,7 @@ fun TvSearchScreen(
                     onSearch = {
                         albumsViewModel.search(searchQuery)
                         songsViewModel.search(searchQuery)
-                        artistsViewModel.onSearchQueryChange(searchQuery)
+                        artistsViewModel.search(searchQuery)
                     }
                 ),
                 placeholder = {

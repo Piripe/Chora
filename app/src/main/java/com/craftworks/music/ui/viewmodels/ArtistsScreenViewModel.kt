@@ -17,19 +17,15 @@ import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -46,14 +42,14 @@ class ArtistsScreenViewModel @Inject constructor(
     private val _allArtists = MutableStateFlow<List<MediaModel.Artist>>(emptyList())
     val allArtists: StateFlow<List<MediaModel.Artist>> = _allArtists.asStateFlow()
 
+    private val _searchResults = MutableStateFlow<List<MediaModel.Artist>>(emptyList())
+    val searchResults: StateFlow<List<MediaModel.Artist>> = _searchResults.asStateFlow()
+
     private val _selectedArtist = MutableStateFlow<MediaModel.Artist?>(null)
     val selectedArtist: StateFlow<MediaModel.Artist?> = _selectedArtist
 
     private val _artistAlbums = MutableStateFlow<List<MediaItem>>(emptyList())
     val artistAlbums: StateFlow<List<MediaItem>> = _artistAlbums.asStateFlow()
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery = _searchQuery.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -83,6 +79,9 @@ class ArtistsScreenViewModel @Inject constructor(
                     _showFavoritesOnly.value = showFavorites
                     getArtists()
                 }
+        }
+
+        viewModelScope.launch {
             DataRefreshManager.dataSourceChangedEvent.collect {
                 getArtists()
             }
@@ -98,10 +97,10 @@ class ArtistsScreenViewModel @Inject constructor(
                 _isLoading.value = true
                 _allArtists.value = artistRepository.getArtists(
                     MediaQuery.AlbumArtistListQuery(
-                        _sort.value,
-                        _sortOrder.value,
+                        sortBy = _sort.value,
+                        sortOrder = _sortOrder.value,
                         startIndex = 0,
-                        favorite = _showFavoritesOnly.value
+                        favorite = if (_showFavoritesOnly.value) true else null
                     )
                 )
             }
@@ -115,28 +114,31 @@ class ArtistsScreenViewModel @Inject constructor(
         return albumRepository.getAlbum(id) ?: emptyList()
     }
 
-    fun onSearchQueryChange(query: String) {
-        _searchQuery.value = query
-    }
+    private var searchJob: Job? = null
+    fun search(query: String) {
+        if (query.isBlank())
+            return
 
-    @OptIn(FlowPreview::class)
-    val searchResults: StateFlow<List<MediaModel.Artist>> = searchQuery
-        .debounce(300L) // Adds a small delay to avoid searching on every keystroke.
-        .combine(allArtists) { query, artists ->
-            if (query.isBlank()) {
-                emptyList()
-            } else {
-                artists.filter { artist ->
-                    artist.name.contains(query, ignoreCase = true)
-                }
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _searchResults.value = artistRepository.getArtists(
+                    MediaQuery.AlbumArtistListQuery(
+                        sortBy = _sort.value,
+                        sortOrder = _sortOrder.value,
+                        favorite = if (_showFavoritesOnly.value) true else null,
+                        startIndex = 0,
+                        searchTerm = query
+                    )
+                )
+            }
+            finally {
+                _isLoading.value = false
             }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-
+    }
 
     fun loadArtistDetails(artistId: String) {
         _selectedArtist.value = _allArtists.value.firstOrNull { it.id == artistId }

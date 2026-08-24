@@ -53,7 +53,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -186,14 +185,12 @@ fun ArtistDetails(
                     //Image and Name
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
-                            .data(selectedArtistImage)
+                            .data(artist?.imageUrl)
                             .diskCacheKey(selectedArtistId)
                             .diskCachePolicy(CachePolicy.READ_ONLY)
                             .placeholderMemoryCacheKey(selectedArtistId)
                             .crossfade(true)
                             .build(),
-                        placeholder = painterResource(R.drawable.s_a_username),
-                        fallback = painterResource(R.drawable.s_a_username),
                         contentScale = ContentScale.FillWidth,
                         contentDescription = "Artist Image",
                         modifier = Modifier

@@ -56,11 +56,10 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
-import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.artists
-import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.model.providerId
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.MediaProviderManager
@@ -117,27 +116,31 @@ fun NowPlayingLandscape(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(metadata?.getProvider()?.getImageUrl(
-                        metadata.extras?.getString("imageId")?:"",
-                        LibraryType.SONG,
-                        500
-                    ))
-                    .placeholderMemoryCacheKey(metadata?.artworkUri.toString())
-                    .crossfade(true)
-                    .diskCachePolicy(CachePolicy.DISABLED)
-                    .build(),
-                contentDescription = "Album Cover Art",
-                fallback = painterResource(R.drawable.placeholder),
-                contentScale = ContentScale.FillWidth,
-                alignment = Alignment.Center,
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .shadow(4.dp, RoundedCornerShape(24.dp), clip = true)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-            )
+            Crossfade(
+                targetState = metadata?.artworkUri.toString(),
+                animationSpec = tween(
+                    durationMillis = 400,
+                    easing = FastOutSlowInEasing
+                ),
+                label = "Crossfade between albums"
+            ) { artworkUri ->
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(artworkUri)
+                        .placeholderMemoryCacheKey(metadata?.id)
+                        .diskCachePolicy(CachePolicy.DISABLED)
+                        .build(),
+                    contentDescription = "Album Cover Art",
+                    fallback = painterResource(R.drawable.placeholder),
+                    contentScale = ContentScale.FillWidth,
+                    alignment = Alignment.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .shadow(4.dp, RoundedCornerShape(24.dp), clip = true)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+            }
             Column(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {

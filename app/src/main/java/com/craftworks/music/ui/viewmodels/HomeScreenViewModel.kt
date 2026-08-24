@@ -8,7 +8,6 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.managers.DataRefreshManager
-import com.craftworks.music.managers.MediaProviderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -43,12 +42,6 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             DataRefreshManager.dataSourceChangedEvent.collect {
                 loadHomeScreenData()
-            }
-
-            MediaProviderManager.currentProvider.collect {
-                if (it != null) {
-                    loadHomeScreenData()
-                }
             }
         }
     }

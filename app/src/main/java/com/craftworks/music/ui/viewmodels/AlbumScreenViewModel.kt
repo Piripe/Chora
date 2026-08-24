@@ -7,6 +7,7 @@ import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.repository.AlbumRepository
+import com.craftworks.music.managers.DataRefreshManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -57,6 +58,12 @@ class AlbumScreenViewModel @Inject constructor(
                     getAlbums()
                 }
         }
+
+        viewModelScope.launch {
+            DataRefreshManager.dataSourceChangedEvent.collect {
+                getAlbums()
+            }
+        }
     }
 
     private var getAlbumsJob: Job? = null
@@ -73,7 +80,7 @@ class AlbumScreenViewModel @Inject constructor(
                         _sortOrder.value,
                         limit = 50,
                         startIndex = 0,
-                        favorite = _showFavoritesOnly.value
+                        favorite = if (_showFavoritesOnly.value) true else null
                     )
                 )
             }
@@ -99,7 +106,7 @@ class AlbumScreenViewModel @Inject constructor(
                         _sortOrder.value,
                         limit = size,
                         startIndex = albumOffset,
-                        favorite = _showFavoritesOnly.value
+                        favorite = if (_showFavoritesOnly.value) true else null
                     )
                 )
                 _allAlbums.value += newAlbums
@@ -124,7 +131,7 @@ class AlbumScreenViewModel @Inject constructor(
                         _sortOrder.value,
                         searchTerm = query,
                         startIndex = 0,
-                        favorite = _showFavoritesOnly.value
+                        favorite = if (_showFavoritesOnly.value) true else null
                     )
                 )
             }
