@@ -110,6 +110,29 @@ class ArtistsScreenViewModel @Inject constructor(
         }
     }
 
+    fun getMoreArtists() {
+        if (_isLoading.value || getArtistsJob?.isActive == true) return
+
+        getArtistsJob = viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _allArtists.value += artistRepository.getArtists(
+                    MediaQuery.AlbumArtistListQuery(
+                        sortBy = _sort.value,
+                        sortOrder = _sortOrder.value,
+                        startIndex = _allArtists.value.size,
+                        limit = 50,
+                        favorite = if (_showFavoritesOnly.value) true else null
+                    )
+                )
+            }
+            finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
     suspend fun getAlbum(id: String): List<MediaItem> {
         return albumRepository.getAlbum(id) ?: emptyList()
     }

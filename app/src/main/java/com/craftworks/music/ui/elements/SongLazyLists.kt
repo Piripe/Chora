@@ -243,9 +243,22 @@ fun AlbumRow(
 @Composable
 fun ArtistsGrid(
     artists: List<MediaModel.Artist>,
-    onArtistSelected: (artist: MediaModel.Artist) -> Unit
+    onArtistSelected: (artist: MediaModel.Artist) -> Unit,
+    onGetMoreArtists: () -> Unit
 ){
     val gridState = rememberLazyGridState()
+
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            val lastVisibleItemIndex = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            val totalItemsCount = gridState.layoutInfo.totalItemsCount
+
+            lastVisibleItemIndex != null && totalItemsCount > 0 &&
+                    (totalItemsCount - lastVisibleItemIndex) <= 10
+        }
+            .filter { it }
+            .collect { onGetMoreArtists() }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(96.dp),

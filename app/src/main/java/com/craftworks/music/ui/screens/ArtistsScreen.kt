@@ -105,11 +105,20 @@ fun ArtistsScreen(
                     scrollBehavior = scrollBehavior,
                     onSearch = { query -> viewModel.search(query) },
                     searchResults = {
-                        ArtistsGrid(searchResults, onArtistSelected = { artist ->
-                            navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {
-                                launchSingleTop = true
-                            }
-                        })
+                        ArtistsGrid(
+                            artists = searchResults,
+                            onArtistSelected = { artist ->
+                                navHostController.navigate(
+                                    Screen.ArtistDetails(
+                                        artistId = artist.id,
+                                        imageUri = artist.imageUrl
+                                    )
+                                ) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onGetMoreArtists = { }
+                        )
                     },
                     extraAction = {
                         Row {
@@ -173,11 +182,21 @@ fun ArtistsScreen(
                     .fillMaxSize()
                     .padding(top = innerPadding.calculateTopPadding())
             ) {
-                ArtistsGrid(allArtistList, onArtistSelected = { artist ->
-                    navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it)} ?: "")) {
-                        launchSingleTop = true
-                    }
-                })
+                ArtistsGrid(
+                    artists = allArtistList,
+                    onArtistSelected = { artist ->
+                        navHostController.navigate(
+                            Screen.ArtistDetails(
+                                artistId = artist.id,
+                                imageUri = artist.imageUrl
+                            )
+                        ) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onGetMoreArtists = {
+                        viewModel.getMoreArtists()
+                    })
             }
         }
     }

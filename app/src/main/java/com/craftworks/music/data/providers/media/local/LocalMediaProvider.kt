@@ -203,6 +203,9 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
     }
 
     override suspend fun getAlbumArtistList(query: MediaQuery.AlbumArtistListQuery): List<MediaModel.Artist> {
+        if (query.startIndex > 0)
+            return emptyList()
+
         return LocalUtils.getLocalAlbumArtists(appContext, id, query.musicFolderId?:data.libraries.filter { it.second }.map { it.first.name })
     }
 

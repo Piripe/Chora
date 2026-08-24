@@ -335,6 +335,9 @@ open class SubsonicMediaProvider : MediaProvider() {
     }
 
     override suspend fun getAlbumArtistList(query: MediaQuery.AlbumArtistListQuery): List<MediaModel.Artist> {
+        if (query.startIndex > 0)
+            return emptyList()
+
         var artists = (service.getArtists(
             musicFolderId = query.musicFolderId?.map { it.toInt() } ?: data.libraries.filter { it.second }.map { it.first.id.toInt() },
         ).subsonicResponse.artists?.index ?: emptyList())
