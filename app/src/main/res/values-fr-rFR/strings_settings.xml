@@ -59,8 +59,8 @@
     <string name="settings_misc">Divers</string>
     <string name="misc_download_template">Pattern de téléchargement</string>
     <string name="misc_download_template_description">
-        {title} - Title de la musique\n
-        {album} - Title de l\'album\n
+        {title} - Titre de la musique\n
+        {album} - Titre de l\'album\n
         {artist} - Artiste de la musique\n
         {album_artist} - Artiste de l\'album\n
         {ext} - Extension\n
@@ -69,8 +69,8 @@
     </string>
     <string name="misc_playlist_download_template">Pattern de téléchargement de playlist</string>
     <string name="misc_playlist_download_template_description">
-        {title} - Title de la musique\n
-        {album} - Title de l\'album\n
+        {title} - Titre de la musique\n
+        {album} - Titre de l\'album\n
         {artist} - Artiste de la musique\n
         {album_artist} - Artiste de l\'album\n
         {ext} - Extension\n
