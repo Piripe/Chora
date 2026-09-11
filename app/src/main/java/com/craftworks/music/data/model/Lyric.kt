@@ -1,24 +1,38 @@
 package com.craftworks.music.data.model
 
-import android.util.Log
 import androidx.compose.runtime.Stable
+import com.craftworks.music.utils.getTimeStamps
+import com.craftworks.music.utils.mmssToMilliseconds
+import com.craftworks.music.utils.separateBackgroundLyrics
 import kotlinx.serialization.Serializable
 import org.snakeyaml.engine.v2.api.Load
 import org.snakeyaml.engine.v2.api.LoadSettings
+
+enum class LyricsRole {
+    MAIN, BG
+}
 
 // Universal Lyric object
 @Stable
 data class Lyrics(
     val wordSynced: Boolean,
     val synced: Boolean,
+    val lines: List<LyricsLine>
+)
+
+@Stable
+data class LyricsLine(
+    val startMs: Int,
+    val endMs: Int? = null,
     val lines: List<Lyric>
 )
 @Stable
 data class Lyric(
-    val startMs: Int,
-    val text: List<String>,
+    val text: String,
     val words: List<SyncedWord>? = null,
-    val endMs: Int? = null
+    val startMs: Int? = null,
+    val endMs: Int? = null,
+    val role: LyricsRole = LyricsRole.MAIN
 )
 @Stable
 data class SyncedWord(
@@ -49,7 +63,7 @@ data class NeteaseLrc(
     val lyric: String? = null
 )
 
-fun LrcLibLyrics.toLyrics(): List<Lyric> {
+fun LrcLibLyrics.toLyrics(): List<LyricsLine> {
     if (instrumental) return listOf()
 
     if (lyricsfile.toString() != "null") {
@@ -58,8 +72,12 @@ fun LrcLibLyrics.toLyrics(): List<Lyric> {
             ?: throw IllegalArgumentException("Invalid YAML format")
 
         val linesList = raw["lines"] as? List<*> ?: emptyList<Any>()
+
         val lines = linesList.map { lineItem ->
             val lineMap = lineItem as? Map<*, *> ?: emptyMap<Any, Any>()
+
+            val startMs = lineMap["start_ms"]?.toString()?.toIntOrNull() ?: 0
+            val endMs = lineMap["end_ms"]?.toString()?.toIntOrNull() ?: 0
 
             val wordsList = lineMap["words"] as? List<*> ?: emptyList<Any>()
             val words = wordsList.map { wordItem ->
@@ -71,40 +89,39 @@ fun LrcLibLyrics.toLyrics(): List<Lyric> {
                 )
             }
 
-            Lyric(
-                text = listOf(lineMap["text"]?.toString() ?: ""),
-                words = words,
-                startMs = lineMap["start_ms"]?.toString()?.toInt() ?: 0,
-                endMs = lineMap["end_ms"]?.toString()?.toInt() ?: 0
-            )
+            if (words.isEmpty()) {
+                val rawText = lineMap["text"]?.toString()?.trim() ?: return emptyList()
+                separateBackgroundLyrics(rawText, startMs, endMs)
+            } else {
+                separateBackgroundLyrics(words, startMs, endMs)
+            }
         }
         return lines
     }
-    else if (syncedLyrics.toString() != "null") {
-        val raw = mutableListOf<Pair<Int, String>>()
-        syncedLyrics?.lines()?.forEach { lyric ->
-            if (lyric.isBlank())
-                return@forEach
-            val timeStampsRaw = getTimeStamps(lyric)[0]
-            val time = mmssToMilliseconds(timeStampsRaw).toInt()
-            val lyricText = lyric.substringAfter("]").trim()
-            raw.add(Pair(time, lyricText))
+    else if (syncedLyrics != null) {
+        val lines = mutableListOf<LyricsLine>()
+
+        syncedLyrics.lines().forEach { lyric ->
+            if (lyric.isBlank()) return@forEach
+            val timeStampRaw = getTimeStamps(lyric).firstOrNull() ?: return@forEach
+            val time = mmssToMilliseconds(timeStampRaw).toInt()
+            val text = lyric.substringAfter("]").trim()
+
+            separateBackgroundLyrics(text, time)
         }
 
-        return raw
-            .groupBy { it.first }
-            .map { (time, lines) -> Lyric(time, lines.map { it.second }) }
-            .sortedBy { it.startMs }
+        return lines
     }
-    else if (plainLyrics.toString() != "null") {
-        Log.d("LYRICS", "Got LRCLIB plain lyrics: $plainLyrics")
-        return listOf(Lyric(-1, listOf(plainLyrics.toString())))
+    else if (plainLyrics != null) {
+        return listOf(
+            LyricsLine(startMs = -1, lines = listOf(Lyric(text = plainLyrics)))
+        )
     }
     else
         return listOf()
 }
 
-fun NeteaseLyricsResponse.toLyrics(): List<Lyric> {
+fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
     if (pureMusic == true)
         return emptyList()
 
@@ -136,40 +153,6 @@ fun NeteaseLyricsResponse.toLyrics(): List<Lyric> {
     // Group lines sharing the same timestamp
     return originalMap
         .map { (timestamp, origLine) ->
-            val lines = buildList {
-                add(origLine)
-                translationMap[timestamp]?.let { add(it) }
-            }
-            Lyric(startMs = timestamp, text = lines)
+            separateBackgroundLyrics(origLine, timestamp)
         }
-        .sortedBy { it.startMs }
-}
-
-//endregion
-
-fun mmssToMilliseconds(mmss: String): Long {
-    val parts = mmss.split(":", ".")
-    if (parts.size == 3) {
-        try {
-            val minutes = parts[0].toLong()
-            val seconds = parts[1].toLong()
-            val ms = parts[2].substring(0,2).toLong()
-            return (minutes * 60 + seconds) * 1000 + ms * 10
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
-        }
-    }
-    return 0L
-}
-
-fun getTimeStamps(input: String): List<String> {
-    val regex = Regex("\\[(.*?)]")
-    val matches = regex.findAll(input)
-
-    val result = mutableListOf<String>()
-    for (match in matches) {
-        result.add(match.groupValues[1])
-    }
-
-    return result
 }

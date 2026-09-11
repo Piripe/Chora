@@ -39,14 +39,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextMotion
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
+import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.calculateLyricBlur
 import com.craftworks.music.ui.playing.dpToPx
 
 @Composable
 fun WordSyncedLyricItem(
-    lyric: Lyric,
+    lyric: LyricsLine,
     index: Int,
     currentLyricIndex: Int,
     currentPosition: Int,
@@ -71,7 +72,7 @@ fun WordSyncedLyricItem(
         animationSpec = tween(lyricsAnimationSpeed, 0, FastOutSlowInEasing)
     )
 
-    if (lyric.text[0].isEmpty()) {
+    if (lyric.lines[0].text.isEmpty()) {
         AnimatedContent(
             targetState = currentLyricIndex == index
         ) {
@@ -109,25 +110,29 @@ fun WordSyncedLyricItem(
                 },
             verticalArrangement = Arrangement.SpaceEvenly,
         ) {
-            FlowRow (
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = when (lyricsAlignment) {
-                    NowPlayingAlignment.LEFT -> Arrangement.Start
-                    NowPlayingAlignment.CENTER -> Arrangement.Center
-                    NowPlayingAlignment.RIGHT -> Arrangement.End
-                }
-            ) {
-                lyric.words?.forEachIndexed { i, word ->
-                    val nextWordStart = lyric.words.getOrNull(i + 1)?.startMs ?: lyric.endMs!!
-                    val duration = word.endMs?.let { it - word.startMs } ?: (nextWordStart - word.startMs)
-                    val isThisWordActive = currentPosition >= word.startMs && currentPosition < lyric.endMs!!
+            lyric.lines.forEach { line ->
+                FlowRow (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = when (lyricsAlignment) {
+                        NowPlayingAlignment.LEFT -> Arrangement.Start
+                        NowPlayingAlignment.CENTER -> Arrangement.Center
+                        NowPlayingAlignment.RIGHT -> Arrangement.End
+                    }
+                ) {
+                    line.words?.forEachIndexed { i, word ->
+                        val nextWordStart = line.words.getOrNull(i + 1)?.startMs ?: line.endMs ?: lyric.endMs!!
+                        val duration = word.endMs?.let { it - word.startMs } ?: (nextWordStart - word.startMs)
+                        val isThisWordActive = currentPosition >= word.startMs && currentPosition < (line.endMs ?: lyric.endMs!!)
 
-                    AnimatedWord(
-                        wordText = word.text,
-                        isActive = isThisWordActive,
-                        durationMillis = duration,
-                        color = color
-                    )
+                        AnimatedWord(
+                            wordText = word.text,
+                            isActive = isThisWordActive,
+                            durationMillis = duration,
+                            role = line.role,
+                            isOnlyBackgroundLine = !lyric.lines.any { it.role == LyricsRole.MAIN },
+                            color = color
+                        )
+                    }
                 }
             }
         }
@@ -140,17 +145,21 @@ fun AnimatedWord(
     wordText: String,
     isActive: Boolean,
     durationMillis: Int,
+    role: LyricsRole,
+    isOnlyBackgroundLine: Boolean,
     color: Color
 ) {
+    val targetAlpha = if (role == LyricsRole.MAIN) 1f else 0.7f
+
     val inactiveColor = color.copy(alpha = 0.4f)
     val wipeProgress = remember { Animatable(0f) }
-    val textAlpha = remember { Animatable(1f) }
+    val textAlpha = remember { Animatable(targetAlpha) }
 
     val dipAmount = dpToPx(1).toFloat()
 
     LaunchedEffect(isActive) {
         if (isActive) {
-            textAlpha.snapTo(1f)
+            textAlpha.snapTo(targetAlpha)
             wipeProgress.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
@@ -172,13 +181,13 @@ fun AnimatedWord(
         val activeEnd = (currentOffset - 0.3f).coerceIn(0f, 1f)
         val inactiveStart = currentOffset.coerceIn(0f, 1f)
         Brush.horizontalGradient(
-            0f to color,
-            activeEnd to color,
+            0f to color.copy(targetAlpha),
+            activeEnd to color.copy(targetAlpha),
             inactiveStart to inactiveColor,
             1f to inactiveColor
         )
     } else {
-        SolidColor(color)
+        SolidColor(color.copy(targetAlpha))
     }
 
     val yOffset = remember { Animatable(0f) }
@@ -191,12 +200,19 @@ fun AnimatedWord(
         }
     }
 
-    Text(
-        text = wordText,
-        style = MaterialTheme.typography.titleLarge.copy(
+    val textStyle = if (role == LyricsRole.MAIN || isOnlyBackgroundLine) MaterialTheme.typography.titleLarge.copy(
+        fontWeight = FontWeight.SemiBold,
+        textMotion = TextMotion.Animated
+    )
+    else
+        MaterialTheme.typography.bodyLarge.copy(
             fontWeight = FontWeight.SemiBold,
             textMotion = TextMotion.Animated
-        ),
+        )
+
+    Text(
+        text = wordText,
+        style = textStyle,
         modifier = Modifier
             .graphicsLayer {
                 translationY = yOffset.value

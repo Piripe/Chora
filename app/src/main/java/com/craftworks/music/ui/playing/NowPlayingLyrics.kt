@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.playing.lyrics.SyncedLyricItem
@@ -160,7 +160,7 @@ fun LyricsView(
     LaunchedEffect(currentPosition, lyrics) {
         //if (mediaController?.isPlaying == true) {
         val newCurrentLyricIndex =
-            lyrics.indexOfFirst { it.startMs > (currentPosition) }
+            lyrics.indexOfFirst { it.startMs > currentPosition }
                 .takeIf { it >= 0 } ?: lyrics.size
 
         val targetIndex = (newCurrentLyricIndex - 1).coerceAtLeast(-1)
@@ -176,7 +176,7 @@ fun LyricsView(
                     if (targetItemAfter != null) {
                         var finalScrollDelta = targetItemAfter.offset - scrollOffset
 
-                        if (lyrics[(targetIndex - 1).coerceAtLeast(0)].text[0] == "")
+                        if (lyrics[(targetIndex - 1).coerceAtLeast(0)].lines[0].text == "")
                             finalScrollDelta -= interludeHeight
 
                         state.animateScrollBy(
@@ -294,9 +294,9 @@ fun LyricsView(
                     if (lyrics.size > 1) {
                         itemsIndexed(
                             lyrics,
-                            key = { index, lyric -> "${index}:${lyric.text}" }
+                            key = { index, lyric -> "${index}:${lyric.lines[0].text}" }
                         ) { index, lyric ->
-                            if (!lyric.words.isNullOrEmpty()) {
+                            if (!lyric.lines.any { it.words.isNullOrEmpty() }) {
                                 WordSyncedLyricItem(
                                     lyric = lyric,
                                     index = index,
@@ -334,7 +334,7 @@ fun LyricsView(
                     } else if (lyrics.isNotEmpty()) {
                         item {
                             Text(
-                                text = lyrics[0].text[0],
+                                text = lyrics[0].lines[0].text,
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = color,
                                 modifier = Modifier
@@ -369,14 +369,16 @@ fun calculateLyricBlur(
     }
 }
 
-private fun getNextUpdateDelay(currentTime: Int, lyrics: List<Lyric>): Long {
+private fun getNextUpdateDelay(currentTime: Int, lyrics: List<LyricsLine>): Long {
     val nextTimestamp = lyrics.asSequence()
         .flatMap { lyric ->
             val timestamps = mutableListOf(lyric.startMs)
             lyric.endMs?.let { timestamps.add(it) }
-            lyric.words?.forEach { word ->
-                timestamps.add(word.startMs)
-                word.endMs?.let { timestamps.add(it) }
+            lyric.lines.forEach { line ->
+                line.words?.forEach { word ->
+                    timestamps.add(word.startMs)
+                    word.endMs?.let { timestamps.add(it) }
+                }
             }
             timestamps
         }

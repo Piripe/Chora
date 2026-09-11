@@ -1,13 +1,18 @@
 package com.craftworks.music.data.providers.media.subsonic
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.util.fastJoinToString
 import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.GainInfo
 import com.craftworks.music.data.model.Lyric
 import com.craftworks.music.data.model.Lyrics
+import com.craftworks.music.data.model.LyricsLine
+import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.SyncedWord
+import com.craftworks.music.utils.separateBackgroundLyrics
+import com.craftworks.music.utils.splitMultipleBg
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Locale.getDefault
@@ -468,47 +473,145 @@ data class SubsonicStructuredLyrics(
         // Unsynced
         if (!synced) {
             return Lyrics(
-                wordSynced = false, synced = false, lines = listOf(
-                    Lyric(
+                wordSynced = false,
+                synced = false,
+                lines = listOf(
+                    LyricsLine(
                         startMs = -1,
-                        text = line.map { it.value }
+                        lines = listOf(Lyric(text = line.fastJoinToString { it.value }))
                     )
-                ))
+                )
+            )
         }
 
         // V2
         if (!cueLine.isNullOrEmpty()) {
-            return Lyrics(wordSynced = true, synced = true, lines = cueLine.map { cLine ->
-                Lyric(
-                    startMs = cLine.start + lyricOffset,
-                    endMs = cLine.end?.plus(lyricOffset),
-                    text = listOf(cLine.value),
-                    words = cLine.cue.mapIndexed { index, cue ->
-                        val lineBytes = cLine.value.toByteArray(Charsets.UTF_8)
-                        val cueByteEnd = cLine.cue.getOrNull(index + 1)?.byteStart?.minus(1) ?: cue.byteEnd
-                        val cueBytes = lineBytes.sliceArray(cue.byteStart..cueByteEnd)
+            val explicitLines = mutableListOf<LyricsLine>()
+            val toGroup = mutableListOf<Lyric>()
 
-                        SyncedWord(
-                            text = String(cueBytes, Charsets.UTF_8),
-                            startMs = cue.start + lyricOffset,
-                            endMs = cue.end?.plus(lyricOffset)
+            cueLine.forEach { cLine ->
+                val agent = agents?.find { it.id == cLine.agentId }
+                val lyricsRole = when (agent?.role) {
+                    "main" -> LyricsRole.MAIN
+                    else -> LyricsRole.BG
+                }
+
+                val words = cLine.cue.mapIndexed { index, cue ->
+                    val lineBytes = cLine.value.toByteArray(Charsets.UTF_8)
+                    val cueByteEnd = cLine.cue.getOrNull(index + 1)?.byteStart?.minus(1) ?: (lineBytes.size - 1)
+                    val safeByteStart = cue.byteStart.coerceIn(0, lineBytes.size)
+                    val safeByteEnd = cueByteEnd.coerceIn(safeByteStart, lineBytes.size - 1)
+
+                    val cueBytes = lineBytes.sliceArray(safeByteStart..safeByteEnd)
+
+                    SyncedWord(
+                        text = String(cueBytes, Charsets.UTF_8),
+                        startMs = cue.start + lyricOffset,
+                        endMs = cue.end?.plus(lyricOffset)
+                    )
+                }
+
+                val lineStart = cLine.start + lyricOffset
+                val lineEnd = cLine.end?.plus(lyricOffset)
+
+                val needsBgFallback = lyricsRole == LyricsRole.MAIN &&
+                        cLine.value.contains('(') && cLine.value.contains(')')
+
+                when {
+                    needsBgFallback -> {
+                        val subLyrics = separateBackgroundLyrics(words, lineStart, lineEnd).lines.map { subLyric ->
+                            subLyric.copy(
+                                startMs = subLyric.words?.firstOrNull()?.startMs ?: lineStart,
+                                endMs = subLyric.words?.lastOrNull()?.endMs ?: lineEnd
+                            )
+                        }
+
+                        explicitLines.add(
+                            LyricsLine(
+                                startMs = subLyrics.minOf { it.startMs!! },
+                                endMs = subLyrics.mapNotNull { it.endMs }.maxOrNull(),
+                                lines = subLyrics
+                            )
                         )
                     }
+                    lyricsRole == LyricsRole.BG -> {
+                        splitMultipleBg(words).forEach {
+                            toGroup.add(
+                                Lyric(
+                                    text = it.fastJoinToString(""),
+                                    words = it,
+                                    startMs = lineStart,
+                                    endMs = lineEnd,
+                                    role = lyricsRole
+                                )
+                            )
+                        }
+                    }
+                    else -> {
+                        toGroup.add(
+                            Lyric(
+                                text = cLine.value,
+                                words = words,
+                                startMs = lineStart,
+                                endMs = lineEnd,
+                                role = lyricsRole
+                            )
+                        )
+                    }
+                }
+            }
+
+            val groupedLines = mutableListOf<MutableList<Lyric>>()
+            var mainGroupIndex: Int? = null
+            var lastMain: Lyric? = null
+
+            toGroup.forEach { lyric ->
+                if (lyric.role == LyricsRole.MAIN) {
+                    groupedLines.add(mutableListOf(lyric))
+                    mainGroupIndex = groupedLines.lastIndex
+                    lastMain = lyric
+                } else {
+                    val main = lastMain
+                    val withinMain = main != null &&
+                            lyric.startMs!! >= main.startMs!! &&
+                            lyric.startMs <= (main.endMs ?: main.startMs)
+
+                    if (withinMain && mainGroupIndex != null) {
+                        groupedLines[mainGroupIndex!!].add(lyric)
+                    } else {
+                        groupedLines.add(mutableListOf(lyric))
+                    }
+                }
+            }
+
+            val groupedFromTags = groupedLines.map { group ->
+                LyricsLine(
+                    startMs = group.minOf { it.startMs!! },
+                    endMs = group.mapNotNull { it.endMs }.maxOrNull(),
+                    lines = group
                 )
-            }.sortedBy { it.startMs })
+            }
+
+            val result = (explicitLines + groupedFromTags).sortedBy { it.startMs }
+
+            return Lyrics(
+                wordSynced = true,
+                synced = true,
+                lines = result
+            )
         }
 
         // V1
         return Lyrics(
-            wordSynced = false, synced = true, lines = line
+            wordSynced = false,
+            synced = true,
+            lines = line
                 .groupBy { (it.start ?: 0) + lyricOffset }
                 .map { (timestamp, lines) ->
-                    Lyric(
-                        startMs = timestamp,
-                        text = lines.map { it.value }
-                    )
+                    val lyricText = lines.fastJoinToString(" ") { it.value }
+
+                    separateBackgroundLyrics(lyricText, timestamp)
                 }
-                .sortedBy { it.startMs }
         )
     }
 }

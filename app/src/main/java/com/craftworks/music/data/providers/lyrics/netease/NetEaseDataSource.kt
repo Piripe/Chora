@@ -3,7 +3,7 @@ package com.craftworks.music.data.providers.lyrics.netease
 import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaMetadata
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.NeteaseLyricsResponse
 import com.craftworks.music.data.model.toLyrics
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -78,7 +78,7 @@ class NeteaseDataSource @Inject constructor(
     private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-    suspend fun getNeteaseLyrics(metadata: MediaMetadata?): List<Lyric> = withContext(Dispatchers.IO) {
+    suspend fun getNeteaseLyrics(metadata: MediaMetadata?): List<LyricsLine> = withContext(Dispatchers.IO) {
         try {
             val title  = metadata?.title?.toString() ?: return@withContext emptyList()
             val artist = metadata.extras?.getString("lyricsArtist") ?: ""
@@ -99,7 +99,7 @@ class NeteaseDataSource @Inject constructor(
             "https://music.163.com/api/search/get"
         ) {
             parameter("s", query)
-            parameter("type", 1)      // 1 = songs
+            parameter("type", 1) // 1 = songs
             parameter("limit", 1)
             header(HttpHeaders.UserAgent, userAgent)
         }.body()

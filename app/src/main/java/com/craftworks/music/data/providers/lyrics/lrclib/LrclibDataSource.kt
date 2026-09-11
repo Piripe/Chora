@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaMetadata
 import com.craftworks.music.data.model.LrcLibLyrics
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.toLyrics
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -65,7 +65,7 @@ class LrclibDataSource @Inject constructor(
         expectSuccess = true
     }
 
-    suspend fun getLrcLibLyrics(metadata: MediaMetadata?, ignoreCachedResponse: Boolean = false): List<Lyric> = withContext(Dispatchers.IO) {
+    suspend fun getLrcLibLyrics(metadata: MediaMetadata?, ignoreCachedResponse: Boolean = false): List<LyricsLine> = withContext(Dispatchers.IO) {
         val baseUrl = settingsManager.lrcLibEndpointFlow.first()
 
         val artist = metadata?.extras?.getString("lyricsArtist") ?: metadata?.artist.toString()

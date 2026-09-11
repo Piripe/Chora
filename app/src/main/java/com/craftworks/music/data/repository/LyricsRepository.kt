@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.MediaMetadata
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.providers.lyrics.lrclib.LrclibDataSource
@@ -19,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 object LyricsState {
-    val lyrics = MutableStateFlow<List<Lyric>>(emptyList())
+    val lyrics = MutableStateFlow<List<LyricsLine>>(emptyList())
     val loading = MutableStateFlow(false)
     var open = mutableStateOf(false)
     var useLrcLib by mutableStateOf(true)
@@ -77,7 +77,7 @@ class LyricsRepository @Inject constructor(
                         return@coroutineScope
                     }
 
-                    val lrclibWordSynced = lrcLib.count { !it.words.isNullOrEmpty() } > 1
+                    val lrclibWordSynced = lrcLib.count { !it.lines.any { it.words.isNullOrEmpty() } } > 1
                     if (lrclibWordSynced) {
                         Log.d("LYRICS", "Using LRCLIB word synced Lyrics")
                         LyricsState.lyrics.value = lrcLib

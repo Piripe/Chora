@@ -27,13 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricsLine
+import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.calculateLyricBlur
 
 @Composable
 fun SyncedLyricItem(
-    lyric: Lyric,
+    lyric: LyricsLine,
     index: Int,
     currentLyricIndex: Int,
     useBlur: Boolean,
@@ -63,7 +64,7 @@ fun SyncedLyricItem(
         animationSpec = tween(lyricsAnimationSpeed, 0, FastOutSlowInEasing)
     )
 
-    if (lyric.text[0].isEmpty()) {
+    if (lyric.lines[0].text.isEmpty()) {
         AnimatedContent(
             targetState = currentLyricIndex == index
         ) {
@@ -110,13 +111,15 @@ fun SyncedLyricItem(
 //                textAlign = TextAlign.Center,
 //                //lineHeight = 32.sp
 //            )
-            lyric.text.forEachIndexed { i, line ->
+            lyric.lines.forEach{ line ->
+                val isMain = line.role == LyricsRole.MAIN
+
                 Text(
-                    text = line,
-                    style = if (i == 0) MaterialTheme.typography.titleLarge
-                    else MaterialTheme.typography.bodyMedium,
+                    text = line.text,
+                    style = if (isMain || !lyric.lines.any { it.role == LyricsRole.MAIN }) MaterialTheme.typography.titleLarge
+                    else MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = color.copy(alpha = if (i == 0) lyricAlpha else lyricAlpha * 0.65f),
+                    color = color.copy(alpha = if (isMain) lyricAlpha else lyricAlpha * 0.65f),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = when (lyricsAlignment) {
                         NowPlayingAlignment.LEFT -> TextAlign.Start

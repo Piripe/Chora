@@ -56,9 +56,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
@@ -342,6 +345,12 @@ fun NowPlayingPortrait(
                                                 withLink(
                                                     LinkAnnotation.Clickable(
                                                         tag = "ARTIST",
+                                                        styles = TextLinkStyles(
+                                                            style = SpanStyle(
+                                                                color = iconTextColor.copy(alpha = 0.7f),
+                                                                textDecoration = TextDecoration.None
+                                                            )
+                                                        ),
                                                         linkInteractionListener = {
                                                             onArtistNav(artist)
                                                         }
