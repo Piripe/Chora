@@ -12,11 +12,14 @@ enum class LyricsRole {
     MAIN, BG
 }
 
+enum class SyncType {
+    NONE, LINE, WORD
+}
+
 // Universal Lyric object
 @Stable
 data class Lyrics(
-    val wordSynced: Boolean,
-    val synced: Boolean,
+    val syncType: SyncType,
     val lines: List<LyricsLine>
 )
 
@@ -63,8 +66,32 @@ data class NeteaseLrc(
     val lyric: String? = null
 )
 
-fun LrcLibLyrics.toLyrics(): List<LyricsLine> {
-    if (instrumental) return listOf()
+// Binimum Lyrics
+@Serializable
+data class BiniLyricsResponse(
+    val results: List<BiniLyricsResult>
+)
+@Serializable
+data class BiniLyricsResult(
+    val timing_type: String,
+    val lyricsUrl: String
+)
+
+// Unison Lyrics
+@Serializable
+data class UnisonLyricsResponse(
+    val success: Boolean,
+    val data: UnisonLyricsData? = null
+)
+
+@Serializable
+data class UnisonLyricsData(
+    val lyrics: String,
+    val format: String
+)
+
+fun LrcLibLyrics.toLyrics(): Lyrics? {
+    if (instrumental) return null
 
     if (lyricsfile.toString() != "null") {
         val settings = LoadSettings.builder().build()
@@ -72,6 +99,7 @@ fun LrcLibLyrics.toLyrics(): List<LyricsLine> {
             ?: throw IllegalArgumentException("Invalid YAML format")
 
         val linesList = raw["lines"] as? List<*> ?: emptyList<Any>()
+        var wordSynced = false
 
         val lines = linesList.map { lineItem ->
             val lineMap = lineItem as? Map<*, *> ?: emptyMap<Any, Any>()
@@ -90,13 +118,17 @@ fun LrcLibLyrics.toLyrics(): List<LyricsLine> {
             }
 
             if (words.isEmpty()) {
-                val rawText = lineMap["text"]?.toString()?.trim() ?: return emptyList()
+                val rawText = lineMap["text"]?.toString()?.trim() ?: return null
                 separateBackgroundLyrics(rawText, startMs, endMs)
             } else {
+                wordSynced = true
                 separateBackgroundLyrics(words, startMs, endMs)
             }
         }
-        return lines
+        return Lyrics(
+            syncType = if (wordSynced) SyncType.WORD else SyncType.LINE,
+            lines = lines
+        )
     }
     else if (syncedLyrics != null) {
         val lines = mutableListOf<LyricsLine>()
@@ -104,21 +136,29 @@ fun LrcLibLyrics.toLyrics(): List<LyricsLine> {
         syncedLyrics.lines().forEach { lyric ->
             if (lyric.isBlank()) return@forEach
             val timeStampRaw = getTimeStamps(lyric).firstOrNull() ?: return@forEach
-            val time = mmssToMilliseconds(timeStampRaw).toInt()
+            val time = mmssToMilliseconds(timeStampRaw) ?: 0
             val text = lyric.substringAfter("]").trim()
 
-            separateBackgroundLyrics(text, time)
+            lines.add(separateBackgroundLyrics(text, time))
         }
 
-        return lines
+        return Lyrics(
+            syncType = SyncType.LINE,
+            lines = lines
+        )
     }
     else if (plainLyrics != null) {
-        return listOf(
-            LyricsLine(startMs = -1, lines = listOf(Lyric(text = plainLyrics)))
+        return Lyrics(
+            syncType = SyncType.NONE,
+            lines = listOf(
+            LyricsLine(
+                startMs = -1,
+                lines = listOf(Lyric(text = plainLyrics)))
+            )
         )
     }
     else
-        return listOf()
+        return null
 }
 
 fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
@@ -133,7 +173,7 @@ fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
         if (tags.isEmpty()) return@forEach
         val text = line.substringAfter("]").trim()
         tags.forEach { tag ->
-            val time = mmssToMilliseconds(tag).toInt()
+            val time = mmssToMilliseconds(tag) ?: 0
             originalMap[time] = text
         }
     }
@@ -144,7 +184,7 @@ fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
             // Group lines sharing the same timestamp
             val text = line.substringAfter("]").trim()
             tags.forEach { tag ->
-                val time = mmssToMilliseconds(tag).toInt()
+                val time = mmssToMilliseconds(tag) ?: 0
                 translationMap[time] = text
             }
         }

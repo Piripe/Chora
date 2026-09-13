@@ -292,6 +292,7 @@ abstract class MediaModel
         val lyrics: String? = null,
         val mbzRecordingId: String? = null,
         val mbzTrackId: String? = null,
+        val isrc: List<String>? = null,
         val name: String,
         val participants: Map<String, List<Artist>>? = null,
         val path: String? = null,
@@ -350,6 +351,7 @@ abstract class MediaModel
                             putString("imageId", this@Song.imageId)
                             putString("format", this@Song.format)
                             putLong("bitrate", this@Song.bitRate?.toLong() ?: 0)
+                            if (this@Song.isrc != null) putString("isrc", this@Song.isrc.joinToString(","))
                             putParcelableArrayList("artists", ArrayList(this@Song.artists))
                             putBoolean("userFavorite", this@Song.userFavorite ?: false)
                             putBoolean(METADATA_KEY_IS_EXPLICIT, this@Song.explicit == true)

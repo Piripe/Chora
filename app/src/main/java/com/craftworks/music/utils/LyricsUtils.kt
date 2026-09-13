@@ -177,19 +177,24 @@ fun splitMultipleBg(input: List<SyncedWord>): List<List<SyncedWord>> {
     return result
 }
 
-fun mmssToMilliseconds(mmss: String): Long {
-    val parts = mmss.split(":", ".")
-    if (parts.size == 3) {
-        try {
-            val minutes = parts[0].toLong()
-            val seconds = parts[1].toLong()
-            val ms = parts[2].substring(0,2).toLong()
-            return (minutes * 60 + seconds) * 1000 + ms * 10
-        } catch (e: NumberFormatException) {
-            e.printStackTrace()
+fun mmssToMilliseconds(timeStr: String?): Int? {
+    if (timeStr.isNullOrBlank()) return null
+    val parts = timeStr.trim().split(":")
+    return when (parts.size) {
+        3 -> {
+            val h = parts[0].toIntOrNull() ?: 0
+            val m = parts[1].toIntOrNull() ?: 0
+            val s = parts[2].toDoubleOrNull() ?: 0.0
+            ((h * 3600 + m * 60 + s) * 1000).toInt()
         }
+        2 -> {
+            val m = parts[0].toIntOrNull() ?: 0
+            val s = parts[1].toDoubleOrNull() ?: 0.0
+            ((m * 60 + s) * 1000).toInt()
+        }
+        1 -> ((parts[0].toDoubleOrNull() ?: 0.0) * 1000).toInt()
+        else -> 0
     }
-    return 0L
 }
 
 fun getTimeStamps(input: String): List<String> {

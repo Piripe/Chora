@@ -10,6 +10,7 @@ import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.model.SyncType
 import com.craftworks.music.data.model.SyncedWord
 import com.craftworks.music.utils.separateBackgroundLyrics
 import com.craftworks.music.utils.splitMultipleBg
@@ -473,8 +474,7 @@ data class SubsonicStructuredLyrics(
         // Unsynced
         if (!synced) {
             return Lyrics(
-                wordSynced = false,
-                synced = false,
+                syncType = SyncType.NONE,
                 lines = listOf(
                     LyricsLine(
                         startMs = -1,
@@ -595,16 +595,14 @@ data class SubsonicStructuredLyrics(
             val result = (explicitLines + groupedFromTags).sortedBy { it.startMs }
 
             return Lyrics(
-                wordSynced = true,
-                synced = true,
+                syncType = SyncType.WORD,
                 lines = result
             )
         }
 
         // V1
         return Lyrics(
-            wordSynced = false,
-            synced = true,
+            syncType = SyncType.LINE,
             lines = line
                 .groupBy { (it.start ?: 0) + lyricOffset }
                 .map { (timestamp, lines) ->
