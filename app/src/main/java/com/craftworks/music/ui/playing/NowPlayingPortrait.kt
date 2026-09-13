@@ -130,7 +130,7 @@ fun NowPlayingPortrait(
     val lyrics by LyricsState.lyrics.collectAsStateWithLifecycle()
     val loadingLyrics by LyricsState.loading.collectAsStateWithLifecycle()
 
-    val isLyricsActive = lyricsOpen && (lyrics.isNotEmpty() || loadingLyrics)
+    val isLyricsActive = lyricsOpen && (lyrics != null || loadingLyrics)
     val isRadio = metadata?.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION
 
     Column(

@@ -1,6 +1,5 @@
 package com.craftworks.music.ui.screens.settings
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,8 +39,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.ui.elements.LRCLIBProviderCard
-import com.craftworks.music.ui.elements.NetEaseProviderCard
 import com.craftworks.music.ui.elements.ProviderCard
 import com.craftworks.music.ui.elements.dialogs.CreateMediaProviderDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
@@ -53,8 +49,6 @@ import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 @Composable
 @Preview(showSystemUi = false, showBackground = true)
 fun S_ProviderScreen(navHostController: NavHostController = rememberNavController()) {
-    val context = LocalContext.current.applicationContext
-
     var showNavidromeServerDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -97,13 +91,7 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
                     .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LRCLIBProviderCard(context)
-
-                NetEaseProviderCard(context)
-
                 val providers by MediaProviderManager.allProviders.collectAsStateWithLifecycle()
-
-                Log.d("ProviderScreen", "Provider amount: ${providers.size}")
 
                 for (provider in providers) {
                     ProviderCard(provider)

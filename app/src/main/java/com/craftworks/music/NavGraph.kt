@@ -43,9 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.craftworks.music.data.model.Screen
-import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import com.craftworks.music.ui.playing.NowPlayingContent
 import com.craftworks.music.ui.playing.NowPlayingViewModel
 import com.craftworks.music.ui.playing.dpToPx
@@ -61,6 +59,7 @@ import com.craftworks.music.ui.screens.RadioScreen
 import com.craftworks.music.ui.screens.SettingScreen
 import com.craftworks.music.ui.screens.SongsScreen
 import com.craftworks.music.ui.screens.settings.S_AppearanceScreen
+import com.craftworks.music.ui.screens.settings.S_LyricsProviderScreen
 import com.craftworks.music.ui.screens.settings.S_MiscScreen
 import com.craftworks.music.ui.screens.settings.S_PlaybackScreen
 import com.craftworks.music.ui.screens.settings.S_ProviderScreen
@@ -92,15 +91,8 @@ fun SetupNavGraph(
     bottomPadding: Dp,
     mediaController: MediaController?
 ) {
-    val context = LocalContext.current
     val isTv = LocalConfiguration.current.uiMode and
             Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
-
-    LyricsState.useLrcLib =
-        MediaProviderSettingsManager(context).lrcLibLyricsFlow.collectAsStateWithLifecycle(true).value
-
-    LyricsState.useNetEase =
-        MediaProviderSettingsManager(context).netEaseLyricsFlow.collectAsStateWithLifecycle(false).value
 
     val orientation = LocalConfiguration.current.orientation
 
@@ -321,7 +313,7 @@ fun SetupNavGraph(
                     else
                         S_AppearanceScreen(navController)
                 }
-                composable<Screen.S_Providers>(
+                composable<Screen.S_Media_Providers>(
                     enterTransition = {
                         slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
                             fullWidth / 4
@@ -337,6 +329,23 @@ fun SetupNavGraph(
                         TvS_ProviderScreen()
                     else
                         S_ProviderScreen(navController)
+                }
+                composable<Screen.S_Lyrics_Providers>(
+                    enterTransition = {
+                        slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                            fullWidth / 4
+                        } + fadeIn(animationSpec)
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
+                            fullWidth / 4
+                        } + fadeOut(animationSpec)
+                    }
+                ) {
+                    if (isTv)
+                        TvS_ProviderScreen()
+                    else
+                        S_LyricsProviderScreen(navController)
                 }
                 composable<Screen.S_Playback>(
                     enterTransition = {

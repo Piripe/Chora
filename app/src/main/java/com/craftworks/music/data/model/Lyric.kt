@@ -1,6 +1,9 @@
 package com.craftworks.music.data.model
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.res.stringResource
+import com.craftworks.music.R
 import com.craftworks.music.utils.getTimeStamps
 import com.craftworks.music.utils.mmssToMilliseconds
 import com.craftworks.music.utils.separateBackgroundLyrics
@@ -16,10 +19,40 @@ enum class SyncType {
     NONE, LINE, WORD
 }
 
+enum class LyricSource{
+    MEDIA_PROVIDER, LRCLIB, BINI_LYRICS, UNISON, NETEASE;
+
+    val displayName: String
+        @Composable
+        get() = when (this) {
+            MEDIA_PROVIDER -> stringResource(R.string.settings_media_providers)
+            LRCLIB -> "LRCLIB"
+            BINI_LYRICS -> "BiniLyrics"
+            UNISON -> "Unison"
+            NETEASE -> "NetEase"
+        }
+
+    val icon: Int
+        get() = when (this) {
+            MEDIA_PROVIDER -> R.drawable.s_m_media_providers
+            LRCLIB -> R.drawable.lrclib_logo
+            BINI_LYRICS -> R.drawable.binilyrics_logo
+            UNISON -> R.drawable.unison_logo
+            NETEASE -> R.drawable.netease_cloud_music
+        }
+}
+
+@Serializable
+data class LyricsProvider(
+    val source: LyricSource,
+    val enabled: Boolean = true
+)
+
 // Universal Lyric object
 @Stable
 data class Lyrics(
     val syncType: SyncType,
+    val source: LyricSource,
     val lines: List<LyricsLine>
 )
 
@@ -127,6 +160,7 @@ fun LrcLibLyrics.toLyrics(): Lyrics? {
         }
         return Lyrics(
             syncType = if (wordSynced) SyncType.WORD else SyncType.LINE,
+            source = LyricSource.LRCLIB,
             lines = lines
         )
     }
@@ -144,12 +178,14 @@ fun LrcLibLyrics.toLyrics(): Lyrics? {
 
         return Lyrics(
             syncType = SyncType.LINE,
+            source = LyricSource.LRCLIB,
             lines = lines
         )
     }
     else if (plainLyrics != null) {
         return Lyrics(
             syncType = SyncType.NONE,
+            source = LyricSource.LRCLIB,
             lines = listOf(
             LyricsLine(
                 startMs = -1,
@@ -161,9 +197,9 @@ fun LrcLibLyrics.toLyrics(): Lyrics? {
         return null
 }
 
-fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
+fun NeteaseLyricsResponse.toLyrics(): Lyrics? {
     if (pureMusic == true)
-        return emptyList()
+        return null
 
     val originalMap = mutableMapOf<Int, String>()
     val translationMap = mutableMapOf<Int, String>()
@@ -190,9 +226,12 @@ fun NeteaseLyricsResponse.toLyrics(): List<LyricsLine> {
         }
     }
 
-    // Group lines sharing the same timestamp
-    return originalMap
-        .map { (timestamp, origLine) ->
-            separateBackgroundLyrics(origLine, timestamp)
-        }
+    return Lyrics(
+        syncType = SyncType.LINE,
+        source = LyricSource.NETEASE,
+        lines = originalMap
+            .map { (timestamp, origLine) ->
+                separateBackgroundLyrics(origLine, timestamp)
+            }
+    )
 }

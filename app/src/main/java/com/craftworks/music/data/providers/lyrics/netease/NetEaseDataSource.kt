@@ -3,6 +3,7 @@ package com.craftworks.music.data.providers.lyrics.netease
 import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaMetadata
+import com.craftworks.music.data.model.Lyrics
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.NeteaseLyricsResponse
 import com.craftworks.music.data.model.toLyrics
@@ -78,18 +79,18 @@ class NeteaseDataSource @Inject constructor(
     private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-    suspend fun getLyrics(metadata: MediaMetadata?): List<LyricsLine> = withContext(Dispatchers.IO) {
+    suspend fun getLyrics(metadata: MediaMetadata?): Lyrics? = withContext(Dispatchers.IO) {
         try {
-            val title  = metadata?.title?.toString() ?: return@withContext emptyList()
+            val title  = metadata?.title?.toString() ?: return@withContext null
             val artist = metadata.extras?.getString("lyricsArtist") ?: ""
 
-            val songId = searchSongId(title, artist) ?: return@withContext emptyList()
+            val songId = searchSongId(title, artist) ?: return@withContext null
             val lyricsResponse = fetchLyrics(songId)
 
             lyricsResponse.toLyrics()
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            null
         }
     }
 

@@ -73,7 +73,8 @@ fun LyricsView(
     paddingValues: PaddingValues = PaddingValues(),
     onRefreshLyrics: () -> Unit = {},
 ) {
-    val lyrics by LyricsState.lyrics.collectAsStateWithLifecycle()
+    val lyrics = LyricsState.lyrics.collectAsStateWithLifecycle().value ?: return
+
     val loading by LyricsState.loading.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
 
@@ -130,7 +131,7 @@ fun LyricsView(
                 while (isActive) {
                     position = mediaController.currentPosition.toInt()
                     currentPosition = position
-                    delay(getNextUpdateDelay(position, lyrics).milliseconds)
+                    delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
                 }
             }
         }
@@ -148,7 +149,7 @@ fun LyricsView(
                         while (isActive) {
                             position = mediaController.currentPosition.toInt()
                             currentPosition = position
-                            delay(getNextUpdateDelay(position, lyrics).milliseconds)
+                            delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
                         }
                     }
                 } else trackingJob.cancel()
@@ -160,8 +161,8 @@ fun LyricsView(
     LaunchedEffect(currentPosition, lyrics) {
         //if (mediaController?.isPlaying == true) {
         val newCurrentLyricIndex =
-            lyrics.indexOfFirst { it.startMs > currentPosition }
-                .takeIf { it >= 0 } ?: lyrics.size
+            lyrics.lines.indexOfFirst { it.startMs > currentPosition }
+                .takeIf { it >= 0 } ?: lyrics.lines.size
 
         val targetIndex = (newCurrentLyricIndex - 1).coerceAtLeast(-1)
 
@@ -176,7 +177,7 @@ fun LyricsView(
                     if (targetItemAfter != null) {
                         var finalScrollDelta = targetItemAfter.offset - scrollOffset
 
-                        if (lyrics[(targetIndex - 1).coerceAtLeast(0)].lines[0].text == "")
+                        if (lyrics.lines[(targetIndex - 1).coerceAtLeast(0)].lines[0].text == "")
                             finalScrollDelta -= interludeHeight
 
                         state.animateScrollBy(
@@ -199,7 +200,7 @@ fun LyricsView(
     var plainLyricsItemHeightPx by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(mediaController, lyrics, plainLyricsItemHeightPx, plainLyricsViewportHeightPx) {
-        if (lyrics.size == 1 && lyricsAutoscroll) {
+        if (lyrics.lines.size == 1 && lyricsAutoscroll) {
             val updateIntervalMs = 500L
 
             while (isActive) {
@@ -291,9 +292,9 @@ fun LyricsView(
                     contentPadding = PaddingValues(vertical = 32.dp),
                     state = state,
                 ) {
-                    if (lyrics.size > 1) {
+                    if (lyrics.lines.size > 1) {
                         itemsIndexed(
-                            lyrics,
+                            lyrics.lines,
                             key = { index, lyric -> "${index}:${lyric.lines[0].text}" }
                         ) { index, lyric ->
                             if (!lyric.lines.any { it.words.isNullOrEmpty() }) {
@@ -331,10 +332,10 @@ fun LyricsView(
                                 )
                             }
                         }
-                    } else if (lyrics.isNotEmpty()) {
+                    } else if (lyrics.lines.isNotEmpty()) {
                         item {
                             Text(
-                                text = lyrics[0].lines[0].text,
+                                text = lyrics.lines[0].lines[0].text,
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = color,
                                 modifier = Modifier

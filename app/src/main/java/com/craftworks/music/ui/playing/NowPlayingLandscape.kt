@@ -308,7 +308,7 @@ fun NowPlayingLandscape(
         val lyrics by LyricsState.lyrics.collectAsStateWithLifecycle()
 
         AnimatedVisibility(
-            metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION && lyrics.isNotEmpty()
+            metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION && lyrics != null
         ) {
             Box(Modifier
                 .widthIn(max = 480.dp, min = 256.dp)

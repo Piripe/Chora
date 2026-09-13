@@ -5,6 +5,7 @@ import androidx.compose.ui.util.fastJoinToString
 import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.GainInfo
 import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricSource
 import com.craftworks.music.data.model.Lyrics
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.LyricsRole
@@ -475,6 +476,7 @@ data class SubsonicStructuredLyrics(
         if (!synced) {
             return Lyrics(
                 syncType = SyncType.NONE,
+                source = LyricSource.MEDIA_PROVIDER,
                 lines = listOf(
                     LyricsLine(
                         startMs = -1,
@@ -596,6 +598,7 @@ data class SubsonicStructuredLyrics(
 
             return Lyrics(
                 syncType = SyncType.WORD,
+                source = LyricSource.MEDIA_PROVIDER,
                 lines = result
             )
         }
@@ -603,6 +606,7 @@ data class SubsonicStructuredLyrics(
         // V1
         return Lyrics(
             syncType = SyncType.LINE,
+            source = LyricSource.MEDIA_PROVIDER,
             lines = line
                 .groupBy { (it.start ?: 0) + lyricOffset }
                 .map { (timestamp, lines) ->

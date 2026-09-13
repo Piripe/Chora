@@ -92,9 +92,16 @@ fun SettingScreen(
                 )
 
                 SettingsButton(
-                    Screen.S_Providers,
+                    Screen.S_Media_Providers,
                     R.drawable.s_m_media_providers,
                     R.string.settings_media_providers,
+                    navHostController
+                )
+
+                SettingsButton(
+                    Screen.S_Lyrics_Providers,
+                    R.drawable.s_m_media_providers,
+                    R.string.settings_lyrics_providers,
                     navHostController
                 )
 

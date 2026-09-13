@@ -62,7 +62,7 @@ fun TvSettingScreen(
         )
 
         SettingsButton(
-            Screen.S_Providers,
+            Screen.S_Media_Providers,
             R.drawable.s_m_media_providers,
             R.string.settings_media_providers,
             navHostController,

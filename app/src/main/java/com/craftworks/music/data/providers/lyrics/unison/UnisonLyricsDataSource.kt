@@ -3,6 +3,7 @@ package com.craftworks.music.data.providers.lyrics.unison
 import android.content.Context
 import androidx.media3.common.MediaMetadata
 import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricSource
 import com.craftworks.music.data.model.Lyrics
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.SyncType
@@ -92,7 +93,7 @@ class UnisonLyricsDataSource @Inject constructor(
             val data = response.body<UnisonLyricsResponse>().data ?: return@withContext null
 
             when (data.format) {
-                "ttml" -> return@withContext parseTtml(data.lyrics)
+                "ttml" -> return@withContext parseTtml(data.lyrics, LyricSource.UNISON)
                 "lrc" -> {
                     val lines = mutableListOf<LyricsLine>()
 
@@ -107,12 +108,14 @@ class UnisonLyricsDataSource @Inject constructor(
 
                     return@withContext Lyrics(
                         syncType = SyncType.LINE,
+                        source = LyricSource.UNISON,
                         lines = lines
                     )
                 }
                 "plain" -> {
                     return@withContext Lyrics(
                         syncType = SyncType.NONE,
+                        source = LyricSource.UNISON,
                         lines = listOf(
                             LyricsLine(
                                 startMs = -1,

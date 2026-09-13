@@ -36,7 +36,6 @@
         <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
             <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
     <string name="settings_media_providers">Media Providers</string>
-        <string name="media_providers_lrclib_url">LRCLIB Url</string>
         <string name="media_providers_media_source">Media Source</string>
             // Local
             <string name="add_media_provider_local_directory">Directory</string>
@@ -46,6 +45,8 @@
             <string name="add_media_provider_server_password">Password</string>
             <string name="add_media_provider_server_allow_self_signed_certs">Allow self-signed certs</string>
             <string name="add_media_provider_login">Login</string>
+    <string name="settings_lyrics_providers">Lyrics Providers</string>
+        <string name="media_providers_lrclib_url">LRCLIB Url</string>
     <string name="settings_playback">Playback</string>
         // Transcoding
         <string name="playback_max_bitrate">Max Bitrate</string>

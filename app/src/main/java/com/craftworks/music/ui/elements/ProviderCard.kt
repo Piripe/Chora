@@ -1,21 +1,20 @@
 package com.craftworks.music.ui.elements
 
-import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,9 +24,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,16 +37,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.craftworks.music.R
+import com.craftworks.music.data.model.LyricSource
+import com.craftworks.music.data.model.LyricsProvider
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.data.providers.media.local.LocalMediaProvider
 import com.craftworks.music.data.providers.media.local.LocalProviderData
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
-import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.managers.settings.MediaProviderSettingsManager
-import com.craftworks.music.ui.elements.dialogs.EditLrcLibUrlDialog
 import kotlinx.coroutines.runBlocking
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Preview
 @Composable
@@ -142,128 +138,68 @@ fun ProviderCard(
     }
 }
 
-@Preview
 @Composable
-fun LRCLIBProviderCard(
-    context: Context = LocalContext.current
+fun ReorderableCollectionItemScope.LyricsProviderCard(
+    provider: LyricsProvider,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    onEditClick: (() -> Unit) = { }
 ) {
-    var showEditDialog by remember { mutableStateOf(false) }
+    val type = provider.source
+
     Row(
-        modifier = Modifier
-            .padding(bottom = 12.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceBright)
-            .selectableGroup(),
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceBright),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Provider Icon
         Image(
-            painter = painterResource(R.drawable.lrclib_logo),
-            contentDescription = "LRCLIB.net logo",
+            painter = painterResource(type.icon),
+            contentDescription = null,
             modifier = Modifier
-                .padding(start = 20.dp, end = 16.dp)
+                .padding(horizontal = 16.dp)
                 .size(32.dp)
         )
-        // Provider Name
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(vertical = 10.dp)) {
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 16.dp)
+        ) {
             Text(
-                text = "Lyrics",
+                text = type.displayName,
                 color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-            )
-            Text(
-                text = "LRCLIB.net",
-                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge
             )
         }
 
-        // Edit Button
+        if (provider.source == LyricSource.LRCLIB) {
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit ${type.displayName} URL"
+                )
+            }
+        }
+
+        Checkbox(
+            checked = provider.enabled,
+            onCheckedChange = onCheckedChange
+        )
+
         IconButton(
-            onClick = { showEditDialog = true },
-            shape = CircleShape,
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onBackground
-            )
+            modifier = Modifier.draggableHandle(
+                onDragStarted = {
+                },
+                onDragStopped = {
+                }
+            ),
+            onClick = {},
         ) {
             Icon(
-                imageVector = Icons.Rounded.Edit,
-                contentDescription = "Edit LRCLIB Endpoint",
+                ImageVector.vectorResource(R.drawable.baseline_drag_handle_24),
+                contentDescription = "Reorder"
             )
         }
-
-        // Enabled Checkbox
-        Checkbox(
-            checked = LyricsState.useLrcLib,
-            onCheckedChange = {
-                LyricsState.useLrcLib = it
-                runBlocking {
-                    MediaProviderSettingsManager(context).setUseLrcLib(it)
-                }
-            }
-        )
-
-        Spacer(Modifier.width(12.dp))
-    }
-
-    if (showEditDialog)
-        EditLrcLibUrlDialog(setShowDialog = { showEditDialog = it })
-}
-
-@Preview
-@Composable
-fun NetEaseProviderCard(
-    context: Context = LocalContext.current
-) {
-    var showEditDialog by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .padding(bottom = 12.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceBright)
-            .selectableGroup(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Provider Icon
-        Image(
-            painter = painterResource(R.drawable.netease_cloud_music),
-            contentDescription = "NetEase logo",
-            modifier = Modifier
-                .padding(start = 20.dp, end = 16.dp)
-                .size(32.dp)
-        )
-        // Provider Name
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(vertical = 10.dp)) {
-            Text(
-                text = "Lyrics",
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-            )
-            Text(
-                text = "NetEase",
-                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        // Enabled Checkbox
-        Checkbox(
-            checked = LyricsState.useNetEase,
-            onCheckedChange = {
-                LyricsState.useNetEase = it
-                runBlocking {
-                    MediaProviderSettingsManager(context).setUseNetEase(it)
-                }
-            }
-        )
-
-        Spacer(Modifier.width(12.dp))
     }
 }

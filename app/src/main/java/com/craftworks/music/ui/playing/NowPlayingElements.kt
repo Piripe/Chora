@@ -75,7 +75,6 @@ import com.craftworks.music.ui.elements.moveClick
 import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
@@ -299,7 +298,7 @@ fun LyricsButton(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         modifier = // Disable bounce click if no lyrics are present
-        if (lyrics.isNotEmpty() || loading)
+        if (lyrics != null || loading)
             Modifier
                 .bounceClick()
                 .size(size + 12.dp)
@@ -313,9 +312,9 @@ fun LyricsButton(
             contentColor = color.copy(0.5f),
             disabledContentColor = color.copy(0.25f)
         ),
-        enabled = lyrics.isNotEmpty() || loading
+        enabled = lyrics != null || loading
     ) {
-        Crossfade(targetState = isActive && lyrics.isNotEmpty(), label = "Lyrics Icon Crossfade") { open ->
+        Crossfade(targetState = isActive && lyrics != null, label = "Lyrics Icon Crossfade") { open ->
             when (open) {
                 true -> Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.lyrics_active),

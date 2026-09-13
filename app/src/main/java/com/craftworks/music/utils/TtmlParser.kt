@@ -1,6 +1,7 @@
 package com.craftworks.music.utils
 
 import com.craftworks.music.data.model.Lyric
+import com.craftworks.music.data.model.LyricSource
 import com.craftworks.music.data.model.Lyrics
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.LyricsRole
@@ -18,7 +19,7 @@ private class Group(val role: LyricsRole) {
     val text = StringBuilder()
 }
 
-fun parseTtml(ttml: String): Lyrics {
+fun parseTtml(ttml: String, source: LyricSource): Lyrics {
     return ttml.konsumeXml().use { k ->
         var syncType = SyncType.NONE
         val lines = mutableListOf<LyricsLine>()
@@ -37,7 +38,7 @@ fun parseTtml(ttml: String): Lyrics {
             }
         }
 
-        Lyrics(syncType = syncType, lines = lines)
+        Lyrics(syncType = syncType, source = source, lines = lines)
     }
 }
 

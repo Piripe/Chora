@@ -3,6 +3,7 @@ package com.craftworks.music.data.providers.lyrics.binimum
 import android.content.Context
 import androidx.media3.common.MediaMetadata
 import com.craftworks.music.data.model.BiniLyricsResponse
+import com.craftworks.music.data.model.LyricSource
 import com.craftworks.music.data.model.Lyrics
 import com.craftworks.music.utils.parseTtml
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -92,7 +93,7 @@ class BiniLyricsDataSource @Inject constructor(
 
             val lyricsUrl = response.body<BiniLyricsResponse>().results.first().lyricsUrl
 
-            val ttml = parseTtml(client.get(lyricsUrl).bodyAsText())
+            val ttml = parseTtml(client.get(lyricsUrl).bodyAsText(), LyricSource.BINI_LYRICS)
             return@withContext ttml
         } catch (e: ClientRequestException) {
             if (e.response.status == HttpStatusCode.NotFound) {

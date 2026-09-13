@@ -43,7 +43,9 @@ sealed interface Screen {
     @Serializable
     object S_Appearance : Screen
     @Serializable
-    object S_Providers : Screen
+    object S_Media_Providers : Screen
+    @Serializable
+    object S_Lyrics_Providers : Screen
     @Serializable
     object S_Playback : Screen
     @Serializable

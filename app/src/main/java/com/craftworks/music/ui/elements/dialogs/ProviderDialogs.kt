@@ -508,7 +508,7 @@ fun NoMediaProvidersDialog(setShowDialog: (Boolean) -> Unit, navController: NavH
 
             Button(
                 onClick = {
-                    navController.navigate(Screen.S_Providers) {
+                    navController.navigate(Screen.S_Media_Providers) {
                         launchSingleTop = true
                     }; setShowDialog(false)
                 },

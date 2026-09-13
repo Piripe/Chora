@@ -260,7 +260,7 @@ fun TvNowPlaying(
             }
 
             AnimatedVisibility(
-                visible = metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION && lyrics.isNotEmpty() && oledProtectionMode != OLEDProtectionMode.MINIMAL,
+                visible = metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION && lyrics != null && oledProtectionMode != OLEDProtectionMode.MINIMAL,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight(

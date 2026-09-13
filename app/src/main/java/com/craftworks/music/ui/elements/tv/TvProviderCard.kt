@@ -42,7 +42,6 @@ import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.DataRefreshManager
 import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -224,7 +223,8 @@ fun LrcLibProviderCard(
         onClick = {
             LyricsState.useLrcLib = !LyricsState.useLrcLib
             coroutineScope.launch {
-                MediaProviderSettingsManager(context).setUseLrcLib(LyricsState.useLrcLib)
+                //TODO: FIX TV LYRICS PROVIDERS
+                //MediaProviderSettingsManager(context).setUseLrcLib(LyricsState.useLrcLib)
             }
         },
         onLongClick = onLongClick
@@ -244,7 +244,8 @@ fun NetEaseProviderCard() {
         onClick = {
             LyricsState.useNetEase = !LyricsState.useNetEase
             coroutineScope.launch {
-                MediaProviderSettingsManager(context).setUseNetEase(LyricsState.useNetEase)
+                //TODO: FIX TV LYRICS PROVIDERS
+                //MediaProviderSettingsManager(context).setUseNetEase(LyricsState.useNetEase)
             }
         },
     )
