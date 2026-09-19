@@ -3,6 +3,7 @@ package com.craftworks.music.ui.playing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.BottomSheetDefaults
@@ -35,8 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,7 +50,13 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
+import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.util.UUID
@@ -71,6 +82,8 @@ fun PlayQueueContent(
     var currentMediaItem: QueueItem? by remember { mutableStateOf(null) }
 
     val haptic = LocalHapticFeedback.current
+
+    val context = LocalContext.current
 
     DisposableEffect(mediaController) {
         fun syncList() {
@@ -157,7 +170,7 @@ fun PlayQueueContent(
                         }
                 ) {
                     Row(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -180,6 +193,28 @@ fun PlayQueueContent(
                                 )
                             }
                         }
+
+
+                        SubcomposeAsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(item.mediaItem.mediaMetadata.getProvider()?.getImageUrl(
+                                    id = item.mediaItem.mediaMetadata.id ?: "",
+                                    itemType = LibraryType.SONG,
+                                    size = 128
+                                ))
+                                .crossfade(true)
+                                .diskCacheKey(item.mediaItem.mediaMetadata.id)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .placeholderMemoryCacheKey(item.mediaItem.mediaMetadata.id)
+                                .build(),
+                            contentDescription = "Album Image",
+                            contentScale = ContentScale.FillHeight,
+                            modifier = Modifier
+                                .size(52.dp)
+                                .padding(4.dp, 0.dp, 0.dp, 0.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                        )
 
                         // Title + artist
                         Column(
