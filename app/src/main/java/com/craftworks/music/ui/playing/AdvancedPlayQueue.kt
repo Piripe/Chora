@@ -327,7 +327,18 @@ fun QueueItemMenu(
             Box(
                 contentAlignment = Alignment.Center
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        text = queueItem.mediaItem.mediaMetadata.title.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    QueueMenuButton(R.drawable.remove_circle_24px, R.string.action_remove_from_queue) {
+                        mediaController.removeMediaItem(queueIndex)
+                        onDialogDismiss()
+                    }
                     QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
                         val to = mediaController.currentMediaItemIndex
                         if (queueIndex > to) {
@@ -335,6 +346,7 @@ fun QueueItemMenu(
                         } else {
                             mediaController.moveMediaItem(queueIndex, to)
                         }
+                        onDialogDismiss()
                     }
                 }
             }
