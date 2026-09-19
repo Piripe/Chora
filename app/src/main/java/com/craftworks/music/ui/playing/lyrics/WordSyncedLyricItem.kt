@@ -2,12 +2,11 @@ package com.craftworks.music.ui.playing.lyrics
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -34,16 +33,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextMotion
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.calculateLyricBlur
-import com.craftworks.music.ui.playing.dpToPx
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun WordSyncedLyricItem(
@@ -52,6 +55,7 @@ fun WordSyncedLyricItem(
     currentLyricIndex: Int,
     currentPosition: Int,
     useBlur: Boolean,
+    useWordBounce: Boolean,
     visibleItemsInfo: List<LazyListItemInfo>,
     color: Color,
     lyricsAnimationSpeed: Int = 1200,
@@ -67,9 +71,9 @@ fun WordSyncedLyricItem(
     )
 
     val scale by animateFloatAsState(
-        targetValue = if (currentLyricIndex == index) 1f else 0.9f,
+        targetValue = if (currentLyricIndex == index) 1f else 0.95f,
         label = "Lyric Scale Animation",
-        animationSpec = tween(lyricsAnimationSpeed, 0, FastOutSlowInEasing)
+        animationSpec = tween(lyricsAnimationSpeed, 0, CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f))
     )
 
     if (lyric.lines[0].text.isEmpty()) {
@@ -83,6 +87,11 @@ fun WordSyncedLyricItem(
                         .graphicsLayer {
                             scaleX = scale
                             scaleY = scale
+                            transformOrigin = when (lyricsAlignment) {
+                                NowPlayingAlignment.LEFT -> TransformOrigin(0f, 0.5f)
+                                NowPlayingAlignment.CENTER -> TransformOrigin(0.5f, 0.5f)
+                                NowPlayingAlignment.RIGHT -> TransformOrigin(1f, 0.5f)
+                            }
                         },
                     contentAlignment = when (lyricsAlignment) {
                         NowPlayingAlignment.LEFT -> Alignment.TopStart
@@ -103,6 +112,11 @@ fun WordSyncedLyricItem(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
+                    transformOrigin = when (lyricsAlignment) {
+                        NowPlayingAlignment.LEFT -> TransformOrigin(0f, 0.5f)
+                        NowPlayingAlignment.CENTER -> TransformOrigin(0.5f, 0.5f)
+                        NowPlayingAlignment.RIGHT -> TransformOrigin(1f, 0.5f)
+                    }
                 }
                 .blur(lyricBlur)
                 .clickable {
@@ -130,7 +144,8 @@ fun WordSyncedLyricItem(
                             durationMillis = duration,
                             role = line.role,
                             isOnlyBackgroundLine = !lyric.lines.any { it.role == LyricsRole.MAIN },
-                            color = color
+                            color = color,
+                            useWordBounce = useWordBounce
                         )
                     }
                 }
@@ -147,7 +162,8 @@ fun AnimatedWord(
     durationMillis: Int,
     role: LyricsRole,
     isOnlyBackgroundLine: Boolean,
-    color: Color
+    color: Color,
+    useWordBounce: Boolean
 ) {
     val targetAlpha = if (role == LyricsRole.MAIN) 1f else 0.7f
 
@@ -155,31 +171,64 @@ fun AnimatedWord(
     val wipeProgress = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(targetAlpha) }
 
-    val dipAmount = dpToPx(1).toFloat()
+    val textStyle = (if (role == LyricsRole.MAIN || isOnlyBackgroundLine) MaterialTheme.typography.headlineMediumEmphasized else MaterialTheme.typography.titleLargeEmphasized)
+        .copy(textMotion = TextMotion.Animated)
+
+    val wobbleProgress = remember { Animatable(0f) }
+    val wobbleShift = 0.5.sp
+
+    val textMeasurer = rememberTextMeasurer()
+    val visibleFraction = remember(wordText, textStyle) {
+        val trimmed = wordText.trimEnd()
+        if (trimmed.isEmpty() || trimmed.length == wordText.length) {
+            1f
+        } else {
+            val fullWidth = textMeasurer.measure(wordText, style = textStyle).size.width
+            val trimmedWidth = textMeasurer.measure(trimmed, style = textStyle).size.width
+            trimmedWidth.toFloat() / fullWidth.toFloat()
+        }
+    }
 
     LaunchedEffect(isActive) {
         if (isActive) {
-            textAlpha.snapTo(targetAlpha)
-            wipeProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = durationMillis,
-                    easing = LinearEasing
-                )
-            )
+            coroutineScope {
+                launch { textAlpha.snapTo(targetAlpha) }
+                launch { wipeProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = durationMillis,
+                        easing = LinearEasing
+                    )
+                )}
+                launch {
+                    wobbleProgress.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween((1000 * 0.125f).toInt(), easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f))
+                    )
+                    wobbleProgress.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween((1000 * (0.75f - 0.125f)).toInt(), easing = CubicBezierEasing(0f, 0f, 0.58f, 1f))
+                    )
+                }
+            }
         } else {
-            wipeProgress.snapTo(0f)
-            textAlpha.animateTo(
-                targetValue = 0.4f,
-                animationSpec = tween(durationMillis = 400, easing = LinearEasing)
-            )
+            coroutineScope {
+                launch { wipeProgress.snapTo(0f) }
+                launch {
+                    textAlpha.animateTo(
+                        targetValue = 0.4f,
+                        animationSpec = tween(durationMillis = 400, easing = LinearEasing)
+                    )
+                }
+            }
         }
     }
 
     val brush = if (isActive && wipeProgress.isRunning) {
-        val currentOffset = wipeProgress.value * (1f + 0.3f)
-        val activeEnd = (currentOffset - 0.3f).coerceIn(0f, 1f)
-        val inactiveStart = currentOffset.coerceIn(0f, 1f)
+        val sweepWidth = 0.12f
+        val currentOffset = wipeProgress.value * (1f + sweepWidth) * visibleFraction
+        val activeEnd = (currentOffset - sweepWidth).coerceIn(0f, visibleFraction)
+        val inactiveStart = currentOffset.coerceIn(0f, visibleFraction)
         Brush.horizontalGradient(
             0f to color.copy(targetAlpha),
             activeEnd to color.copy(targetAlpha),
@@ -190,32 +239,18 @@ fun AnimatedWord(
         SolidColor(color.copy(targetAlpha))
     }
 
-    val yOffset = remember { Animatable(0f) }
-    LaunchedEffect(isActive) {
-        if (isActive) {
-            yOffset.animateTo(-dipAmount, tween(120, easing = FastOutSlowInEasing))
-            yOffset.animateTo(0f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow))
-        } else {
-            yOffset.animateTo(0f, tween(durationMillis, 0, FastOutSlowInEasing))
-        }
-    }
-
-    val textStyle = if (role == LyricsRole.MAIN || isOnlyBackgroundLine) MaterialTheme.typography.titleLarge.copy(
-        fontWeight = FontWeight.SemiBold,
-        textMotion = TextMotion.Animated
-    )
-    else
-        MaterialTheme.typography.bodyLarge.copy(
-            fontWeight = FontWeight.SemiBold,
-            textMotion = TextMotion.Animated
-        )
-
     Text(
         text = wordText,
         style = textStyle,
+        fontWeight = FontWeight.SemiBold,
         modifier = Modifier
             .graphicsLayer {
-                translationY = yOffset.value
+                translationX = wobbleShift.toPx() * wobbleProgress.value
+
+                if (useWordBounce)
+                    translationY = -wobbleShift.toPx() * 2 * wobbleProgress.value
+
+                scaleX = 1f + 0.025f * wobbleProgress.value
                 alpha = textAlpha.value
                 compositingStrategy = CompositingStrategy.Offscreen
             }
@@ -223,8 +258,7 @@ fun AnimatedWord(
                 onDrawWithContent {
                     drawContent()
                     drawRect(
-                        brush = brush,
-                        blendMode = BlendMode.SrcIn
+                        brush = brush, blendMode = BlendMode.SrcIn
                     )
                 }
             },

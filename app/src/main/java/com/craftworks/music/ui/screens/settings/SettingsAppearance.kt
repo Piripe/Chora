@@ -68,7 +68,13 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
-import com.craftworks.music.ui.elements.dialogs.appearance.*
+import com.craftworks.music.ui.elements.dialogs.appearance.BackgroundDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.HomeItemsDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.NameDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.NavbarItemsDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingTitleAlignmentDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.SongListActionButtonsDialog
+import com.craftworks.music.ui.elements.dialogs.appearance.ThemeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
@@ -78,7 +84,7 @@ import kotlinx.coroutines.runBlocking
 @SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-@Preview(showSystemUi = false, showBackground = true)
+@Preview(showBackground = true)
 fun S_AppearanceScreen(navHostController: NavHostController = rememberNavController()) {
     var showNameDialog by remember { mutableStateOf(false) }
     var showBackgroundDialog by remember { mutableStateOf(false) }
@@ -382,6 +388,18 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         toggleEvent = {
                             coroutineScope.launch {
                                 AppearanceSettingsManager(context).setLyricsRecenterAfterScroll(!lyricsRecenterAfterScroll)
+                            }
+                        }
+                    )
+
+                    val lyricsWordBounce by AppearanceSettingsManager(context).lyricsBounce.collectAsStateWithLifecycle(true)
+                    SettingsSwitch(
+                        lyricsWordBounce,
+                        stringResource(R.string.appearance_lyrics_word_bounce),
+                        ImageVector.vectorResource(R.drawable.rounded_format_line_spacing_24),
+                        toggleEvent = {
+                            coroutineScope.launch {
+                                AppearanceSettingsManager(context).setLyricsBounce(!lyricsWordBounce)
                             }
                         }
                     )

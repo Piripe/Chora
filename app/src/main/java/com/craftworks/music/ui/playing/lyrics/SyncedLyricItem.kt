@@ -1,6 +1,7 @@
 package com.craftworks.music.ui.playing.lyrics
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,7 +63,7 @@ fun SyncedLyricItem(
     val scale by animateFloatAsState(
         targetValue = if (currentLyricIndex == index) 1f else 0.9f,
         label = "Lyric Scale Animation",
-        animationSpec = tween(lyricsAnimationSpeed, 0, FastOutSlowInEasing)
+        animationSpec = tween(lyricsAnimationSpeed, 0, CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f))
     )
 
     if (lyric.lines[0].text.isEmpty()) {
@@ -95,6 +97,11 @@ fun SyncedLyricItem(
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
+                    transformOrigin = when (lyricsAlignment) {
+                        NowPlayingAlignment.LEFT -> TransformOrigin(0f, 0.5f)
+                        NowPlayingAlignment.CENTER -> TransformOrigin(0.5f, 0.5f)
+                        NowPlayingAlignment.RIGHT -> TransformOrigin(1f, 0.5f)
+                    }
                 }
                 .blur(lyricBlur)
                 .clickable {
@@ -102,22 +109,13 @@ fun SyncedLyricItem(
                 },
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-//            Text(
-//                text = lyric.content,
-//                style = MaterialTheme.typography.titleLarge,
-//                //fontWeight = FontWeight.Bold,
-//                color = color.copy(lyricAlpha),
-//                modifier = Modifier.fillMaxWidth(),
-//                textAlign = TextAlign.Center,
-//                //lineHeight = 32.sp
-//            )
             lyric.lines.forEach{ line ->
                 val isMain = line.role == LyricsRole.MAIN
 
                 Text(
                     text = line.text,
-                    style = if (isMain || !lyric.lines.any { it.role == LyricsRole.MAIN }) MaterialTheme.typography.titleLarge
-                    else MaterialTheme.typography.bodyLarge,
+                    style = if (isMain || !lyric.lines.any { it.role == LyricsRole.MAIN }) MaterialTheme.typography.headlineMediumEmphasized
+                    else MaterialTheme.typography.titleLargeEmphasized,
                     fontWeight = FontWeight.SemiBold,
                     color = color.copy(alpha = if (isMain) lyricAlpha else lyricAlpha * 0.65f),
                     modifier = Modifier.fillMaxWidth(),

@@ -53,14 +53,15 @@ data class LyricsProvider(
 data class Lyrics(
     val syncType: SyncType,
     val source: LyricSource,
-    val lines: List<LyricsLine>
+    val lines: List<LyricsLine>,
+    val agents: List<LyricsAgent> = emptyList()
 )
-
 @Stable
 data class LyricsLine(
     val startMs: Int,
     val endMs: Int? = null,
-    val lines: List<Lyric>
+    val lines: List<Lyric>,
+    val agentId: String? = null,
 )
 @Stable
 data class Lyric(
@@ -75,6 +76,15 @@ data class SyncedWord(
     val text: String,
     val startMs: Int,
     val endMs: Int?
+)
+enum class LyricsAgentType {
+    PERSON, GROUP, OTHER
+}
+@Stable
+data class LyricsAgent(
+    val id: String,
+    val type: LyricsAgentType = LyricsAgentType.PERSON,
+    val name: String? = null
 )
 
 // LRCLIB Lyrics
@@ -132,34 +142,52 @@ fun LrcLibLyrics.toLyrics(): Lyrics? {
             ?: throw IllegalArgumentException("Invalid YAML format")
 
         val linesList = raw["lines"] as? List<*> ?: emptyList<Any>()
+        val plainText = raw["plain"] as? String
         var wordSynced = false
 
-        val lines = linesList.map { lineItem ->
-            val lineMap = lineItem as? Map<*, *> ?: emptyMap<Any, Any>()
+        val lines: List<LyricsLine> = if (linesList.isNotEmpty()) {
+            linesList.mapNotNull { lineItem ->
+                val lineMap = lineItem as? Map<*, *> ?: return@mapNotNull null
 
-            val startMs = lineMap["start_ms"]?.toString()?.toIntOrNull() ?: 0
-            val endMs = lineMap["end_ms"]?.toString()?.toIntOrNull() ?: 0
+                val startMs = lineMap["start_ms"]?.toString()?.toIntOrNull() ?: 0
+                val endMs = lineMap["end_ms"]?.toString()?.toIntOrNull() ?: 0
 
-            val wordsList = lineMap["words"] as? List<*> ?: emptyList<Any>()
-            val words = wordsList.map { wordItem ->
-                val wordMap = wordItem as? Map<*, *> ?: emptyMap<Any, Any>()
-                SyncedWord(
-                    text = wordMap["text"]?.toString() ?: "",
-                    startMs = wordMap["start_ms"] as? Int ?: 0,
-                    endMs = wordMap["end_ms"] as? Int
+                val wordsList = lineMap["words"] as? List<*> ?: emptyList<Any>()
+                val words = wordsList.mapNotNull { wordItem ->
+                    val wordMap = wordItem as? Map<*, *> ?: return@mapNotNull null
+                    SyncedWord(
+                        text = wordMap["text"]?.toString() ?: "",
+                        startMs = wordMap["start_ms"] as? Int ?: 0,
+                        endMs = wordMap["end_ms"] as? Int
+                    )
+                }
+
+                if (words.isEmpty()) {
+                    val rawText = lineMap["text"]?.toString()?.trim() ?: return@mapNotNull null
+                    separateBackgroundLyrics(rawText, startMs, endMs)
+                } else {
+                    wordSynced = true
+                    separateBackgroundLyrics(words, startMs, endMs)
+                }
+            }
+        } else if (!plainText.isNullOrBlank()) {
+            listOf(LyricsLine(
+                startMs = -1,
+                lines = listOf(
+                    Lyric(plainText)
                 )
-            }
+            ))
+        } else {
+            emptyList()
+        }
 
-            if (words.isEmpty()) {
-                val rawText = lineMap["text"]?.toString()?.trim() ?: return null
-                separateBackgroundLyrics(rawText, startMs, endMs)
-            } else {
-                wordSynced = true
-                separateBackgroundLyrics(words, startMs, endMs)
-            }
+        val syncType = when {
+            wordSynced -> SyncType.WORD
+            linesList.isNotEmpty() -> SyncType.LINE
+            else -> SyncType.NONE
         }
         return Lyrics(
-            syncType = if (wordSynced) SyncType.WORD else SyncType.LINE,
+            syncType = syncType,
             source = LyricSource.LRCLIB,
             lines = lines
         )

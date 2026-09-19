@@ -1,7 +1,7 @@
 package com.craftworks.music.ui.playing
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
+import com.craftworks.music.data.model.LyricsAgentType
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
@@ -95,12 +96,20 @@ fun LyricsView(
     val lyricsRecenter by appearanceSettingsManager.lyricsRecenterAfterScroll.collectAsStateWithLifecycle(
         true
     )
+    val lyricsWordBounce by appearanceSettingsManager.lyricsBounce.collectAsStateWithLifecycle(
+        true
+    )
 
     // State holding the current position
-    var currentPosition by remember {
+    var currentPositionLyrics by remember {
         mutableIntStateOf(mediaController?.currentPosition?.toInt() ?: 0)
     }
+    var currentPositionScroll by remember {
+        mutableIntStateOf(mediaController?.currentPosition?.toInt() ?: 0)
+    }
+
     val currentLyricIndex = remember { mutableIntStateOf(-1) }
+    var lastScrolledIndex by remember { mutableIntStateOf(-2) }
 
     val state = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -120,17 +129,29 @@ fun LyricsView(
 
     // Update current position only each lyrics change.
     LaunchedEffect(mediaController, lyrics) {
-        var trackingJob: Job = Job()
+        var lyricsTrackingJon: Job = Job()
+        var scrollTrackingJob: Job = Job()
         val scope = CoroutineScope(Dispatchers.Main)
 
         if (mediaController?.isPlaying == true) {
-            trackingJob = scope.launch {
+            lyricsTrackingJon = scope.launch {
                 var position = mediaController.currentPosition.toInt()
-                currentPosition = position
+                currentPositionLyrics = position
 
                 while (isActive) {
                     position = mediaController.currentPosition.toInt()
-                    currentPosition = position
+                    currentPositionLyrics = position
+                    delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
+                }
+            }
+
+            scrollTrackingJob = scope.launch {
+                var position = mediaController.currentPosition.toInt() + lyricsAnimationSpeed
+                currentPositionScroll = position
+
+                while (isActive) {
+                    position = mediaController.currentPosition.toInt() + lyricsAnimationSpeed
+                    currentPositionScroll = position
                     delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
                 }
             }
@@ -140,34 +161,61 @@ fun LyricsView(
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
                 if (isPlaying) {
-                    if (trackingJob.isActive) return
+                    if (lyricsTrackingJon.isActive) return
+                    if (scrollTrackingJob.isActive) return
 
-                    trackingJob = scope.launch {
+                    lyricsTrackingJon = scope.launch {
                         var position = mediaController.currentPosition.toInt()
-                        currentPosition = position
+                        currentPositionLyrics = position
 
                         while (isActive) {
                             position = mediaController.currentPosition.toInt()
-                            currentPosition = position
+                            currentPositionLyrics = position
                             delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
                         }
                     }
-                } else trackingJob.cancel()
+
+                    scrollTrackingJob = scope.launch {
+                        var position = mediaController.currentPosition.toInt() + lyricsAnimationSpeed / 2
+                        currentPositionScroll = position
+
+                        while (isActive) {
+                            position = mediaController.currentPosition.toInt() + lyricsAnimationSpeed / 2
+                            currentPositionScroll = position
+                            delay(getNextUpdateDelay(position, lyrics.lines).milliseconds)
+                        }
+                    }
+                } else {
+                    lyricsTrackingJon.cancel()
+                    scrollTrackingJob.cancel()
+                }
             }
         })
     }
 
-    // Lyric index updates and scrolling
-    LaunchedEffect(currentPosition, lyrics) {
-        //if (mediaController?.isPlaying == true) {
+    // Lyrics index update
+    LaunchedEffect(currentPositionLyrics, lyrics) {
         val newCurrentLyricIndex =
-            lyrics.lines.indexOfFirst { it.startMs > currentPosition }
+            lyrics.lines.indexOfFirst { it.startMs > currentPositionLyrics }
                 .takeIf { it >= 0 } ?: lyrics.lines.size
 
         val targetIndex = (newCurrentLyricIndex - 1).coerceAtLeast(-1)
 
         if (targetIndex != currentLyricIndex.intValue) {
             currentLyricIndex.intValue = targetIndex
+        }
+    }
+
+    // Lyrics scrolling
+    LaunchedEffect(currentPositionScroll, lyrics) {
+        val newCurrentLyricIndex =
+            lyrics.lines.indexOfFirst { it.startMs > currentPositionScroll }
+                .takeIf { it >= 0 } ?: lyrics.lines.size
+
+        val targetIndex = (newCurrentLyricIndex - 1).coerceAtLeast(-1)
+
+        if (targetIndex != lastScrolledIndex) {
+            lastScrolledIndex = targetIndex
 
             if (lyricsRecenter || !(!lyricsRecenter && userScrolled)) {
                 coroutineScope.launch {
@@ -182,7 +230,9 @@ fun LyricsView(
 
                         state.animateScrollBy(
                             value = finalScrollDelta.toFloat(),
-                            animationSpec = tween(lyricsAnimationSpeed, 0, FastOutSlowInEasing)
+                            animationSpec = tween(lyricsAnimationSpeed, 0,
+                                CubicBezierEasing(0.5f, 0.5f, 0.2f, 1f)
+                            )
                         )
                     } else
                         state.animateScrollToItem(
@@ -192,7 +242,6 @@ fun LyricsView(
                 }
             }
         }
-        //}
     }
 
     // Plain lyrics scrolling
@@ -231,6 +280,32 @@ fun LyricsView(
                 }
                 delay(updateIntervalMs.milliseconds)
             }
+        }
+    }
+
+    val agentAlignment = remember(lyrics.agents, lyricsAlignment) {
+        val opposite = when (lyricsAlignment) {
+            NowPlayingAlignment.LEFT -> NowPlayingAlignment.RIGHT
+            NowPlayingAlignment.RIGHT -> NowPlayingAlignment.LEFT
+            NowPlayingAlignment.CENTER -> NowPlayingAlignment.RIGHT
+        }
+
+        var preferredTaken = false
+        var oppositeTaken = false
+
+        lyrics.agents.associate { agent ->
+            val alignment = when (agent.type) {
+                LyricsAgentType.GROUP -> NowPlayingAlignment.CENTER
+                else -> when {
+                    !preferredTaken -> { preferredTaken = true; lyricsAlignment }
+                    !oppositeTaken -> { oppositeTaken = true; opposite }
+                    else -> if (lyricsAlignment == NowPlayingAlignment.CENTER)
+                                NowPlayingAlignment.LEFT
+                            else
+                                NowPlayingAlignment.CENTER
+                }
+            }
+            agent.id to alignment
         }
     }
 
@@ -297,20 +372,24 @@ fun LyricsView(
                             lyrics.lines,
                             key = { index, lyric -> "${index}:${lyric.lines[0].text}" }
                         ) { index, lyric ->
+                            val alignment = agentAlignment[lyric.agentId] ?: lyricsAlignment
+
                             if (!lyric.lines.any { it.words.isNullOrEmpty() }) {
                                 WordSyncedLyricItem(
                                     lyric = lyric,
                                     index = index,
                                     currentLyricIndex = currentLyricIndex.intValue,
-                                    currentPosition = currentPosition,
+                                    currentPosition = currentPositionLyrics,
                                     useBlur = useBlur,
+                                    useWordBounce = lyricsWordBounce,
                                     visibleItemsInfo = visibleItemsInfo,
                                     color = color,
                                     lyricsAnimationSpeed = lyricsAnimationSpeed,
-                                    lyricsAlignment = lyricsAlignment,
+                                    lyricsAlignment = alignment,
                                     onClick = {
                                         mediaController?.seekTo(lyric.startMs.toLong())
-                                        currentPosition = lyric.startMs
+                                        currentPositionLyrics = lyric.startMs
+                                        currentPositionScroll = lyric.startMs
                                         userScrolled = false
                                     }
                                 )
@@ -323,10 +402,11 @@ fun LyricsView(
                                     visibleItemsInfo = visibleItemsInfo,
                                     color = color,
                                     lyricsAnimationSpeed = lyricsAnimationSpeed,
-                                    lyricsAlignment = lyricsAlignment,
+                                    lyricsAlignment = alignment,
                                     onClick = {
                                         mediaController?.seekTo(lyric.startMs.toLong())
-                                        currentPosition = lyric.startMs
+                                        currentPositionLyrics = lyric.startMs
+                                        currentPositionScroll = lyric.startMs
                                         userScrolled = false
                                     }
                                 )
@@ -337,10 +417,10 @@ fun LyricsView(
                             Text(
                                 text = lyrics.lines[0].lines[0].text,
                                 style = MaterialTheme.typography.headlineMedium,
+                                lineHeight = MaterialTheme.typography.displayMedium.lineHeight,
                                 color = color,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp)
                                     .onSizeChanged { size ->
                                         plainLyricsItemHeightPx = size.height.toFloat()
                                     },

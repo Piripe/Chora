@@ -3,15 +3,19 @@ package com.craftworks.music.utils
 import com.craftworks.music.data.model.Lyric
 import com.craftworks.music.data.model.LyricSource
 import com.craftworks.music.data.model.Lyrics
+import com.craftworks.music.data.model.LyricsAgent
+import com.craftworks.music.data.model.LyricsAgentType
 import com.craftworks.music.data.model.LyricsLine
 import com.craftworks.music.data.model.LyricsRole
 import com.craftworks.music.data.model.SyncType
 import com.craftworks.music.data.model.SyncedWord
 import com.gitlab.mvysny.konsumexml.Konsumer
 import com.gitlab.mvysny.konsumexml.Whitespace
+import com.gitlab.mvysny.konsumexml.allChildrenAutoIgnore
 import com.gitlab.mvysny.konsumexml.konsumeXml
 
 private const val iTunesNs = "http://music.apple.com/lyric-ttml-internal"
+private const val xmlNs = "http://www.w3.org/XML/1998/namespace"
 private const val ttmNs = "http://www.w3.org/ns/ttml#metadata"
 
 private class Group(val role: LyricsRole) {
@@ -23,28 +27,50 @@ fun parseTtml(ttml: String, source: LyricSource): Lyrics {
     return ttml.konsumeXml().use { k ->
         var syncType = SyncType.NONE
         val lines = mutableListOf<LyricsLine>()
-
+        val agents = mutableListOf<LyricsAgent>()
         k.child("tt") {
             syncType = when (attributes.getValueOrNull("timing", iTunesNs)) {
                 "Word" -> SyncType.WORD
                 "Line" -> SyncType.LINE
                 else -> SyncType.NONE
             }
-            child("head") { skipContents() }
+            child("head") {
+                child("metadata") {
+                    allChildrenAutoIgnore("agent") {
+                        val id = attributes.getValueOrNull("id", xmlNs)
+                        val typeAttr = attributes.getValueOrNull("type")
+                        val type = when (typeAttr) {
+                            "person" -> LyricsAgentType.PERSON
+                            "group" -> LyricsAgentType.GROUP
+                            else -> LyricsAgentType.OTHER
+                        }
+                        val name = childTextOrNull("name")
+                        if (id != null)
+                            agents.add(LyricsAgent(id, type, name))
+                    }
+                }
+            }
             child("body") {
                 children("div") {
                     children("p") { lines.add(parseLines(this)) }
                 }
             }
         }
-
-        Lyrics(syncType = syncType, source = source, lines = lines)
+        println("lyrics agents: $agents")
+        Lyrics(
+            syncType = syncType,
+            source = source,
+            lines = lines,
+            agents = agents
+        )
     }
 }
 
 private fun parseLines(k: Konsumer): LyricsLine {
     val lineStart = mmssToMilliseconds(k.attributes.getValueOrNull("begin"))
     val lineEnd = mmssToMilliseconds(k.attributes.getValueOrNull("end"))
+
+    val agentId = k.attributes.getValueOrNull("agent", ttmNs)
 
     val groups = mutableListOf<Group>()
     val plainText = StringBuilder()
@@ -64,7 +90,12 @@ private fun parseLines(k: Konsumer): LyricsLine {
         }
     }
 
-    return LyricsLine(startMs = lineStart!!, endMs = lineEnd, lines = lyrics)
+    return LyricsLine(
+        startMs = lineStart!!,
+        endMs = lineEnd,
+        lines = lyrics,
+        agentId = agentId
+    )
 }
 
 private fun parseWords(

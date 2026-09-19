@@ -191,7 +191,7 @@ fun NowPlayingPortrait(
                     if (showLyrics) {
                         Column(
                             Modifier
-                                .padding(horizontal = 12.dp),
+                                .padding(horizontal = 24.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(

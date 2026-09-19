@@ -2,6 +2,7 @@ package com.craftworks.music.managers.settings
 
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -50,6 +51,7 @@ class AppearanceSettingsManager @Inject constructor(
         private val LYRICS_ANIMATION_SPEED = intPreferencesKey("lyrics_animation_speed")
         private val LYRICS_AUTOSCROLL = booleanPreferencesKey("lyrics_auto_scroll")
         private val LYRICS_RECENTER_AFTER_SCROLL = booleanPreferencesKey("lyrics_recenter_after_Scroll")
+        private val LYRICS_WORD_BOUNCE = booleanPreferencesKey("lyrics_word_bounce")
         private val USE_REFRESH_ANIMATION = booleanPreferencesKey("use_refresh_animation")
         private val SHOW_TRACK_NUMBERS = booleanPreferencesKey("show_track_numbers")
 
@@ -284,6 +286,23 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[LYRICS_RECENTER_AFTER_SCROLL] = recenterAfterScroll
+            }
+        }
+    }
+
+    val lyricsBounce: Flow<Boolean> =
+        context.dataStore.data.map { preferences ->
+            preferences[LYRICS_WORD_BOUNCE] ?: try {
+                Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE) == 0f
+            } catch (e: Exception) {
+                true
+            }
+        }
+
+    suspend fun setLyricsBounce(bounce: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[LYRICS_WORD_BOUNCE] = bounce
             }
         }
     }
