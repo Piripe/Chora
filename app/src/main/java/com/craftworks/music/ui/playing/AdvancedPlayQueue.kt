@@ -61,14 +61,9 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.util.UUID
 
-data class QueueItem(
-    val queueItemId: String = UUID.randomUUID().toString(),
-    val mediaItem: MediaItem
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlayQueueContent(
+fun AdvancedPlayQueueContent(
     mediaController: MediaController?,
     modifier: Modifier = Modifier
 ) {

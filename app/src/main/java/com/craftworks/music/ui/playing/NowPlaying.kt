@@ -57,6 +57,7 @@ fun NowPlayingContent(
     onHide: () -> Unit = {}
 ) {
     val backgroundStyle by viewModel.backgroundStyle.collectAsStateWithLifecycle(NowPlayingBackground.STATIC_BLUR)
+    val useAdvancedQueue by viewModel.useAdvancedQueue.collectAsStateWithLifecycle(false)
     val backgroundDarkMode by viewModel.isBackgroundDark.collectAsStateWithLifecycle()
     val oledProtectionMode by viewModel.oledProtectionMode.collectAsStateWithLifecycle(OLEDProtectionMode.OFF)
     val lyricsOpen by viewModel.lyricsOpen.collectAsStateWithLifecycle()
@@ -136,7 +137,11 @@ fun NowPlayingContent(
             onDismissRequest = { viewModel.setPlayQueueOpen(false) },
             sheetState = playQueueSheetState,
         ) {
-            PlayQueueContent(mediaController = mediaController)
+            if (useAdvancedQueue) {
+                AdvancedPlayQueueContent(mediaController = mediaController)
+            }   else {
+                PlayQueueContent(mediaController = mediaController)
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
