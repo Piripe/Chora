@@ -214,7 +214,7 @@ fun AdvancedPlayQueueContent(
                 showAddToPlaylistDialog = true
             }, modifier = Modifier.size(40.dp).bounceClick()) {
                 Icon(
-                    ImageVector.vectorResource(R.drawable.library_add_24px),
+                    ImageVector.vectorResource(R.drawable.save_24px),
                     contentDescription = stringResource(R.string.action_add_to_playlist),
                     modifier = Modifier.size(30.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant

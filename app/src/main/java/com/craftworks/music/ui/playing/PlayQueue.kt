@@ -173,16 +173,12 @@ fun PlayQueueContent(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         )  {
-            ChoraMediaLibraryService.getInstance()?.player?.let { player ->
-                PlayPauseButton(player, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.size(40.dp))
-            }
-
             IconButton(onClick = {
-
-            }, modifier = Modifier.size(40.dp).bounceClick() ) {
+                showAddToPlaylistDialog = true
+            }, modifier = Modifier.size(40.dp).bounceClick()) {
                 Icon(
-                    ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                    contentDescription = stringResource(R.string.button_sort_by),
+                    ImageVector.vectorResource(R.drawable.save_24px),
+                    contentDescription = stringResource(R.string.action_add_to_playlist),
                     modifier = Modifier.size(30.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -219,17 +215,6 @@ fun PlayQueueContent(
                         lineHeight = 16.sp
                     )
                 }
-            }
-
-            IconButton(onClick = {
-                showAddToPlaylistDialog = true
-            }, modifier = Modifier.size(40.dp).bounceClick()) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.library_add_24px),
-                    contentDescription = stringResource(R.string.action_add_to_playlist),
-                    modifier = Modifier.size(30.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             IconButton(onClick = {
