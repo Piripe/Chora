@@ -146,7 +146,13 @@ fun NowPlayingContent(
                     }
                 )
             }   else {
-                PlayQueueContent(mediaController = mediaController)
+                PlayQueueContent(
+                    mediaController = mediaController,
+                    dismissNowPlaying = {
+                        onHide()
+                        viewModel.setPlayQueueOpen(false)
+                    }
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
         }

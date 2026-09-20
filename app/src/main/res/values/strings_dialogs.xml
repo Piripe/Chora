@@ -51,4 +51,7 @@
 
     // Set Sleep Timer
     <string name="now_playing_set_sleep_timer">Set Sleep Timer</string>
+
+    // Queue
+    <string name="clear_queue_confirm">Are you sure you want to clear this queue?</string>
 </resources>

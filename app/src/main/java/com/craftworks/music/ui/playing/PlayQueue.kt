@@ -1,10 +1,11 @@
+
 package com.craftworks.music.ui.playing
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +21,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,17 +44,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
@@ -57,6 +72,10 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
+import com.craftworks.music.player.ChoraMediaLibraryService
+import com.craftworks.music.ui.elements.bounceClick
+import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.util.UUID
@@ -66,11 +85,13 @@ data class QueueItem(
     val mediaItem: MediaItem
 )
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayQueueContent(
     mediaController: MediaController?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    dismissNowPlaying: () -> Unit
 ) {
     if (mediaController == null)
         return
@@ -79,15 +100,23 @@ fun PlayQueueContent(
     var dragStartIndex by remember { mutableIntStateOf(-1) }
     var dragCurrentIndex by remember { mutableIntStateOf(-1) }
 
+    var currentMediaIndex by remember { mutableIntStateOf(-1) }
     var currentMediaItem: QueueItem? by remember { mutableStateOf(null) }
 
     val haptic = LocalHapticFeedback.current
 
     val context = LocalContext.current
 
+    var selectedMediaItem: QueueItem? by remember { mutableStateOf(null) }
+    var selectedMediaIndex by remember { mutableIntStateOf(-1) }
+
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+
     DisposableEffect(mediaController) {
         fun syncList() {
-            val incomingMediaItems = List(mediaController.mediaItemCount) { mediaController.getMediaItemAt(it) }
+            val incomingMediaItems =
+                List(mediaController.mediaItemCount) { mediaController.getMediaItemAt(it) }
 
             val syncedList = incomingMediaItems.map { mediaItem ->
                 val matchIndex = currentList.indexOfFirst { it.mediaItem == mediaItem }
@@ -103,18 +132,23 @@ fun PlayQueueContent(
 
         val listener = object : Player.Listener {
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                if (mediaController.mediaItemCount == 0) return
                 syncList()
                 currentMediaItem = currentList[mediaController.currentMediaItemIndex]
+                currentMediaIndex = mediaController.currentMediaItemIndex
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 currentMediaItem = currentList[mediaController.currentMediaItemIndex]
+                currentMediaIndex = mediaController.currentMediaItemIndex
             }
         }
 
         // Initial load
+        if (mediaController.mediaItemCount == 0) return@DisposableEffect onDispose { }
         syncList()
         currentMediaItem = currentList[mediaController.currentMediaItemIndex]
+        currentMediaIndex = mediaController.currentMediaItemIndex
         mediaController.addListener(listener)
 
         onDispose { mediaController.removeListener(listener) }
@@ -123,7 +157,7 @@ fun PlayQueueContent(
     val lazyListState = rememberLazyListState()
 
     LaunchedEffect(Unit) {
-        if (currentList.any { it.queueItemId == currentMediaItem?.queueItemId } ) {
+        if (currentList.any { it.queueItemId == currentMediaItem?.queueItemId }) {
             lazyListState.scrollToItem(mediaController.currentMediaItemIndex)
         }
     }
@@ -133,145 +167,338 @@ fun PlayQueueContent(
         currentList.add(to.index, currentList.removeAt(from.index))
         dragCurrentIndex = to.index
     }
+    Column {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        )  {
+            ChoraMediaLibraryService.getInstance()?.player?.let { player ->
+                PlayPauseButton(player, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.size(40.dp))
+            }
 
-    LazyColumn(
-        state = lazyListState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        itemsIndexed(currentList, key = { _, item -> item.queueItemId }) { index, item ->
-            ReorderableItem(
-                state = reorderableState,
-                key = item.queueItemId,
-                animateItemModifier = Modifier.animateItem(
-                    placementSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow)
-                )
-            ) { draggingThis ->
-                val elevation by animateDpAsState(
-                    targetValue = if (draggingThis) 6.dp else 0.dp,
-                    label = "queue_item_elevation"
-                )
-                val isCurrentItem = item.queueItemId == currentMediaItem?.queueItemId
+            IconButton(onClick = {
 
-                Surface(
-                    tonalElevation = elevation,
-                    shadowElevation = elevation,
-                    color = when {
-                        draggingThis -> MaterialTheme.colorScheme.surfaceContainerHighest
-                        isCurrentItem -> MaterialTheme.colorScheme.secondaryContainer
-                        else -> BottomSheetDefaults.ContainerColor
+            }, modifier = Modifier.size(40.dp).bounceClick() ) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                    contentDescription = stringResource(R.string.button_sort_by),
+                    modifier = Modifier.size(30.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append((currentMediaIndex + 1).toString())
+                        }
+                        append(" / ${mediaController.mediaItemCount}")
                     },
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            mediaController.seekTo(index, 0)
-                        }
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
+                Row (
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier.size(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (isCurrentItem && !draggingThis) {
-                                Icon(
-                                    imageVector = Icons.Rounded.PlayArrow,
-                                    contentDescription = "Now playing",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = "${index + 1}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.rounded_timer_24),
+                        contentDescription = "DURATION ICON",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = StringUtils.formatSeconds(currentList.sumOf { it.mediaItem.mediaMetadata.durationMs?:0 }.div(1000)),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
 
+            IconButton(onClick = {
+                showAddToPlaylistDialog = true
+            }, modifier = Modifier.size(40.dp).bounceClick()) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.library_add_24px),
+                    contentDescription = stringResource(R.string.action_add_to_playlist),
+                    modifier = Modifier.size(30.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-                        SubcomposeAsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(item.mediaItem.mediaMetadata.getProvider()?.getImageUrl(
-                                    id = item.mediaItem.mediaMetadata.id ?: "",
-                                    itemType = LibraryType.SONG,
-                                    size = 128
-                                ))
-                                .crossfade(true)
-                                .diskCacheKey(item.mediaItem.mediaMetadata.id)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .placeholderMemoryCacheKey(item.mediaItem.mediaMetadata.id)
-                                .build(),
-                            contentDescription = "Album Image",
-                            contentScale = ContentScale.FillHeight,
-                            modifier = Modifier
-                                .size(52.dp)
-                                .padding(4.dp, 0.dp, 0.dp, 0.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                        )
+            IconButton(onClick = {
+                showClearDialog = true
+            }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.delete_sweep_24px),
+                    contentDescription = stringResource(R.string.action_clear_queue),
+                    modifier = Modifier.size(30.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        LazyColumn(
+            state = lazyListState,
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            itemsIndexed(currentList, key = { _, item -> item.queueItemId }) { index, item ->
+                ReorderableItem(
+                    state = reorderableState,
+                    key = item.queueItemId,
+                    animateItemModifier = Modifier.animateItem(
+                        placementSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow)
+                    )
+                ) { draggingThis ->
+                    val elevation by animateDpAsState(
+                        targetValue = if (draggingThis) 6.dp else 0.dp,
+                        label = "queue_item_elevation"
+                    )
+                    val isCurrentItem = item.queueItemId == currentMediaItem?.queueItemId
 
-                        // Title + artist
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(1.dp)
-                        ) {
-                            Text(
-                                text = item.mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
-                                else MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                    Surface(
+                        tonalElevation = elevation,
+                        shadowElevation = elevation,
+                        color = when {
+                            draggingThis -> MaterialTheme.colorScheme.surfaceContainerHighest
+                            isCurrentItem -> MaterialTheme.colorScheme.secondaryContainer
+                            else -> BottomSheetDefaults.ContainerColor
+                        },
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = {
+                                    mediaController.seekTo(index, 0)
+                                },
+                                onLongClick = {
+                                    selectedMediaIndex = index
+                                    selectedMediaItem = item
+                                }
                             )
-                            item.mediaItem.mediaMetadata.artist?.toString()?.let { artist ->
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.size(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isCurrentItem && !draggingThis) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.PlayArrow,
+                                        contentDescription = "Now playing",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "${index + 1}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+
+                            SubcomposeAsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .data(
+                                        item.mediaItem.mediaMetadata.getProvider()?.getImageUrl(
+                                            id = item.mediaItem.mediaMetadata.id ?: "",
+                                            itemType = LibraryType.SONG,
+                                            size = 128
+                                        )
+                                    )
+                                    .crossfade(true)
+                                    .diskCacheKey(item.mediaItem.mediaMetadata.id)
+                                    .diskCachePolicy(CachePolicy.ENABLED)
+                                    .placeholderMemoryCacheKey(item.mediaItem.mediaMetadata.id)
+                                    .build(),
+                                contentDescription = "Album Image",
+                                contentScale = ContentScale.FillHeight,
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .padding(4.dp, 0.dp, 0.dp, 0.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                            )
+
+                            // Title + artist
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(1.dp)
+                            ) {
                                 Text(
-                                    text = artist,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = (
-                                            if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
-                                            else MaterialTheme.colorScheme.onSurfaceVariant
-                                            ).copy(alpha = 0.7f),
+                                    text = item.mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
+                                    else MaterialTheme.colorScheme.onSurface,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
+                                item.mediaItem.mediaMetadata.artist?.toString()?.let { artist ->
+                                    Text(
+                                        text = artist,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = (
+                                                if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                                ).copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
-                        }
 
-                        // Drag handle
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.baseline_drag_handle_24),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .size(24.dp)
-                                .draggableHandle(
-                                    onDragStarted = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    },
-                                    onDragStopped = {
-                                        // Commit to player only if the item actually moved.
-                                        if (dragStartIndex != -1 && dragCurrentIndex != -1 &&
-                                            dragStartIndex != dragCurrentIndex
-                                        ) {
-                                            mediaController.moveMediaItem(
-                                                dragStartIndex,
-                                                dragCurrentIndex
-                                            )
+                            // Drag handle
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.baseline_drag_handle_24),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .draggableHandle(
+                                        onDragStarted = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        },
+                                        onDragStopped = {
+                                            // Commit to player only if the item actually moved.
+                                            if (dragStartIndex != -1 && dragCurrentIndex != -1 &&
+                                                dragStartIndex != dragCurrentIndex
+                                            ) {
+                                                mediaController.moveMediaItem(
+                                                    dragStartIndex,
+                                                    dragCurrentIndex
+                                                )
+                                            }
+                                            dragStartIndex = -1
+                                            dragCurrentIndex = -1
                                         }
-                                        dragStartIndex = -1
-                                        dragCurrentIndex = -1
-                                    }
-                                )
-                        )
+                                    )
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+
+    selectedMediaItem?.let {
+        QueueItemMenu(
+            onDialogDismiss = {selectedMediaItem = null},
+            queueItem = it,
+            queueIndex = selectedMediaIndex,
+            mediaController = mediaController
+        )
+    }
+    if (showClearDialog) {
+        AlertDialog(
+            title = {
+                Text(text = stringResource(R.string.action_clear_queue))
+            },
+            text = {
+                Text(text = stringResource(R.string.clear_queue_confirm))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mediaController.clearMediaItems()
+                        currentList.clear()
+                        currentMediaItem = null
+                        currentMediaIndex =  -1
+                        showClearDialog = false
+                        dismissNowPlaying()
+                    }
+                ) {
+                    Text(stringResource(R.string.action_clear_queue))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showClearDialog = false }
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+            onDismissRequest = { showClearDialog = false }
+        )
+    }
+
+    if (showAddToPlaylistDialog) {
+        AddToPlaylist(
+            onDismissRequest = { showAddToPlaylistDialog = false },
+            mediaToAddToPlaylist = currentList.map { it.mediaItem }
+        )
+    }
+}
+
+@Composable
+private fun QueueMenuButton(icon: Int, text: Int, action: () -> Unit) {
+    ListItem(
+        onClick = action,
+        modifier = Modifier
+            .fillMaxWidth(),
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent
+        ),
+        leadingContent = {
+            Icon(
+                imageVector = ImageVector.vectorResource(icon),
+                contentDescription = stringResource(text)
+            )
+        },
+        content = { Text(stringResource(text)) }
+    )
+}
+
+@Composable
+fun QueueItemMenu(
+    onDialogDismiss: () -> Unit,
+    queueItem: QueueItem,
+    queueIndex: Int,
+    mediaController: MediaController
+) {
+    Dialog(onDismissRequest = { onDialogDismiss() }) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Box(
+                contentAlignment = Alignment.Center
+            ) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Text(
+                        text = queueItem.mediaItem.mediaMetadata.title.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    QueueMenuButton(R.drawable.remove_circle_24px, R.string.action_remove_from_queue) {
+                        mediaController.removeMediaItem(queueIndex)
+                        onDialogDismiss()
+                    }
+                    QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
+                        val to = mediaController.currentMediaItemIndex
+                        if (queueIndex > to) {
+                            mediaController.moveMediaItem(queueIndex, to+1)
+                        } else {
+                            mediaController.moveMediaItem(queueIndex, to)
+                        }
+                        onDialogDismiss()
+                    }
+                }
+            }
+
         }
     }
 }

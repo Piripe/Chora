@@ -8,30 +8,27 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -44,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -57,10 +53,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -75,6 +69,7 @@ import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.bounceClick
+import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -104,6 +99,8 @@ fun AdvancedPlayQueueContent(
     var selectedMediaItem: QueueItem? by remember { mutableStateOf(null) }
     var selectedMediaIndex by remember { mutableIntStateOf(-1) }
 
+    var showClearDialog by remember { mutableStateOf(false) }
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(mediaController) {
         fun syncList() {
@@ -214,10 +211,10 @@ fun AdvancedPlayQueueContent(
             }
 
             IconButton(onClick = {
-
+                showAddToPlaylistDialog = true
             }, modifier = Modifier.size(40.dp).bounceClick()) {
                 Icon(
-                    ImageVector.vectorResource(R.drawable.save_24px),
+                    ImageVector.vectorResource(R.drawable.library_add_24px),
                     contentDescription = stringResource(R.string.action_add_to_playlist),
                     modifier = Modifier.size(30.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -225,15 +222,10 @@ fun AdvancedPlayQueueContent(
             }
 
             IconButton(onClick = {
-                // TODO : Add a confirmation dialog
-                mediaController.clearMediaItems()
-                currentList.clear()
-                currentMediaItem = null
-                currentMediaIndex =  -1
-                dismissNowPlaying()
+                showClearDialog = true
             }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
                 Icon(
-                    ImageVector.vectorResource(R.drawable.close_24px),
+                    ImageVector.vectorResource(R.drawable.delete_sweep_24px),
                     contentDescription = stringResource(R.string.action_clear_queue),
                     modifier = Modifier.size(30.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -398,65 +390,43 @@ fun AdvancedPlayQueueContent(
             mediaController = mediaController
         )
     }
-}
-
-@Composable
-private fun QueueMenuButton(icon: Int, text: Int, action: () -> Unit) {
-    ListItem(
-        onClick = action,
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ),
-        leadingContent = {
-            Icon(
-                imageVector = ImageVector.vectorResource(icon),
-                contentDescription = stringResource(text)
-            )
-        },
-        content = { Text(stringResource(text)) }
-    )
-}
-
-@Composable
-fun QueueItemMenu(
-    onDialogDismiss: () -> Unit,
-    queueItem: QueueItem,
-    queueIndex: Int,
-    mediaController: MediaController
-) {
-    Dialog(onDismissRequest = { onDialogDismiss() }) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = queueItem.mediaItem.mediaMetadata.title.toString(),
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(8.dp)
-                    )
-                    QueueMenuButton(R.drawable.remove_circle_24px, R.string.action_remove_from_queue) {
-                        mediaController.removeMediaItem(queueIndex)
-                        onDialogDismiss()
+    if (showClearDialog) {
+        AlertDialog(
+            title = {
+                Text(text = stringResource(R.string.action_clear_queue))
+            },
+            text = {
+                Text(text = stringResource(R.string.clear_queue_confirm))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mediaController.clearMediaItems()
+                        currentList.clear()
+                        currentMediaItem = null
+                        currentMediaIndex =  -1
+                        showClearDialog = false
+                        dismissNowPlaying()
                     }
-                    QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
-                        val to = mediaController.currentMediaItemIndex
-                        if (queueIndex > to) {
-                            mediaController.moveMediaItem(queueIndex, to+1)
-                        } else {
-                            mediaController.moveMediaItem(queueIndex, to)
-                        }
-                        onDialogDismiss()
-                    }
+                ) {
+                    Text(stringResource(R.string.action_clear_queue))
                 }
-            }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showClearDialog = false }
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+            onDismissRequest = { showClearDialog = false }
+        )
+    }
 
-        }
+    if (showAddToPlaylistDialog) {
+        AddToPlaylist(
+            onDismissRequest = { showAddToPlaylistDialog = false },
+            mediaToAddToPlaylist = currentList.map { it.mediaItem }
+        )
     }
 }
