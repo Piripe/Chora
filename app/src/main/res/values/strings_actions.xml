@@ -15,6 +15,7 @@
     <string name="action_add">Add</string>
     <string name="action_add_to_queue">Add To Queue</string>
     <string name="action_remove_from_queue">Remove From Queue</string>
+    <string name="action_clear_queue">Clear Queue</string>
     <string name="action_play_next">Play Next</string>
     <string name="action_move_next">Move Next</string>
     <string name="action_add_to_playlist">Add To Playlist</string>

@@ -138,7 +138,13 @@ fun NowPlayingContent(
             sheetState = playQueueSheetState,
         ) {
             if (useAdvancedQueue) {
-                AdvancedPlayQueueContent(mediaController = mediaController)
+                AdvancedPlayQueueContent(
+                    mediaController = mediaController,
+                    dismissNowPlaying = {
+                        onHide()
+                        viewModel.setPlayQueueOpen(false)
+                    }
+                )
             }   else {
                 PlayQueueContent(mediaController = mediaController)
             }
