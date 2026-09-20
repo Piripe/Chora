@@ -31,7 +31,7 @@ object StringUtils {
             .ifBlank { "_" }
     }
 
-    fun formatSeconds(seconds: Int): String {
+    fun formatSeconds(seconds: Long): String {
         if (seconds >= 3600) return String.format(Locale.getDefault(), "%02d:%02d:%02d", seconds / 3600, seconds / 60 % 60, seconds % 60)
         return String.format(Locale.getDefault(), "%02d:%02d", seconds / 60, seconds % 60)
     }
