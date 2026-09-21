@@ -21,6 +21,8 @@
         <string name="new_playlist_playlist_name">Playlist Name</string>
 
     // Sorting
+    <string name="button_sort_order_ascending">Ascending</string>
+    <string name="button_sort_order_descending">Descending</string>
     <string name="button_sort_by">Sort By</string>
     <string name="sort_by_album">Album</string>
     <string name="sort_by_album_artist">Album Artist</string>
@@ -54,4 +56,7 @@
 
     // Queue
     <string name="clear_queue_confirm">Are you sure you want to clear this queue?</string>
+    <string name="sort_queue_title">Sort Queue</string>
+    <string name="sort_queue_reverse">Reverse</string>
+    <string name="sort_queue_sort">Sort</string>
 </resources>

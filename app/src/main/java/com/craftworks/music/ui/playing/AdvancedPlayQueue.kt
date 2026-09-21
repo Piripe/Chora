@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -26,6 +28,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -65,6 +73,8 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.SongListSort
+import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
@@ -100,6 +110,7 @@ fun AdvancedPlayQueueContent(
     var selectedMediaIndex by remember { mutableIntStateOf(-1) }
 
     var showClearDialog by remember { mutableStateOf(false) }
+    var showSortDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var addToPlaylistSongsOverride by remember { mutableStateOf<List<MediaItem>?>(null) }
 
@@ -168,7 +179,7 @@ fun AdvancedPlayQueueContent(
             }
 
             IconButton(onClick = {
-
+                showSortDialog = true
             }, modifier = Modifier.size(40.dp).bounceClick() ) {
                 Icon(
                     ImageVector.vectorResource(R.drawable.rounded_sort_24),
@@ -429,6 +440,15 @@ fun AdvancedPlayQueueContent(
         )
     }
 
+    if (showSortDialog) {
+        AdvancedQueueSortDialog(
+            onDismissRequest = {
+                showSortDialog = false
+            },
+            mediaController = mediaController
+        )
+    }
+
     if (showAddToPlaylistDialog) {
         AddToPlaylist(
             onDismissRequest = {
@@ -438,4 +458,152 @@ fun AdvancedPlayQueueContent(
             mediaToAddToPlaylist = addToPlaylistSongsOverride ?: currentList.map { it.mediaItem }
         )
     }
+}
+
+private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, sort: SongListSort) {
+
+}
+@Composable
+private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController: MediaController) {
+    var selectedOrder by remember { mutableStateOf(SortOrder.ASC) }
+    var selectedSort by remember { mutableStateOf(SongListSort.ID) }
+
+    val sortTranslationBindings = mapOf(
+        SongListSort.ALBUM to R.string.sort_by_album,
+        SongListSort.ALBUM_ARTIST to R.string.sort_by_album_artist,
+        SongListSort.ARTIST to R.string.sort_by_artist,
+        SongListSort.BPM to R.string.sort_by_bpm,
+        SongListSort.CHANNELS to R.string.sort_by_channels,
+        SongListSort.COMMENT to R.string.sort_by_comment,
+        SongListSort.DURATION to R.string.sort_by_duration,
+        SongListSort.EXPLICIT_STATUS to R.string.sort_by_explicit_status,
+        SongListSort.FAVORITE to R.string.sort_by_favorite,
+        SongListSort.GENRE to R.string.sort_by_genre,
+        SongListSort.ID to R.string.sort_queue_reverse, // Hack to reverse the queue
+        SongListSort.NAME to R.string.sort_by_name,
+        SongListSort.PLAY_COUNT to R.string.sort_by_play_count,
+        SongListSort.RANDOM to R.string.sort_by_random,
+        SongListSort.RATING to R.string.sort_by_rating,
+        SongListSort.RECENTLY_ADDED to R.string.sort_by_recently_added,
+        SongListSort.RECENTLY_PLAYED to R.string.sort_by_recently_played,
+        SongListSort.RELEASE_DATE to R.string.sort_by_release_date,
+        SongListSort.YEAR to R.string.sort_by_year,
+    )
+
+    AlertDialog(
+        title = {
+            Text(text = stringResource(R.string.sort_queue_title))
+        },
+        text = {
+            Column {
+                SingleChoiceSegmentedButtonRow {
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = 0,
+                            count = 2
+                        ),
+                        onClick = { selectedOrder = SortOrder.ASC },
+                        selected = selectedOrder == SortOrder.ASC,
+                        icon = {
+                                SegmentedButtonDefaults.Icon(active = selectedOrder == SortOrder.ASC) {
+                                    Icon(
+                                        ImageVector.vectorResource(R.drawable.arrow_upward_24px),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                                    )
+                                }
+                               },
+                        label = {
+                            Text(stringResource(R.string.button_sort_order_ascending))
+                        }
+                    )
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = 1,
+                            count = 2
+                        ),
+                        onClick = { selectedOrder = SortOrder.DESC },
+                        selected = selectedOrder == SortOrder.DESC,
+                        icon = {
+                            SegmentedButtonDefaults.Icon(active = selectedOrder == SortOrder.DESC) {
+                                Icon(
+                                    ImageVector.vectorResource(R.drawable.arrow_downward_24px),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                                )
+                            }
+                        },
+                        label = {
+                            Text(stringResource(R.string.button_sort_order_descending))
+                        }
+                    )
+                }
+
+                LazyColumn {
+                    itemsIndexed(
+                        items = listOf(
+                            SongListSort.ID,
+                            SongListSort.RANDOM,
+                            SongListSort.ALBUM,
+                            SongListSort.ALBUM_ARTIST,
+                            SongListSort.ARTIST,
+                            SongListSort.BPM,
+                            SongListSort.DURATION,
+                            SongListSort.NAME,
+                            SongListSort.PLAY_COUNT,
+                            SongListSort.RECENTLY_ADDED,
+                            SongListSort.RECENTLY_PLAYED,
+                            SongListSort.YEAR,
+                        ),
+                        key = { _, sort -> sort }
+                    ) { _, sort ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .selectable(
+                                    selected = (sort == selectedSort),
+                                    onClick = { selectedSort = sort },
+                                    role = Role.RadioButton
+                                )
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (sort == selectedSort),
+                                onClick = null
+                            )
+                            Text(
+                                text = sortTranslationBindings[sort]?.let { id ->
+                                    stringResource(
+                                        id
+                                    )
+                                } ?: sort.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    sortQueue(mediaController, selectedOrder, SongListSort.NAME)
+                    onDismissRequest()
+                }
+            ) {
+                Text(stringResource(R.string.sort_queue_sort))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismissRequest
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+        onDismissRequest = onDismissRequest
+    )
 }
