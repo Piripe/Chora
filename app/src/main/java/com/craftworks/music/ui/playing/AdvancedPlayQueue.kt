@@ -101,6 +101,7 @@ fun AdvancedPlayQueueContent(
 
     var showClearDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var addToPlaylistSongsOverride by remember { mutableStateOf<List<MediaItem>?>(null) }
 
     DisposableEffect(mediaController) {
         fun syncList() {
@@ -385,6 +386,10 @@ fun AdvancedPlayQueueContent(
     selectedMediaItem?.let {
         QueueItemMenu(
             onDialogDismiss = {selectedMediaItem = null},
+            onAddToPlaylist = {
+                addToPlaylistSongsOverride = listOf(it.mediaItem)
+                showAddToPlaylistDialog = true
+            },
             queueItem = it,
             queueIndex = selectedMediaIndex,
             mediaController = mediaController
@@ -425,8 +430,11 @@ fun AdvancedPlayQueueContent(
 
     if (showAddToPlaylistDialog) {
         AddToPlaylist(
-            onDismissRequest = { showAddToPlaylistDialog = false },
-            mediaToAddToPlaylist = currentList.map { it.mediaItem }
+            onDismissRequest = {
+                showAddToPlaylistDialog = false
+                addToPlaylistSongsOverride = null
+                               },
+            mediaToAddToPlaylist = addToPlaylistSongsOverride ?: currentList.map { it.mediaItem }
         )
     }
 }

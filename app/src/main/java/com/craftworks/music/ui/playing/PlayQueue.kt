@@ -72,7 +72,6 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
-import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.utils.StringUtils
@@ -112,6 +111,7 @@ fun PlayQueueContent(
 
     var showClearDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var addToPlaylistSongsOverride by remember { mutableStateOf<List<MediaItem>?>(null) }
 
     DisposableEffect(mediaController) {
         fun syncList() {
@@ -380,7 +380,11 @@ fun PlayQueueContent(
 
     selectedMediaItem?.let {
         QueueItemMenu(
-            onDialogDismiss = {selectedMediaItem = null},
+            onDialogDismiss = { selectedMediaItem = null },
+            onAddToPlaylist = {
+                addToPlaylistSongsOverride = listOf(it.mediaItem)
+                showAddToPlaylistDialog = true
+            },
             queueItem = it,
             queueIndex = selectedMediaIndex,
             mediaController = mediaController
@@ -421,8 +425,11 @@ fun PlayQueueContent(
 
     if (showAddToPlaylistDialog) {
         AddToPlaylist(
-            onDismissRequest = { showAddToPlaylistDialog = false },
-            mediaToAddToPlaylist = currentList.map { it.mediaItem }
+            onDismissRequest = {
+                showAddToPlaylistDialog = false
+                addToPlaylistSongsOverride = null
+                               },
+            mediaToAddToPlaylist = addToPlaylistSongsOverride ?: currentList.map { it.mediaItem }
         )
     }
 }
@@ -449,6 +456,7 @@ private fun QueueMenuButton(icon: Int, text: Int, action: () -> Unit) {
 @Composable
 fun QueueItemMenu(
     onDialogDismiss: () -> Unit,
+    onAddToPlaylist: () -> Unit,
     queueItem: QueueItem,
     queueIndex: Int,
     mediaController: MediaController
@@ -479,6 +487,10 @@ fun QueueItemMenu(
                         } else {
                             mediaController.moveMediaItem(queueIndex, to)
                         }
+                        onDialogDismiss()
+                    }
+                    QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
+                        onAddToPlaylist()
                         onDialogDismiss()
                     }
                 }
