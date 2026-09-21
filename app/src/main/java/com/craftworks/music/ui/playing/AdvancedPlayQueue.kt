@@ -62,9 +62,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.StarRating
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -460,8 +460,38 @@ fun AdvancedPlayQueueContent(
     }
 }
 
-private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, sort: SongListSort) {
+private fun syncMediaControllerToList(mediaController: MediaController, originList: MutableList<MediaItem>, destinationList: List<MediaItem>) {
+    fun moveItem(item: MediaItem, to: Int) {
+        val from = originList.indexOf(item)
+        mediaController.moveMediaItem(from, to)
+        originList.add(to, originList.removeAt(from))
+    }
+    destinationList.forEachIndexed { index, item -> moveItem(item, index) }
+}
 
+@Suppress("UNCHECKED_CAST")
+private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, sort: SongListSort) {
+    var currentMediaItems = MutableList(mediaController.mediaItemCount) { mediaController.getMediaItemAt(it) }
+
+    val sortBindings = mapOf<SongListSort, (MediaItem) -> Comparable<*>?>(
+        SongListSort.ALBUM to { it.mediaMetadata.albumTitle.toString() },
+        SongListSort.ALBUM_ARTIST to { it.mediaMetadata.albumArtist.toString() },
+        SongListSort.ARTIST to { it.mediaMetadata.artist.toString() },
+        SongListSort.BPM to { it.mediaMetadata.extras?.getInt("bpm") },
+        SongListSort.DURATION to { it.mediaMetadata.durationMs },
+        SongListSort.ID to { currentMediaItems.indexOf(it) },
+        SongListSort.NAME to { it.mediaMetadata.title.toString() },
+        SongListSort.PLAY_COUNT to { it.mediaMetadata.extras?.getInt("playCount") },
+        SongListSort.RATING to { (it.mediaMetadata.userRating as StarRating).starRating.toInt() },
+        SongListSort.YEAR to { it.mediaMetadata.releaseYear.toString() },
+    )
+
+    val sortList =
+        if (sort == SongListSort.RANDOM) currentMediaItems.shuffled()
+        else if ((sortOrder == SortOrder.DESC) or (sort == SongListSort.ID)) currentMediaItems.sortedByDescending(sortBindings[sort] as (MediaItem) -> Comparable<Any>?)
+        else currentMediaItems.sortedBy(sortBindings[sort] as (MediaItem) -> Comparable<Any>?)
+
+    syncMediaControllerToList(mediaController, currentMediaItems, sortList)
 }
 @Composable
 private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController: MediaController) {
@@ -473,20 +503,12 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
         SongListSort.ALBUM_ARTIST to R.string.sort_by_album_artist,
         SongListSort.ARTIST to R.string.sort_by_artist,
         SongListSort.BPM to R.string.sort_by_bpm,
-        SongListSort.CHANNELS to R.string.sort_by_channels,
-        SongListSort.COMMENT to R.string.sort_by_comment,
         SongListSort.DURATION to R.string.sort_by_duration,
-        SongListSort.EXPLICIT_STATUS to R.string.sort_by_explicit_status,
-        SongListSort.FAVORITE to R.string.sort_by_favorite,
-        SongListSort.GENRE to R.string.sort_by_genre,
         SongListSort.ID to R.string.sort_queue_reverse, // Hack to reverse the queue
         SongListSort.NAME to R.string.sort_by_name,
         SongListSort.PLAY_COUNT to R.string.sort_by_play_count,
         SongListSort.RANDOM to R.string.sort_by_random,
         SongListSort.RATING to R.string.sort_by_rating,
-        SongListSort.RECENTLY_ADDED to R.string.sort_by_recently_added,
-        SongListSort.RECENTLY_PLAYED to R.string.sort_by_recently_played,
-        SongListSort.RELEASE_DATE to R.string.sort_by_release_date,
         SongListSort.YEAR to R.string.sort_by_year,
     )
 
@@ -496,7 +518,7 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
         },
         text = {
             Column {
-                SingleChoiceSegmentedButtonRow {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = 0,
@@ -551,8 +573,6 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
                             SongListSort.DURATION,
                             SongListSort.NAME,
                             SongListSort.PLAY_COUNT,
-                            SongListSort.RECENTLY_ADDED,
-                            SongListSort.RECENTLY_PLAYED,
                             SongListSort.YEAR,
                         ),
                         key = { _, sort -> sort }
@@ -590,7 +610,7 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
         confirmButton = {
             TextButton(
                 onClick = {
-                    sortQueue(mediaController, selectedOrder, SongListSort.NAME)
+                    sortQueue(mediaController, selectedOrder, selectedSort)
                     onDismissRequest()
                 }
             ) {
