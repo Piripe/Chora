@@ -23,7 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -459,7 +461,8 @@ fun QueueItemMenu(
     onAddToPlaylist: () -> Unit,
     queueItem: QueueItem,
     queueIndex: Int,
-    mediaController: MediaController
+    mediaController: MediaController,
+    advancedMenu: Boolean = false
 ) {
     Dialog(onDismissRequest = { onDialogDismiss() }) {
         Surface(
@@ -480,6 +483,13 @@ fun QueueItemMenu(
                         mediaController.removeMediaItem(queueIndex)
                         onDialogDismiss()
                     }
+                    if (advancedMenu) {
+                        HorizontalDivider()
+                        QueueMenuButton(R.drawable.vertical_align_top_24px, R.string.action_move_to_start) {
+                            mediaController.moveMediaItem(queueIndex, 0)
+                            onDialogDismiss()
+                        }
+                    }
                     QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
                         val to = mediaController.currentMediaItemIndex
                         if (queueIndex > to) {
@@ -488,6 +498,13 @@ fun QueueItemMenu(
                             mediaController.moveMediaItem(queueIndex, to)
                         }
                         onDialogDismiss()
+                    }
+                    if (advancedMenu) {
+                        QueueMenuButton(R.drawable.vertical_align_bottom_24px, R.string.action_move_to_end) {
+                            mediaController.moveMediaItem(queueIndex, mediaController.mediaItemCount-1)
+                            onDialogDismiss()
+                        }
+                        HorizontalDivider()
                     }
                     QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
                         onAddToPlaylist()

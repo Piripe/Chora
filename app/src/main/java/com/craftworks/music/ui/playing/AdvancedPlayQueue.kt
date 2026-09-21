@@ -392,7 +392,8 @@ fun AdvancedPlayQueueContent(
             },
             queueItem = it,
             queueIndex = selectedMediaIndex,
-            mediaController = mediaController
+            mediaController = mediaController,
+            advancedMenu = true
         )
     }
     if (showClearDialog) {
