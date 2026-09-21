@@ -471,7 +471,7 @@ private fun syncMediaControllerToList(mediaController: MediaController, originLi
 
 @Suppress("UNCHECKED_CAST")
 private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, sort: SongListSort) {
-    var currentMediaItems = MutableList(mediaController.mediaItemCount) { mediaController.getMediaItemAt(it) }
+    val currentMediaItems = MutableList(mediaController.mediaItemCount) { mediaController.getMediaItemAt(it) }
 
     val sortBindings = mapOf<SongListSort, (MediaItem) -> Comparable<*>?>(
         SongListSort.ALBUM to { it.mediaMetadata.albumTitle.toString() },
@@ -483,6 +483,7 @@ private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, so
         SongListSort.NAME to { it.mediaMetadata.title.toString() },
         SongListSort.PLAY_COUNT to { it.mediaMetadata.extras?.getInt("playCount") },
         SongListSort.RATING to { (it.mediaMetadata.userRating as StarRating).starRating.toInt() },
+        SongListSort.TRACK_NUMBER to { it.mediaMetadata.trackNumber },
         SongListSort.YEAR to { it.mediaMetadata.releaseYear.toString() },
     )
 
@@ -509,6 +510,7 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
         SongListSort.PLAY_COUNT to R.string.sort_by_play_count,
         SongListSort.RANDOM to R.string.sort_by_random,
         SongListSort.RATING to R.string.sort_by_rating,
+        SongListSort.TRACK_NUMBER to R.string.sort_by_track_number,
         SongListSort.YEAR to R.string.sort_by_year,
     )
 
@@ -573,6 +575,7 @@ private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController:
                             SongListSort.DURATION,
                             SongListSort.NAME,
                             SongListSort.PLAY_COUNT,
+                            SongListSort.TRACK_NUMBER,
                             SongListSort.YEAR,
                         ),
                         key = { _, sort -> sort }

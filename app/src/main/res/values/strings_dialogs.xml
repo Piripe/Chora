@@ -44,6 +44,7 @@
     <string name="sort_by_recently_played">Recently Played</string>
     <string name="sort_by_release_date">Release Date</string>
     <string name="sort_by_song_count">Song Count</string>
+    <string name="sort_by_track_number">Track Number</string>
     <string name="sort_by_year">Year</string>
 
 
