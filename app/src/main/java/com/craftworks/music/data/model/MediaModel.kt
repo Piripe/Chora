@@ -338,7 +338,9 @@ abstract class MediaModel
                     .setGenre(this.genres.joinToString { it.name })
                     .apply {
                         if (this@Song.userRating != null)
-                            setUserRating(StarRating(5, this@Song.userRating.toFloat()))
+                            setUserRating(StarRating(5,
+                                this@Song.userRating.toFloat().coerceIn(0f..5f)
+                            ))
                         else
                             setUserRating(StarRating(5))
                     }
