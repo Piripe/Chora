@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -256,6 +257,39 @@ fun HorizontalSongCard(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
+                    DropdownMenuItem (
+                        text = {
+                            Text(
+                                if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(
+                                    R.string.action_add_to_favorites
+                                )
+                            )
+                        },
+                        onClick = {
+                            if (isStarred)
+                                song.mediaMetadata.id?.let {
+                                    viewModel.unstarSong(it)
+                                }
+                            else
+                                song.mediaMetadata.id?.let {
+                                    viewModel.starSong(it)
+                                }
+                            isStarred = !isStarred
+                            expanded = false
+                        },
+                        leadingIcon = {
+                             Icon(
+                                 imageVector = if (isStarred) ImageVector.vectorResource(
+                                    R.drawable.round_favorite_24
+                                 ) else ImageVector.vectorResource(
+                                     R.drawable.round_favorite_border_24
+                                 ),
+                                 contentDescription = stringResource(
+                                     R.string.action_remove_from_favorites
+                                 )
+                             )
+                        }
+                    )
                     DropdownMenuItem(
                         text = {
                             Text(stringResource(R.string.action_set_rating))
