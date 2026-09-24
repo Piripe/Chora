@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.elements
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +56,7 @@ import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.ProviderFeature
+import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
@@ -78,6 +80,8 @@ fun HorizontalSongCard(
 
     var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
     var showSongRatingDialog by remember { mutableStateOf(false) }
+
+    var isStarred by remember { mutableStateOf(song.mediaMetadata.favorite ?: false) }
 
     Card(
         onClick = onClick,
@@ -195,6 +199,35 @@ fun HorizontalSongCard(
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.End
             )
+
+            IconButton(
+                modifier = Modifier,
+                onClick = {
+                    if (isStarred)
+                        song.mediaMetadata.id?.let {
+                            viewModel.unstarSong(it)
+                        }
+                    else
+                        song.mediaMetadata.id?.let {
+                            viewModel.starSong(it)
+                        }
+                    isStarred = !isStarred
+                },
+            ) {
+                Crossfade(
+                    targetState = isStarred
+                ) {
+                    if (it) Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                        contentDescription = stringResource(R.string.action_remove_from_favorites)
+                    )
+                    else
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                            contentDescription = stringResource(R.string.action_add_to_favorites)
+                        )
+                }
+            }
 
             var expanded by remember { mutableStateOf(false) }
             Box(
