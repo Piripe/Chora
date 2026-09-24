@@ -461,12 +461,24 @@ fun AdvancedPlayQueueContent(
 }
 
 private fun syncMediaControllerToList(mediaController: MediaController, originList: MutableList<MediaItem>, destinationList: List<MediaItem>) {
-    fun moveItem(item: MediaItem, to: Int) {
-        val from = originList.indexOf(item)
-        mediaController.moveMediaItem(from, to)
-        originList.add(to, originList.removeAt(from))
+
+    if (originList.size > 100) {
+        val currentItem = mediaController.currentMediaItem ?: return
+        val currentIndex = mediaController.currentMediaItemIndex
+
+        val newIndex = destinationList.indexOf(currentItem)
+            .coerceAtLeast(0)
+
+        mediaController.replaceMediaItems(currentIndex+1, mediaController.mediaItemCount, destinationList.subList(newIndex + 1, destinationList.size))
+        mediaController.replaceMediaItems(0, currentIndex, destinationList.subList(0, newIndex))
+    } else {
+         fun moveItem(item: MediaItem, to: Int) {
+            val from = originList.indexOf(item)
+            mediaController.moveMediaItem(from, to)
+            originList.add(to, originList.removeAt(from))
+        }
+        destinationList.forEachIndexed { index, item -> moveItem(item, index) }
     }
-    destinationList.forEachIndexed { index, item -> moveItem(item, index) }
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -494,6 +506,7 @@ private fun sortQueue(mediaController: MediaController, sortOrder: SortOrder, so
 
     syncMediaControllerToList(mediaController, currentMediaItems, sortList)
 }
+
 @Composable
 private fun AdvancedQueueSortDialog(onDismissRequest: ()->Unit, mediaController: MediaController) {
     var selectedOrder by remember { mutableStateOf(SortOrder.ASC) }
