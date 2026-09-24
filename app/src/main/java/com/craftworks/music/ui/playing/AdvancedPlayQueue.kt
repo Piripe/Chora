@@ -3,38 +3,53 @@ package com.craftworks.music.ui.playing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.splineBasedDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,10 +62,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -60,6 +78,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
@@ -83,6 +102,7 @@ import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.math.roundToInt
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,10 +121,6 @@ fun AdvancedPlayQueueContent(
 
     var currentMediaIndex by remember { mutableIntStateOf(-1) }
     var currentMediaItem: QueueItem? by remember { mutableStateOf(null) }
-
-    val haptic = LocalHapticFeedback.current
-
-    val context = LocalContext.current
 
     var selectedMediaItem: QueueItem? by remember { mutableStateOf(null) }
     var selectedMediaIndex by remember { mutableIntStateOf(-1) }
@@ -257,138 +273,32 @@ fun AdvancedPlayQueueContent(
                     animateItemModifier = Modifier.animateItem(
                         placementSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessLow)
                     )
-                ) { draggingThis ->
-                    val elevation by animateDpAsState(
-                        targetValue = if (draggingThis) 6.dp else 0.dp,
-                        label = "queue_item_elevation"
-                    )
-                    val isCurrentItem = item.queueItemId == currentMediaItem?.queueItemId
-
-                    Surface(
-                        tonalElevation = elevation,
-                        shadowElevation = elevation,
-                        color = when {
-                            draggingThis -> MaterialTheme.colorScheme.surfaceContainerHighest
-                            isCurrentItem -> MaterialTheme.colorScheme.secondaryContainer
-                            else -> BottomSheetDefaults.ContainerColor
+                )
+                { draggingThis ->
+                    QueueItemContent(
+                        index = index,
+                        item = item,
+                        draggingThis = draggingThis,
+                        currentMediaItem = currentMediaItem,
+                        mediaController = mediaController,
+                        onMenuOpen = {
+                            selectedMediaIndex = index
+                            selectedMediaItem = item
                         },
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(
-                                onClick = {
-                                    mediaController.seekTo(index, 0)
-                                },
-                                onLongClick = {
-                                    selectedMediaIndex = index
-                                    selectedMediaItem = item
-                                }
-                            )
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.size(32.dp),
-                                contentAlignment = Alignment.Center
+                        onDragStopped = {
+                            // Commit to player only if the item actually moved.
+                            if (dragStartIndex != -1 && dragCurrentIndex != -1 &&
+                                dragStartIndex != dragCurrentIndex
                             ) {
-                                if (isCurrentItem && !draggingThis) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = "Now playing",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                } else {
-                                    Text(
-                                        text = "${index + 1}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-
-                            SubcomposeAsyncImage(
-                                model = ImageRequest.Builder(context)
-                                    .data(
-                                        item.mediaItem.mediaMetadata.getProvider()?.getImageUrl(
-                                            id = item.mediaItem.mediaMetadata.id ?: "",
-                                            itemType = LibraryType.SONG,
-                                            size = 128
-                                        )
-                                    )
-                                    .crossfade(true)
-                                    .diskCacheKey(item.mediaItem.mediaMetadata.id)
-                                    .diskCachePolicy(CachePolicy.ENABLED)
-                                    .placeholderMemoryCacheKey(item.mediaItem.mediaMetadata.id)
-                                    .build(),
-                                contentDescription = "Album Image",
-                                contentScale = ContentScale.FillHeight,
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .padding(4.dp, 0.dp, 0.dp, 0.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                            )
-
-                            // Title + artist
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(1.dp)
-                            ) {
-                                Text(
-                                    text = item.mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                mediaController.moveMediaItem(
+                                    dragStartIndex,
+                                    dragCurrentIndex
                                 )
-                                item.mediaItem.mediaMetadata.artist?.toString()?.let { artist ->
-                                    Text(
-                                        text = artist,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = (
-                                                if (isCurrentItem) MaterialTheme.colorScheme.onSecondaryContainer
-                                                else MaterialTheme.colorScheme.onSurfaceVariant
-                                                ).copy(alpha = 0.7f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
                             }
-
-                            // Drag handle
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.baseline_drag_handle_24),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .draggableHandle(
-                                        onDragStarted = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        },
-                                        onDragStopped = {
-                                            // Commit to player only if the item actually moved.
-                                            if (dragStartIndex != -1 && dragCurrentIndex != -1 &&
-                                                dragStartIndex != dragCurrentIndex
-                                            ) {
-                                                mediaController.moveMediaItem(
-                                                    dragStartIndex,
-                                                    dragCurrentIndex
-                                                )
-                                            }
-                                            dragStartIndex = -1
-                                            dragCurrentIndex = -1
-                                        }
-                                    )
-                            )
+                            dragStartIndex = -1
+                            dragCurrentIndex = -1
                         }
-                    }
+                    )
                 }
             }
         }
@@ -459,6 +369,7 @@ fun AdvancedPlayQueueContent(
         )
     }
 }
+
 
 private fun syncMediaControllerToList(mediaController: MediaController, originList: MutableList<MediaItem>, destinationList: List<MediaItem>) {
 
