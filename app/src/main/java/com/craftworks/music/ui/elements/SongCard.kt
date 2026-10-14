@@ -1,11 +1,13 @@
 package com.craftworks.music.ui.elements
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media.utils.MediaConstants.METADATA_KEY_IS_EXPLICIT
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -78,6 +81,9 @@ fun HorizontalSongCard(
 
     var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
     var showSongRatingDialog by remember { mutableStateOf(false) }
+
+    val isStarred by remember(song.mediaMetadata) { viewModel.songStarredFlow(song.mediaMetadata) }
+        .collectAsStateWithLifecycle(viewModel.isSongStarred(song.mediaMetadata))
 
     Card(
         onClick = onClick,
@@ -184,7 +190,7 @@ fun HorizontalSongCard(
             }
             val formattedDuration by remember(song.mediaMetadata.durationMs) {
                 derivedStateOf {
-                    StringUtils.formatSeconds((song.mediaMetadata.durationMs?.div(1000))?.toInt() ?: 0)
+                    StringUtils.formatSeconds((song.mediaMetadata.durationMs?.div(1000)) ?: 0)
                 }
             }
             Text(
@@ -195,6 +201,25 @@ fun HorizontalSongCard(
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.End
             )
+
+            IconButton(
+                modifier = Modifier,
+                onClick = { viewModel.toggleSongStar(song.mediaMetadata) },
+            ) {
+                Crossfade(
+                    targetState = isStarred
+                ) {
+                    if (it) Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                        contentDescription = stringResource(R.string.action_remove_from_favorites)
+                    )
+                    else
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                            contentDescription = stringResource(R.string.action_add_to_favorites)
+                        )
+                }
+            }
 
             var expanded by remember { mutableStateOf(false) }
             Box(
@@ -223,6 +248,31 @@ fun HorizontalSongCard(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
+                    DropdownMenuItem (
+                        text = {
+                            Text(
+                                if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(
+                                    R.string.action_add_to_favorites
+                                )
+                            )
+                        },
+                        onClick = {
+                            viewModel.toggleSongStar(song.mediaMetadata)
+                            expanded = false
+                        },
+                        leadingIcon = {
+                             Icon(
+                                 imageVector = if (isStarred) ImageVector.vectorResource(
+                                    R.drawable.round_favorite_24
+                                 ) else ImageVector.vectorResource(
+                                     R.drawable.round_favorite_border_24
+                                 ),
+                                 contentDescription = stringResource(
+                                     R.string.action_remove_from_favorites
+                                 )
+                             )
+                        }
+                    )
                     DropdownMenuItem(
                         text = {
                             Text(stringResource(R.string.action_set_rating))

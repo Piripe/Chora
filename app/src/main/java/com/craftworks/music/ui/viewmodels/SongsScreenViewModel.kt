@@ -3,18 +3,23 @@ package com.craftworks.music.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
+import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.SongRepository
+import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.DataRefreshManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +32,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SongsScreenViewModel @Inject constructor(
     private val songRepository: SongRepository,
+    private val starredRepository: StarredRepository,
     private val localDataSettingsManager: LocalDataSettingsManager,
     private val miscSettingsManager: MiscSettingsManager
 ) : ViewModel() {
@@ -184,6 +190,19 @@ class SongsScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             songRepository.setSongRating(songId, rating)
+        }
+    }
+
+    fun isSongStarred(metadata: MediaMetadata): Boolean =
+        starredRepository.isStarred(metadata.id ?: "", LibraryType.SONG, metadata.favorite ?: false)
+
+    fun songStarredFlow(metadata: MediaMetadata): Flow<Boolean> =
+        starredRepository.isStarredFlow(metadata.id ?: "", LibraryType.SONG, metadata.favorite ?: false)
+
+    fun toggleSongStar(metadata: MediaMetadata) {
+        val id = metadata.id ?: return
+        viewModelScope.launch {
+            starredRepository.toggleStar(id, LibraryType.SONG, isSongStarred(metadata))
         }
     }
 }

@@ -19,8 +19,12 @@ import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.favorite
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.LyricsRepository
 import com.craftworks.music.data.repository.SongRepository
+import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
@@ -29,6 +33,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -39,6 +44,7 @@ import kotlinx.coroutines.withContext
 class NowPlayingViewModel @Inject constructor (
     @ApplicationContext private val context: Context,
     val songRepository: SongRepository,
+    val starredRepository: StarredRepository,
     val lyricsRepository: LyricsRepository,
     val appearanceSettingsManager: AppearanceSettingsManager,
     val playbackSettingsManager: PlaybackSettingsManager,
@@ -62,6 +68,7 @@ class NowPlayingViewModel @Inject constructor (
     fun setSleepTimerDialogOpen(open: Boolean) { _sleepTimerDialogOpen.value = open }
 
     val backgroundStyle = appearanceSettingsManager.npBackgroundFlow
+    val useAdvancedQueue = appearanceSettingsManager.useAdvancedQueue
     val oledProtectionMode = appearanceSettingsManager.oledProtectionMode
 
     private val _paletteColors = MutableStateFlow<List<Color>>(emptyList())
@@ -170,6 +177,27 @@ class NowPlayingViewModel @Inject constructor (
     fun downloadSong(metadata: MediaMetadata) {
         viewModelScope.launch {
             songRepository.downloadSong(metadata, miscSettingsManager.downloadTemplateFlow.first())
+        }
+    }
+
+    fun isSongStarred(metadata: MediaMetadata): Boolean =
+        starredRepository.isStarred(metadata.id ?: "", LibraryType.SONG, metadata.favorite ?: false)
+
+    fun songStarredFlow(metadata: MediaMetadata): Flow<Boolean> =
+        starredRepository.isStarredFlow(metadata.id ?: "", LibraryType.SONG, metadata.favorite ?: false)
+
+    fun toggleSongStar(metadata: MediaMetadata) {
+        val id = metadata.id ?: return
+        viewModelScope.launch {
+            starredRepository.toggleStar(id, LibraryType.SONG, isSongStarred(metadata))
+        }
+    }
+
+    fun setSongsStarred(metadata: List<MediaMetadata>, starred: Boolean) {
+        val ids = metadata.mapNotNull { it.id }.distinct()
+        viewModelScope.launch {
+            if (starred) starredRepository.starItem(ids, LibraryType.SONG)
+            else starredRepository.unStarItem(ids, LibraryType.SONG)
         }
     }
 }

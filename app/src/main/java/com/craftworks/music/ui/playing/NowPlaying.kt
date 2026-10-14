@@ -40,6 +40,7 @@ import com.craftworks.music.managers.settings.OLEDProtectionMode
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.playing.tv.TvNowPlaying
+import kotlinx.coroutines.flow.flowOf
 
 enum class NowPlayingAlignment {
     LEFT, CENTER, RIGHT
@@ -57,6 +58,7 @@ fun NowPlayingContent(
     onHide: () -> Unit = {}
 ) {
     val backgroundStyle by viewModel.backgroundStyle.collectAsStateWithLifecycle(NowPlayingBackground.STATIC_BLUR)
+    val useAdvancedQueue by viewModel.useAdvancedQueue.collectAsStateWithLifecycle(false)
     val backgroundDarkMode by viewModel.isBackgroundDark.collectAsStateWithLifecycle()
     val oledProtectionMode by viewModel.oledProtectionMode.collectAsStateWithLifecycle(OLEDProtectionMode.OFF)
     val lyricsOpen by viewModel.lyricsOpen.collectAsStateWithLifecycle()
@@ -69,6 +71,9 @@ fun NowPlayingContent(
         ?: remember { mutableIntStateOf(0) }
     val colors by viewModel.paletteColors.collectAsStateWithLifecycle()
     val iconTextColor by viewModel.iconTextColor.collectAsStateWithLifecycle()
+
+    val isStarred by remember(metadata) { metadata?.let { viewModel.songStarredFlow(it) } ?: flowOf(false) }
+        .collectAsStateWithLifecycle(metadata?.let { viewModel.isSongStarred(it) } ?: false)
 
     val isSystemDark = if (oledProtectionMode != OLEDProtectionMode.OFF) true
         else isSystemInDarkTheme()
@@ -136,7 +141,25 @@ fun NowPlayingContent(
             onDismissRequest = { viewModel.setPlayQueueOpen(false) },
             sheetState = playQueueSheetState,
         ) {
-            PlayQueueContent(mediaController = mediaController)
+            if (useAdvancedQueue) {
+                AdvancedPlayQueueContent(
+                    mediaController = mediaController,
+                    viewModel = viewModel,
+                    dismissNowPlaying = {
+                        onHide()
+                        viewModel.setPlayQueueOpen(false)
+                    }
+                )
+            }   else {
+                PlayQueueContent(
+                    mediaController = mediaController,
+                    viewModel = viewModel,
+                    dismissNowPlaying = {
+                        onHide()
+                        viewModel.setPlayQueueOpen(false)
+                    }
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -147,9 +170,10 @@ fun NowPlayingContent(
             sheetState = playQueueSheetState,
         ) {
             NowPlayingDetails(
-                isStarred = false,
+                isStarred = isStarred,
                 currentRating = (metadata?.userRating as? StarRating)?.starRating?.toInt() ?: 0,
-                onOpenRating = { showRatingDialog = true }
+                onOpenRating = { showRatingDialog = true },
+                onToggleFavorite = { metadata?.let { viewModel.toggleSongStar(it) } }
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
