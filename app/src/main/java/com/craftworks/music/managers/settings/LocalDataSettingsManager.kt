@@ -12,6 +12,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import com.craftworks.music.data.model.AlbumArtistListSort
 import com.craftworks.music.data.model.AlbumListSort
+import com.craftworks.music.data.model.LibraryFilter
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.SongListSort
@@ -47,6 +48,15 @@ class LocalDataSettingsManager @Inject constructor(
         private val SORT_SONG = stringPreferencesKey("sort_song")
         private val SORT_SONG_ORDER = stringPreferencesKey("sort_song_order")
         private val SHOW_FAVORITES_SONG = booleanPreferencesKey("show_favorites_song")
+
+        private val FILTER_ALBUM = stringPreferencesKey("filter_album")
+        private val FILTER_ARTIST = stringPreferencesKey("filter_artist")
+        private val FILTER_SONG = stringPreferencesKey("filter_song")
+
+        private val filterJson = Json { ignoreUnknownKeys = true }
+
+        private fun decodeFilter(json: String?): LibraryFilter =
+            json?.let { runCatching { filterJson.decodeFromString<LibraryFilter>(it) }.getOrNull() } ?: LibraryFilter()
     }
 /*
     val localRadios: Flow<MutableList<com.craftworks.music.data.model.MediaModel.Radio>> =
@@ -238,6 +248,67 @@ class LocalDataSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[SHOW_FAVORITES_SONG] = showFavorites;
+            }
+        }
+    }
+
+    // Sort and order are saved together so the lists are only reloaded once.
+    suspend fun saveSortAlbumAndOrder(sort: AlbumListSort, sortOrder: SortOrder) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[SORT_ALBUM] = sort.name
+                preferences[SORT_ALBUM_ORDER] = sortOrder.name
+            }
+        }
+    }
+
+    suspend fun saveSortArtistAndOrder(sort: AlbumArtistListSort, sortOrder: SortOrder) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[SORT_ARTIST] = sort.name
+                preferences[SORT_ARTIST_ORDER] = sortOrder.name
+            }
+        }
+    }
+
+    suspend fun saveSortSongAndOrder(sort: SongListSort, sortOrder: SortOrder) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[SORT_SONG] = sort.name
+                preferences[SORT_SONG_ORDER] = sortOrder.name
+            }
+        }
+    }
+
+    val filterAlbum: Flow<LibraryFilter> =
+        context.dataStore.data.map { preferences -> decodeFilter(preferences[FILTER_ALBUM]) }
+
+    val filterArtist: Flow<LibraryFilter> =
+        context.dataStore.data.map { preferences -> decodeFilter(preferences[FILTER_ARTIST]) }
+
+    val filterSong: Flow<LibraryFilter> =
+        context.dataStore.data.map { preferences -> decodeFilter(preferences[FILTER_SONG]) }
+
+    suspend fun saveFilterAlbum(filter: LibraryFilter) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FILTER_ALBUM] = filterJson.encodeToString(filter)
+            }
+        }
+    }
+
+    suspend fun saveFilterArtist(filter: LibraryFilter) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FILTER_ARTIST] = filterJson.encodeToString(filter)
+            }
+        }
+    }
+
+    suspend fun saveFilterSong(filter: LibraryFilter) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FILTER_SONG] = filterJson.encodeToString(filter)
             }
         }
     }

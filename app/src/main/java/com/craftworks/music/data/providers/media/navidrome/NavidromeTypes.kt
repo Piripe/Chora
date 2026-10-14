@@ -96,7 +96,7 @@ data class NavidromeAlbum(
             createdAt = this.createdAt,
             durationMs = durationMs,
             explicit = explicit,
-            genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: emptyList(),
+            genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
             imageUrl = this.id,
             isCompilation = this.compilation,
@@ -258,7 +258,7 @@ data class NavidromeSong(
             peak = if (this.rgAlbumPeak != null || this.rgTrackPeak != null) {
                 GainInfo(album = this.rgAlbumPeak, track = this.rgTrackPeak)
             } else null,
-            genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: emptyList(),
+            genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
             imageUrl = this.id,
             lastPlayedAt = this.playDate,
@@ -343,7 +343,7 @@ data class NavidromeArtist(
             albumCount = albumCount,
             biography = this.biography,
             durationMs = null,
-            genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: emptyList(),
+            genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
             lastPlayedAt = this.playDate,
             playCount = (this.playCount ?: 0).toDouble(),

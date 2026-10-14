@@ -2,9 +2,13 @@ package com.craftworks.music.data.repository
 
 import androidx.media3.common.MediaItem
 import com.craftworks.music.data.cache.LibraryCache
+import com.craftworks.music.data.model.LibraryFilter
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
+import com.craftworks.music.utils.FilteredPage
+import com.craftworks.music.utils.FilteredPaging
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +20,26 @@ class AlbumRepository @Inject constructor(
 ) {
     suspend fun getAlbums(
         query: MediaQuery.AlbumListQuery
-    ): List<MediaItem> = coroutineScope {
+    ): List<MediaItem> = getAlbumModels(query).map { it.toMediaItem() }
+
+    /** Albums matching [filter], read from the provider page by page. See [FilteredPaging.load]. */
+    suspend fun getFilteredAlbums(
+        filter: LibraryFilter,
+        startIndex: Int,
+        count: Int,
+        query: (startIndex: Int, limit: Int) -> MediaQuery.AlbumListQuery
+    ): FilteredPage<MediaItem> =
+        FilteredPaging.load(
+            startIndex = startIndex,
+            count = count,
+            fetch = { start, limit -> getAlbumModels(query(start, limit)) },
+            id = { it.id },
+            matches = { filter.matches(it) }
+        ).map { it.toMediaItem() }
+
+    private suspend fun getAlbumModels(
+        query: MediaQuery.AlbumListQuery
+    ): List<MediaModel.Album> = coroutineScope {
         offlineManager.fetchOrCache(
             online = { it.getAlbumList(query) },
             onSuccess = { providerId, albums -> libraryCache.putAlbums(providerId, albums) },
@@ -24,7 +47,7 @@ class AlbumRepository @Inject constructor(
                 val naturalOrder = MediaProviderManager.currentProvider.value?.supportAlbumSortOrder == false
                 libraryCache.getAlbums(providerId, query, naturalOrder)
             }
-        )?.map { it.toMediaItem() } ?: listOf()
+        ) ?: listOf()
     }
 
     suspend fun getAlbum(albumId: String): List<MediaItem>? = coroutineScope {

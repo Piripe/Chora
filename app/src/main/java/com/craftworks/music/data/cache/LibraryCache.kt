@@ -142,6 +142,14 @@ class LibraryCache @Inject constructor() {
             ?: artists[artistId]?.let { AlbumArtistInfo(biography = it.biography, imageUrl = it.imageUrl) }
     }
 
+    /** Genres of the cached songs and albums, used when the provider is unreachable. */
+    fun getGenres(providerId: String, searchTerm: String?): List<MediaModel.Genre> = withCache(providerId) {
+        (songs.values.flatMap { it.genres } + albums.values.flatMap { it.genres })
+            .filter { it.name.isNotBlank() && (searchTerm.isNullOrBlank() || it.name.contains(searchTerm, true)) }
+            .distinctBy { it.id ?: it.name.lowercase() }
+            .sortedBy { it.name.lowercase() }
+    }
+
     fun getAlbums(
         providerId: String,
         query: MediaQuery.AlbumListQuery,
@@ -153,10 +161,11 @@ class LibraryCache @Inject constructor() {
         val filtered = albums.filter { album ->
             (query.artistIds == null || query.artistIds.any { artistId ->
                 artistAlbums[artistId]?.contains(album.id) == true || album.artists.any { it.id == artistId }
+                    || album.participants.values.any { artists -> artists.any { it.id == artistId } }
             })
                 && (query.compilation == null || (album.isCompilation == true) == query.compilation)
                 && (query.favorite == null || (album.userFavorite == true) == query.favorite)
-                && (query.genreIds == null || album.genres.any { genre -> query.genreIds.any { it.equals(genre.name, true) } })
+                && (query.genreIds == null || album.genres.any { genre -> query.genreIds.any { it == genre.id || it.equals(genre.name, true) } })
                 && (query.hasRating == null || ((album.userRating ?: 0) > 0) == query.hasRating)
                 && (query.minYear == null || (album.releaseYear ?: 0) >= query.minYear)
                 && (query.maxYear == null || (album.releaseYear ?: Int.MAX_VALUE) <= query.maxYear)
@@ -202,6 +211,7 @@ class LibraryCache @Inject constructor() {
 
         val filtered = artists.filter { artist ->
             (query.favorite == null || (artist.userFavorite == true) == query.favorite)
+                && (query.genreIds == null || artist.genres.any { genre -> query.genreIds.any { it == genre.id || it.equals(genre.name, true) } })
                 && (search == null || artist.name.contains(search, true))
         }
 
@@ -237,10 +247,11 @@ class LibraryCache @Inject constructor() {
 
         val filtered = songs.filter { song ->
             (query.albumIds == null || song.albumId in query.albumIds)
-                && (query.artistIds == null || song.artists.any { it.id in query.artistIds } || song.albumArtists.any { it.id in query.artistIds })
+                && (query.artistIds == null || song.artists.any { it.id in query.artistIds } || song.albumArtists.any { it.id in query.artistIds }
+                    || song.participants.orEmpty().values.any { artists -> artists.any { it.id in query.artistIds } })
                 && (query.albumArtistIds == null || song.albumArtists.any { it.id in query.albumArtistIds })
                 && (query.favorite == null || (song.userFavorite == true) == query.favorite)
-                && (query.genreIds == null || song.genres.any { genre -> query.genreIds.any { it.equals(genre.name, true) } })
+                && (query.genreIds == null || song.genres.any { genre -> query.genreIds.any { it == genre.id || it.equals(genre.name, true) } })
                 && (query.hasRating == null || ((song.userRating ?: 0) > 0) == query.hasRating)
                 && (query.minYear == null || (song.releaseYear ?: 0) >= query.minYear)
                 && (query.maxYear == null || (song.releaseYear ?: Int.MAX_VALUE) <= query.maxYear)

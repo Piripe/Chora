@@ -5,11 +5,14 @@ import com.craftworks.music.data.cache.LibraryCache
 import com.craftworks.music.data.model.AlbumArtistDetailResponse
 import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.AlbumListSort
+import com.craftworks.music.data.model.LibraryFilter
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
+import com.craftworks.music.utils.FilteredPage
+import com.craftworks.music.utils.FilteredPaging
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,6 +35,21 @@ class ArtistRepository @Inject constructor(
             }
         ) ?: listOf()
     }
+
+    /** Artists matching [filter], read from the provider page by page. See [FilteredPaging.load]. */
+    suspend fun getFilteredArtists(
+        filter: LibraryFilter,
+        startIndex: Int,
+        count: Int,
+        query: (startIndex: Int, limit: Int) -> MediaQuery.AlbumArtistListQuery
+    ): FilteredPage<MediaModel.Artist> =
+        FilteredPaging.load(
+            startIndex = startIndex,
+            count = count,
+            fetch = { start, limit -> getArtists(query(start, limit)) },
+            id = { it.id },
+            matches = { filter.matches(it) }
+        )
 
     suspend fun getArtistAlbums(artistId: String): List<MediaItem> = coroutineScope {
         offlineManager.fetchOrCache(

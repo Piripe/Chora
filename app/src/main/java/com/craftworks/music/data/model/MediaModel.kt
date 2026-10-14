@@ -167,7 +167,9 @@ abstract class MediaModel
         val imageId: String? = null,
         val imageUrl: String? = null,
         val name: String,
-        val songCount: Int? = null
+        val songCount: Int? = null,
+        /** Provider ID, the name when the provider identifies genres by name (Subsonic, local). */
+        val id: String? = null
     ) : Parcelable
 
     data class InternetRadioStation(

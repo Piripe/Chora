@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
+import com.craftworks.music.data.model.LibraryFilter
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SongListSort
@@ -14,6 +15,8 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,12 +32,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val FILTERED_PAGE_SIZE = 100
+
 @HiltViewModel
 class SongsScreenViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
     private val localDataSettingsManager: LocalDataSettingsManager,
-    private val miscSettingsManager: MiscSettingsManager
+    private val miscSettingsManager: MiscSettingsManager,
+    appearanceSettingsManager: AppearanceSettingsManager
 ) : ViewModel() {
 
     private val _allSongs = MutableStateFlow<List<MediaItem>>(emptyList())
@@ -55,18 +61,34 @@ class SongsScreenViewModel @Inject constructor(
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
 
+    private val _useAdvancedFilter = MutableStateFlow(false)
+    val useAdvancedFilter: StateFlow<Boolean> = _useAdvancedFilter.asStateFlow()
+
+    private val _filter = MutableStateFlow(LibraryFilter())
+    val filter: StateFlow<LibraryFilter> = _filter.asStateFlow()
+
+    // Provider offset of the next page when a filter is active (filtered pages are smaller than provider pages).
+    private var filteredNextIndex = 0
+    private var filteredEndReached = false
+
     init {
         viewModelScope.launch {
             combine(
                 localDataSettingsManager.sortSong,
                 localDataSettingsManager.sortSongOrder,
-                localDataSettingsManager.showFavoriteSong
-            ) { sort, sortOrder, showFavorites -> Triple(sort, sortOrder, showFavorites) }
+                localDataSettingsManager.showFavoriteSong,
+                appearanceSettingsManager.useAdvancedFilter,
+                localDataSettingsManager.filterSong
+            ) { sort, sortOrder, showFavorites, useAdvancedFilter, filter ->
+                ListSettings(sort, sortOrder, showFavorites, useAdvancedFilter, filter)
+            }
                 .distinctUntilChanged()
-                .collect { (sort, sortOrder, showFavorites) ->
-                    _sort.value = sort
-                    _sortOrder.value = sortOrder
-                    _showFavoritesOnly.value = showFavorites
+                .collect { settings ->
+                    _sort.value = settings.sort
+                    _sortOrder.value = settings.sortOrder
+                    _showFavoritesOnly.value = settings.showFavorites
+                    _useAdvancedFilter.value = settings.useAdvancedFilter
+                    _filter.value = settings.filter
                     getSongs()
                 }
         }
@@ -78,13 +100,51 @@ class SongsScreenViewModel @Inject constructor(
         }
     }
 
+    private data class ListSettings(
+        val sort: SongListSort,
+        val sortOrder: SortOrder,
+        val showFavorites: Boolean,
+        val useAdvancedFilter: Boolean,
+        val filter: LibraryFilter
+    )
+
+    /** The filter to apply, or null when the advanced filter is disabled or has no rule. */
+    private fun activeFilter(): LibraryFilter? =
+        _filter.value.takeIf { _useAdvancedFilter.value && it.isActive }
+
+    private fun songQuery(startIndex: Int, limit: Int?, searchTerm: String? = null): MediaQuery.SongListQuery {
+        val filter = activeFilter()
+        val provider = MediaProviderManager.currentProvider.value
+        return MediaQuery.SongListQuery(
+            sortBy = _sort.value,
+            sortOrder = _sortOrder.value,
+            albumIds = filter?.serverAlbumIds(provider),
+            artistIds = filter?.serverArtistIds(provider),
+            genreIds = filter?.serverGenreIds(provider),
+            limit = limit,
+            searchTerm = searchTerm,
+            startIndex = startIndex,
+            favorite = if (_showFavoritesOnly.value || filter?.requiredFavorite == true) true else null
+        )
+    }
+
     private var getSongsJob: Job? = null
+    private var getMoreSongsJob: Job? = null
     fun getSongs() {
         getSongsJob?.cancel()
+        getMoreSongsJob?.cancel()
 
         getSongsJob = viewModelScope.launch {
             try {
                 _isLoading.value = true
+                val filter = activeFilter()
+                if (filter != null) {
+                    val page = songRepository.getFilteredSongs(filter, 0, FILTERED_PAGE_SIZE) { start, limit -> songQuery(start, limit) }
+                    filteredNextIndex = page.nextStartIndex
+                    filteredEndReached = page.endReached
+                    _allSongs.value = page.items
+                    return@launch
+                }
                 _allSongs.value = songRepository.getSongs(
                     MediaQuery.SongListQuery(
                         sortBy = _sort.value,
@@ -101,6 +161,24 @@ class SongsScreenViewModel @Inject constructor(
     }
 
     fun getMoreSongs(size: Int){
+        val filter = activeFilter()
+        if (filter != null) {
+            if (filteredEndReached || getSongsJob?.isActive == true || getMoreSongsJob?.isActive == true) return
+            getMoreSongsJob = viewModelScope.launch {
+                try {
+                    _isLoading.value = true
+                    val page = songRepository.getFilteredSongs(filter, filteredNextIndex, size) { start, limit -> songQuery(start, limit) }
+                    filteredNextIndex = page.nextStartIndex
+                    filteredEndReached = page.endReached
+                    val knownIds = _allSongs.value.mapTo(HashSet()) { it.mediaId }
+                    _allSongs.value += page.items.filter { it.mediaId !in knownIds }
+                }
+                finally {
+                    _isLoading.value = false
+                }
+            }
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
@@ -126,6 +204,18 @@ class SongsScreenViewModel @Inject constructor(
         }
         viewModelScope.launch {
             _isLoading.value = true
+            val filter = activeFilter()
+            if (filter != null) {
+                try {
+                    _searchResults.value = songRepository.getFilteredSongs(filter, 0, FILTERED_PAGE_SIZE) { start, limit ->
+                        songQuery(start, limit, query)
+                    }.items
+                }
+                finally {
+                    _isLoading.value = false
+                }
+                return@launch
+            }
             coroutineScope {
                 _searchResults.value = songRepository.getSongs(
                     MediaQuery.SongListQuery(
@@ -153,6 +243,16 @@ class SongsScreenViewModel @Inject constructor(
     fun setShowFavoritesOnly(showFavorites: Boolean) {
         viewModelScope.launch {
             localDataSettingsManager.saveShowFavoriteSong(showFavorites)
+        }
+    }
+    fun setSortAndOrder(newSort: SongListSort, newSortOrder: SortOrder) {
+        viewModelScope.launch {
+            localDataSettingsManager.saveSortSongAndOrder(newSort, newSortOrder)
+        }
+    }
+    fun setFilter(newFilter: LibraryFilter) {
+        viewModelScope.launch {
+            localDataSettingsManager.saveFilterSong(newFilter)
         }
     }
     fun downloadSong(song: MediaItem) {

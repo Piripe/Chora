@@ -40,6 +40,7 @@ class AppearanceSettingsManager @Inject constructor(
         private val USERNAME_KEY = stringPreferencesKey("username")
         private val NP_BACKGROUND_KEY = stringPreferencesKey("np_background_type")
         private val QUEUE_ADVANCED = booleanPreferencesKey("queue_advanced")
+        private val FILTER_ADVANCED = booleanPreferencesKey("filter_advanced")
         private val NP_TITLE_ALIGNMENT = stringPreferencesKey("np_title_alignment")
         private val NP_LYRICS_ALIGNMENT = stringPreferencesKey("np_lyrics_alignment")
         private val SHOW_NAVIDROME_KEY = booleanPreferencesKey("show_navidrome_logo")
@@ -264,6 +265,18 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[QUEUE_ADVANCED] = useAdvancedQueue
+            }
+        }
+    }
+
+    val useAdvancedFilter: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[FILTER_ADVANCED] ?: false
+    }
+
+    suspend fun setUseAdvancedFilter(useAdvancedFilter: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FILTER_ADVANCED] = useAdvancedFilter
             }
         }
     }

@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -50,10 +49,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -83,7 +78,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -112,6 +106,7 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.SortDialog
 import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -912,9 +907,6 @@ private fun AdvancedQueueSortDialog(
     onDismissRequest: () -> Unit,
     onSort: (SortOrder, SongListSort) -> Unit
 ) {
-    var selectedOrder by remember { mutableStateOf(SortOrder.ASC) }
-    var selectedSort by remember { mutableStateOf(SongListSort.ID) }
-
     val sortTranslationBindings = mapOf(
         SongListSort.ALBUM to R.string.sort_by_album,
         SongListSort.ALBUM_ARTIST to R.string.sort_by_album_artist,
@@ -930,119 +922,25 @@ private fun AdvancedQueueSortDialog(
         SongListSort.YEAR to R.string.sort_by_year,
     )
 
-    AlertDialog(
-        title = {
-            Text(text = stringResource(title))
-        },
-        text = {
-            Column {
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = 0,
-                            count = 2
-                        ),
-                        onClick = { selectedOrder = SortOrder.ASC },
-                        selected = selectedOrder == SortOrder.ASC,
-                        icon = {
-                                SegmentedButtonDefaults.Icon(active = selectedOrder == SortOrder.ASC) {
-                                    Icon(
-                                        ImageVector.vectorResource(R.drawable.arrow_upward_24px),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
-                                    )
-                                }
-                               },
-                        label = {
-                            Text(stringResource(R.string.button_sort_order_ascending))
-                        }
-                    )
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = 1,
-                            count = 2
-                        ),
-                        onClick = { selectedOrder = SortOrder.DESC },
-                        selected = selectedOrder == SortOrder.DESC,
-                        icon = {
-                            SegmentedButtonDefaults.Icon(active = selectedOrder == SortOrder.DESC) {
-                                Icon(
-                                    ImageVector.vectorResource(R.drawable.arrow_downward_24px),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
-                                )
-                            }
-                        },
-                        label = {
-                            Text(stringResource(R.string.button_sort_order_descending))
-                        }
-                    )
-                }
-
-                LazyColumn {
-                    itemsIndexed(
-                        items = listOf(
-                            SongListSort.ID,
-                            SongListSort.RANDOM,
-                            SongListSort.ALBUM,
-                            SongListSort.ALBUM_ARTIST,
-                            SongListSort.ARTIST,
-                            SongListSort.BPM,
-                            SongListSort.DURATION,
-                            SongListSort.NAME,
-                            SongListSort.PLAY_COUNT,
-                            SongListSort.TRACK_NUMBER,
-                            SongListSort.YEAR,
-                        ),
-                        key = { _, sort -> sort }
-                    ) { _, sort ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .selectable(
-                                    selected = (sort == selectedSort),
-                                    onClick = { selectedSort = sort },
-                                    role = Role.RadioButton
-                                )
-                                .padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (sort == selectedSort),
-                                onClick = null
-                            )
-                            Text(
-                                text = sortTranslationBindings[sort]?.let { id ->
-                                    stringResource(
-                                        id
-                                    )
-                                } ?: sort.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onSort(selectedOrder, selectedSort)
-                    onDismissRequest()
-                }
-            ) {
-                Text(stringResource(R.string.sort_queue_sort))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismissRequest
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-        onDismissRequest = onDismissRequest
+    SortDialog(
+        title = title,
+        sorts = listOf(
+            SongListSort.ID,
+            SongListSort.RANDOM,
+            SongListSort.ALBUM,
+            SongListSort.ALBUM_ARTIST,
+            SongListSort.ARTIST,
+            SongListSort.BPM,
+            SongListSort.DURATION,
+            SongListSort.NAME,
+            SongListSort.PLAY_COUNT,
+            SongListSort.TRACK_NUMBER,
+            SongListSort.YEAR,
+        ),
+        sortLabels = sortTranslationBindings,
+        initialSort = SongListSort.ID,
+        confirmText = R.string.sort_queue_sort,
+        onDismissRequest = onDismissRequest,
+        onSort = onSort
     )
 }

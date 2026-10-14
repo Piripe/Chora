@@ -466,7 +466,12 @@ open class SubsonicMediaProvider : MediaProvider() {
     }
 
     override suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre> {
-        TODO("Not yet implemented")
+        // Subsonic identifies genres by name.
+        val genres = (service.getGenres().subsonicResponse.genres?.genre ?: emptyList())
+            .map { MediaModel.Genre(name = it.value, id = it.value, songCount = it.songCount, albumCount = it.albumCount) }
+            .filter { query.searchTerm.isNullOrBlank() || it.name.contains(query.searchTerm, true) }
+            .sortedBy { it.name.lowercase() }
+        return PagingUtils.paginate(genres, query.limit, query.startIndex)
     }
 
     override suspend fun getImageRequest(

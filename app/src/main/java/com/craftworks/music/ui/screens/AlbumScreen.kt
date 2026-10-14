@@ -37,7 +37,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.AlbumListSort
+import com.craftworks.music.data.model.FilterField
 import com.craftworks.music.data.model.ProviderFeature
+import com.craftworks.music.data.model.SimpleFilterOption
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.id
@@ -45,6 +47,7 @@ import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.ui.elements.AlbumGrid
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.TopBarWithSearch
+import com.craftworks.music.ui.elements.dialogs.AdvancedFilterButtons
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
 
@@ -77,6 +80,10 @@ fun AlbumScreen(
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
 
     val showFavoritesOnly by viewModel.showFavoritesOnly.collectAsStateWithLifecycle()
+
+    val sort by viewModel.sort.collectAsStateWithLifecycle()
+    val useAdvancedFilter by viewModel.useAdvancedFilter.collectAsStateWithLifecycle()
+    val filter by viewModel.filter.collectAsStateWithLifecycle()
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
@@ -137,46 +144,61 @@ fun AlbumScreen(
                                         }
                                     }
                                 }
-                                if (currentProvider?.supportAlbumSortOrder ?: false) {
-                                    Box {
-                                        IconButton(
-                                            onClick = { viewModel.setOrder(sortOrder.invert()) }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(if (sortOrder == SortOrder.ASC) R.drawable.arrow_upward_24px else R.drawable.arrow_downward_24px),
-                                                contentDescription = stringResource(R.string.button_toggle_sort_order),
-                                            )
+                                if (useAdvancedFilter) {
+                                    AdvancedFilterButtons(
+                                        sorts = currentProvider?.supportedAlbumSort.orEmpty(),
+                                        sortLabels = sortTranslationBindings,
+                                        sort = sort,
+                                        sortOrder = sortOrder,
+                                        supportSortOrder = currentProvider?.supportAlbumSortOrder ?: false,
+                                        onSort = { newSort, newOrder -> viewModel.setSortAndOrder(newSort, newOrder) },
+                                        filter = filter,
+                                        filterFields = FilterField.albumFields,
+                                        simpleFilterOptions = SimpleFilterOption.albumOptions,
+                                        onFilter = { viewModel.setFilter(it) }
+                                    )
+                                } else {
+                                    if (currentProvider?.supportAlbumSortOrder ?: false) {
+                                        Box {
+                                            IconButton(
+                                                onClick = { viewModel.setOrder(sortOrder.invert()) }
+                                            ) {
+                                                Icon(
+                                                    imageVector = ImageVector.vectorResource(if (sortOrder == SortOrder.ASC) R.drawable.arrow_upward_24px else R.drawable.arrow_downward_24px),
+                                                    contentDescription = stringResource(R.string.button_toggle_sort_order),
+                                                )
+                                            }
                                         }
                                     }
-                                }
-                                if (currentProvider?.supportedAlbumSort.orEmpty().size > 1) {
-                                    Box {
-                                        IconButton(
-                                            onClick = { showSortMenu = true }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                                                contentDescription = stringResource(R.string.button_sort_by),
-                                            )
-                                        }
-                                        DropdownMenu(
-                                            expanded = showSortMenu,
-                                            onDismissRequest = { showSortMenu = false }
-                                        ) {
-                                            currentProvider?.supportedAlbumSort.orEmpty().map {
-                                                return@map DropdownMenuItem(
-                                                    text = {
-                                                        Text(sortTranslationBindings[it]?.let { id ->
-                                                            stringResource(
-                                                                id
-                                                            )
-                                                        } ?: it.name)
-                                                    },
-                                                    onClick = {
-                                                        viewModel.setSorting(it)
-                                                        showSortMenu = false
-                                                    }
+                                    if (currentProvider?.supportedAlbumSort.orEmpty().size > 1) {
+                                        Box {
+                                            IconButton(
+                                                onClick = { showSortMenu = true }
+                                            ) {
+                                                Icon(
+                                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                                                    contentDescription = stringResource(R.string.button_sort_by),
                                                 )
+                                            }
+                                            DropdownMenu(
+                                                expanded = showSortMenu,
+                                                onDismissRequest = { showSortMenu = false }
+                                            ) {
+                                                currentProvider?.supportedAlbumSort.orEmpty().map {
+                                                    return@map DropdownMenuItem(
+                                                        text = {
+                                                            Text(sortTranslationBindings[it]?.let { id ->
+                                                                stringResource(
+                                                                    id
+                                                                )
+                                                            } ?: it.name)
+                                                        },
+                                                        onClick = {
+                                                            viewModel.setSorting(it)
+                                                            showSortMenu = false
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                     }

@@ -61,6 +61,9 @@ data class SubsonicBody(
     val artist: SubsonicArtist? = null,
     val artistInfo: SubsonicArtistInfo? = null,
 
+    // Genres
+    val genres: SubsonicGenreList? = null,
+
     // Internet radio station
     val internetRadioStations: SubsonicInternetRadioStationList? = null,
 
@@ -294,6 +297,18 @@ data class SubsonicRecordLabel(
 @Serializable
 data class SubsonicItemGenre(
     val name: String
+)
+
+@Serializable
+data class SubsonicGenreList(
+    val genre: List<SubsonicGenre>? = null
+)
+
+@Serializable
+data class SubsonicGenre(
+    val value: String,
+    val songCount: Int? = null,
+    val albumCount: Int? = null
 )
 
 @Immutable

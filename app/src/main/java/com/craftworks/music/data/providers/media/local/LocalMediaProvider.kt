@@ -310,7 +310,17 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
     }
 
     override suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre> {
-        TODO("Not yet implemented")
+        val folders = data.libraries.filter { it.second }.map { it.first.name }
+        // MediaStore has no genre IDs here, the name is used instead.
+        val genres = LocalUtils.getLocalSongs(appContext, id, "${MediaStore.Audio.Media.TITLE} ASC", folders)
+            .flatMap { it.genres }
+            .map { it.name }
+            .filter { it.isNotBlank() }
+            .distinctBy { it.lowercase() }
+            .filter { query.searchTerm.isNullOrBlank() || it.contains(query.searchTerm, true) }
+            .sortedBy { it.lowercase() }
+            .map { MediaModel.Genre(name = it, id = it) }
+        return PagingUtils.paginate(genres, query.limit, query.startIndex)
     }
 
     override suspend fun getImageRequest(

@@ -322,6 +322,20 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
 
+                    //Advanced Filter
+                    val useAdvancedFilter =
+                        AppearanceSettingsManager(context).useAdvancedFilter.collectAsState(false)
+                    SettingsSwitch(
+                        useAdvancedFilter.value,
+                        stringResource(R.string.appearance_advanced_filter),
+                        ImageVector.vectorResource(R.drawable.filter_list_24px),
+                        toggleEvent = {
+                            coroutineScope.launch {
+                                AppearanceSettingsManager(context).setUseAdvancedFilter(!useAdvancedFilter.value)
+                            }
+                        }
+                    )
+
                     SettingsDialogButton(
                         stringResource(R.string.appearance_now_playing_title_alignment),
                         stringResource(

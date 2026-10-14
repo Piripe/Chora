@@ -6,6 +6,7 @@ import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.ArtistListSort
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import de.jensklingenberg.ktorfit.Ktorfit
@@ -31,6 +32,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import java.security.SecureRandom
+import java.util.EnumSet
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -105,6 +107,17 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
         get() = R.drawable.s_m_navidrome
     override val providerName: Int
         get() = R.string.source_navidrome
+
+    @Transient
+    override val featureFlags: EnumSet<ProviderFeature> = EnumSet.of(
+        ProviderFeature.REPORT_PLAYBACK,
+        ProviderFeature.DOWNLOADS,
+        ProviderFeature.FAVORITES,
+        ProviderFeature.INTERNET_RADIO,
+        ProviderFeature.PLAYLISTS,
+        ProviderFeature.RATINGS,
+        ProviderFeature.FILTER_BY_ID
+    )
 
     @Transient
     override val supportedAlbumSort: List<AlbumListSort> = listOf(
@@ -262,6 +275,7 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
             name = query.searchTerm,
             role = "albumartist",
             starred = query.favorite,
+            genreId = query.genreIds,
         ).map { it.toMediaModel(id) }
     }
 
@@ -292,6 +306,17 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
             name = query.searchTerm,
             starred = query.favorite,
         ).map { it.toMediaModel(id) }
+    }
+
+    override suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre> {
+        return service.getGenreList(
+            end = query.startIndex + (query.limit ?: 500),
+            order = query.sortOrder.name,
+            start = query.startIndex,
+            sort = "name",
+            libraryId = query.musicFolderId ?: data.libraries.filter { it.second }.map { it.first.id },
+            name = query.searchTerm?.takeIf { it.isNotBlank() },
+        ).map { MediaModel.Genre(name = it.name, id = it.id) }
     }
 
     override suspend fun getSongList(query: MediaQuery.SongListQuery): List<MediaModel.Song> {

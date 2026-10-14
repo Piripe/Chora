@@ -27,6 +27,7 @@ abstract class MediaQuery<T> (
 
         val custom: Map<String, Any>? = null,
         val favorite: Boolean? = null,
+        val genreIds: List<String>? = null,
         val limit: Int? = null,
         val musicFolderId: List<String>? = null,
         val searchTerm: String? = null,

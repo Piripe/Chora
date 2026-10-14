@@ -3,11 +3,14 @@ package com.craftworks.music.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.craftworks.music.data.model.AlbumArtistListSort
+import com.craftworks.music.data.model.LibraryFilter
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.repository.ArtistRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -19,10 +22,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val FILTERED_PAGE_SIZE = 50
+
 @HiltViewModel
 class ArtistsScreenViewModel @Inject constructor(
     private val artistRepository: ArtistRepository,
-    private val localDataSettingsManager: LocalDataSettingsManager
+    private val localDataSettingsManager: LocalDataSettingsManager,
+    appearanceSettingsManager: AppearanceSettingsManager
 ) : ViewModel() {
     private val _allArtists = MutableStateFlow<List<MediaModel.Artist>>(emptyList())
     val allArtists: StateFlow<List<MediaModel.Artist>> = _allArtists.asStateFlow()
@@ -42,18 +48,34 @@ class ArtistsScreenViewModel @Inject constructor(
     private val _showFavoritesOnly = MutableStateFlow(false)
     val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
 
+    private val _useAdvancedFilter = MutableStateFlow(false)
+    val useAdvancedFilter: StateFlow<Boolean> = _useAdvancedFilter.asStateFlow()
+
+    private val _filter = MutableStateFlow(LibraryFilter())
+    val filter: StateFlow<LibraryFilter> = _filter.asStateFlow()
+
+    // Provider offset of the next page when a filter is active (filtered pages are smaller than provider pages).
+    private var filteredNextIndex = 0
+    private var filteredEndReached = false
+
     init {
         viewModelScope.launch {
             combine(
                 localDataSettingsManager.sortArtist,
                 localDataSettingsManager.sortArtistOrder,
-                localDataSettingsManager.showFavoriteArtist
-            ) { sort, sortOrder, showFavorites -> Triple(sort, sortOrder, showFavorites) }
+                localDataSettingsManager.showFavoriteArtist,
+                appearanceSettingsManager.useAdvancedFilter,
+                localDataSettingsManager.filterArtist
+            ) { sort, sortOrder, showFavorites, useAdvancedFilter, filter ->
+                ListSettings(sort, sortOrder, showFavorites, useAdvancedFilter, filter)
+            }
                 .distinctUntilChanged()
-                .collect { (sort, sortOrder, showFavorites) ->
-                    _sort.value = sort
-                    _sortOrder.value = sortOrder
-                    _showFavoritesOnly.value = showFavorites
+                .collect { settings ->
+                    _sort.value = settings.sort
+                    _sortOrder.value = settings.sortOrder
+                    _showFavoritesOnly.value = settings.showFavorites
+                    _useAdvancedFilter.value = settings.useAdvancedFilter
+                    _filter.value = settings.filter
                     getArtists()
                 }
         }
@@ -65,6 +87,29 @@ class ArtistsScreenViewModel @Inject constructor(
         }
     }
 
+    private data class ListSettings(
+        val sort: AlbumArtistListSort,
+        val sortOrder: SortOrder,
+        val showFavorites: Boolean,
+        val useAdvancedFilter: Boolean,
+        val filter: LibraryFilter
+    )
+
+    /** The filter to apply, or null when the advanced filter is disabled or has no rule. */
+    private fun activeFilter(): LibraryFilter? =
+        _filter.value.takeIf { _useAdvancedFilter.value && it.isActive }
+
+    private fun artistQuery(startIndex: Int, limit: Int?, searchTerm: String? = null) =
+        MediaQuery.AlbumArtistListQuery(
+            sortBy = _sort.value,
+            sortOrder = _sortOrder.value,
+            favorite = if (_showFavoritesOnly.value || activeFilter()?.requiredFavorite == true) true else null,
+            genreIds = activeFilter()?.serverGenreIds(MediaProviderManager.currentProvider.value),
+            limit = limit,
+            searchTerm = searchTerm,
+            startIndex = startIndex
+        )
+
     private var getArtistsJob: Job? = null
     fun getArtists() {
         getArtistsJob?.cancel()
@@ -72,6 +117,14 @@ class ArtistsScreenViewModel @Inject constructor(
         getArtistsJob = viewModelScope.launch {
             try {
                 _isLoading.value = true
+                val filter = activeFilter()
+                if (filter != null) {
+                    val page = artistRepository.getFilteredArtists(filter, 0, FILTERED_PAGE_SIZE) { start, limit -> artistQuery(start, limit) }
+                    filteredNextIndex = page.nextStartIndex
+                    filteredEndReached = page.endReached
+                    _allArtists.value = page.items
+                    return@launch
+                }
                 _allArtists.value = artistRepository.getArtists(
                     MediaQuery.AlbumArtistListQuery(
                         sortBy = _sort.value,
@@ -89,6 +142,25 @@ class ArtistsScreenViewModel @Inject constructor(
 
     fun getMoreArtists() {
         if (_isLoading.value || getArtistsJob?.isActive == true) return
+
+        val filter = activeFilter()
+        if (filter != null) {
+            if (filteredEndReached) return
+            getArtistsJob = viewModelScope.launch {
+                try {
+                    _isLoading.value = true
+                    val page = artistRepository.getFilteredArtists(filter, filteredNextIndex, FILTERED_PAGE_SIZE) { start, limit -> artistQuery(start, limit) }
+                    filteredNextIndex = page.nextStartIndex
+                    filteredEndReached = page.endReached
+                    val knownIds = _allArtists.value.mapTo(HashSet()) { it.id }
+                    _allArtists.value += page.items.filter { it.id !in knownIds }
+                }
+                finally {
+                    _isLoading.value = false
+                }
+            }
+            return
+        }
 
         getArtistsJob = viewModelScope.launch {
             try {
@@ -120,6 +192,13 @@ class ArtistsScreenViewModel @Inject constructor(
         searchJob = viewModelScope.launch {
             try {
                 _isLoading.value = true
+                val filter = activeFilter()
+                if (filter != null) {
+                    _searchResults.value = artistRepository.getFilteredArtists(filter, 0, FILTERED_PAGE_SIZE) { start, limit ->
+                        artistQuery(start, limit, query)
+                    }.items
+                    return@launch
+                }
                 _searchResults.value = artistRepository.getArtists(
                     MediaQuery.AlbumArtistListQuery(
                         sortBy = _sort.value,
@@ -149,6 +228,16 @@ class ArtistsScreenViewModel @Inject constructor(
     fun setShowFavoritesOnly(showFavorites: Boolean) {
         viewModelScope.launch {
             localDataSettingsManager.saveShowFavoriteArtist(showFavorites)
+        }
+    }
+    fun setSortAndOrder(newSort: AlbumArtistListSort, newSortOrder: SortOrder) {
+        viewModelScope.launch {
+            localDataSettingsManager.saveSortArtistAndOrder(newSort, newSortOrder)
+        }
+    }
+    fun setFilter(newFilter: LibraryFilter) {
+        viewModelScope.launch {
+            localDataSettingsManager.saveFilterArtist(newFilter)
         }
     }
 }
