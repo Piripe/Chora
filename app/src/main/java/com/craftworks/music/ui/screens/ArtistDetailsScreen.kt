@@ -68,6 +68,7 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
@@ -76,7 +77,7 @@ import com.craftworks.music.ui.elements.AlbumCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
-import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
+import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.utils.bleedHorizontal
 import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.delay
@@ -91,7 +92,8 @@ fun ArtistDetails(
     selectedArtistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
-    viewModel: ArtistsScreenViewModel = hiltViewModel()
+    viewModel: ArtistDetailsViewModel = hiltViewModel(),
+    initialArtist: MediaModel.Artist? = null
 ) {
     var showLoading by remember { mutableStateOf(false) }
 
@@ -122,7 +124,7 @@ fun ArtistDetails(
     LaunchedEffect(selectedArtistId) {
         showLoading = false
 
-        viewModel.loadArtistDetails(selectedArtistId)
+        viewModel.loadArtistDetails(selectedArtistId, initialArtist)
 
         delay(500.milliseconds)
         showLoading = true
@@ -130,7 +132,7 @@ fun ArtistDetails(
 
     // Loading spinner
     AnimatedVisibility(
-        visible = artist?.name?.isBlank() == true && showLoading,
+        visible = artist?.name.isNullOrBlank() && showLoading,
         enter = fadeIn(),
         exit = fadeOut()
     ) {
@@ -283,9 +285,7 @@ fun ArtistDetails(
                                                 else
                                                     viewModel.starArtist(it)
                                             }
-                                            if (selectedArtistId != null) viewModel.loadArtistDetails(
-                                                selectedArtistId
-                                            )
+                                            viewModel.loadArtistDetails(selectedArtistId, force = true)
                                             isStarred = !isStarred
                                         }
                                     },

@@ -57,11 +57,12 @@ import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.tv.TvAlbumCard
-import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
+import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,10 +72,11 @@ fun TvArtistDetailsScreen(
     selectedArtistImage: String? = null,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
-    viewModel: ArtistsScreenViewModel = hiltViewModel()
+    viewModel: ArtistDetailsViewModel = hiltViewModel(),
+    initialArtist: MediaModel.Artist? = null
 ) {
     LaunchedEffect(selectedArtistId) {
-        if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId)
+        if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId, initialArtist)
     }
 
     val showLoading by viewModel.isLoading.collectAsStateWithLifecycle()

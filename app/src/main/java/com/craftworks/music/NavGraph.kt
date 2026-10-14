@@ -2,9 +2,6 @@ package com.craftworks.music
 
 import android.content.res.Configuration
 import android.util.Log
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -30,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -39,6 +37,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -82,6 +82,7 @@ import com.craftworks.music.ui.screens.tv.settings.TvS_AppearanceScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_PlaybackScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_ProviderScreen
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
+import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
@@ -110,6 +111,22 @@ fun SetupNavGraph(
     }
 
     val animationSpec = MaterialTheme.LocalMaterialTheme.current.motionScheme.slowSpatialSpec<Float>()
+    val slideSpec = MaterialTheme.LocalMaterialTheme.current.motionScheme.defaultSpatialSpec<IntOffset>()
+
+    // Details and settings screens come in from the right and leave back to the right.
+    // This is done here rather than on each destination, as destinations can't set predictive back transitions.
+    // On TV, the settings list is a side navigation destination: it keeps the default fade.
+    val slidesFromRight: NavDestination.() -> Boolean = {
+        hasRoute<Screen.AlbumDetails>() ||
+                hasRoute<Screen.ArtistDetails>() ||
+                hasRoute<Screen.PlaylistDetails>() ||
+                (hasRoute<Screen.SettingsList>() && !isTv) ||
+                hasRoute<Screen.S_Appearance>() ||
+                hasRoute<Screen.S_Media_Providers>() ||
+                hasRoute<Screen.S_Lyrics_Providers>() ||
+                hasRoute<Screen.S_Playback>() ||
+                hasRoute<Screen.S_Misc>()
+    }
 
     NavHost(
         navController = navController,
@@ -118,7 +135,10 @@ fun SetupNavGraph(
             .fillMaxSize()
             .padding(bottom = bottomPadding, start = leftPadding),
         enterTransition = {
-            fadeIn(animationSpec)
+            if (targetState.destination.slidesFromRight())
+                slideInHorizontally(slideSpec) { fullWidth -> fullWidth }
+            else
+                fadeIn(animationSpec)
         },
         exitTransition = {
             fadeOut(animationSpec)
@@ -127,13 +147,19 @@ fun SetupNavGraph(
             fadeIn(animationSpec)
         },
         popExitTransition = {
-            fadeOut(animationSpec)
+            if (initialState.destination.slidesFromRight())
+                slideOutHorizontally(slideSpec) { fullWidth -> fullWidth }
+            else
+                fadeOut(animationSpec)
         },
         predictivePopEnterTransition = {
             fadeIn(animationSpec)
         },
         predictivePopExitTransition = {
-            fadeOut(animationSpec)
+            if (initialState.destination.slidesFromRight())
+                slideOutHorizontally(slideSpec) { fullWidth -> fullWidth }
+            else
+                fadeOut(animationSpec)
         }
     ) {
         println("Recomposing NavHost!")
@@ -257,7 +283,14 @@ fun SetupNavGraph(
                     val artistId = backStackEntry.toRoute<Screen.ArtistDetails>().artistId
                     val imageUri = backStackEntry.toRoute<Screen.ArtistDetails>().imageUri
 
-                    val viewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
+                    // Each artist entry has its own view model, so going back to a previous artist doesn't
+                    // reload it into the screen being dismissed.
+                    val viewModel: ArtistDetailsViewModel = hiltViewModel(backStackEntry)
+                    // Show the artist from the list while the details load.
+                    val artistsViewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
+                    val initialArtist = remember(artistId) {
+                        artistsViewModel.allArtists.value.firstOrNull { it.id == artistId }
+                    }
 
                     // Artist links (from songs and albums) don't know the artist image: use the one of the loaded artist.
                     val selectedArtist by viewModel.selectedArtist.collectAsStateWithLifecycle()
@@ -266,9 +299,9 @@ fun SetupNavGraph(
 
                     ArtworkTheme(artistImage, artistId) {
                         if (isTv)
-                            TvArtistDetailsScreen(artistId, imageUri, navController, mediaController, viewModel)
+                            TvArtistDetailsScreen(artistId, imageUri, navController, mediaController, viewModel, initialArtist)
                         else
-                            ArtistDetails(artistId, imageUri, navController, mediaController, viewModel)
+                            ArtistDetails(artistId, imageUri, navController, mediaController, viewModel, initialArtist)
                     }
                 }
             }
@@ -309,16 +342,6 @@ fun SetupNavGraph(
 
             //Settings
             navigation<Screen.Settings>(startDestination = Screen.SettingsList) {
-                val enterSpec = tween<Float>(durationMillis = 210, delayMillis = 90, easing = LinearOutSlowInEasing)
-                val exitSpec = tween<Float>(durationMillis = 90, easing = FastOutLinearInEasing)
-
-                val enterTransition = slideInHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
-                    fullWidth / 4
-                } + fadeIn(enterSpec)
-                val exitTransition = slideOutHorizontally(animationSpec = tween(durationMillis = 300)) { fullWidth ->
-                    fullWidth / 4
-                } + fadeOut(exitSpec)
-
                 composable<Screen.SettingsList> {
                     if (isTv)
                         TvSideNavigation(navController, mediaController) {
@@ -327,46 +350,31 @@ fun SetupNavGraph(
                     else
                         SettingScreen(navController)
                 }
-                composable<Screen.S_Appearance>(
-                    enterTransition = { enterTransition },
-                    exitTransition = { exitTransition }
-                ) {
+                composable<Screen.S_Appearance> {
                     if (isTv)
                         TvS_AppearanceScreen()
                     else
                         S_AppearanceScreen(navController)
                 }
-                composable<Screen.S_Media_Providers>(
-                    enterTransition = { enterTransition },
-                    exitTransition = { exitTransition }
-                ) {
+                composable<Screen.S_Media_Providers> {
                     if (isTv)
                         TvS_ProviderScreen()
                     else
                         S_ProviderScreen(navController)
                 }
-                composable<Screen.S_Lyrics_Providers>(
-                    enterTransition = { enterTransition },
-                    exitTransition = { exitTransition }
-                ) {
+                composable<Screen.S_Lyrics_Providers> {
                     if (isTv)
                         TvS_ProviderScreen()
                     else
                         S_LyricsProviderScreen(navController)
                 }
-                composable<Screen.S_Playback>(
-                    enterTransition = { enterTransition },
-                    exitTransition = { exitTransition }
-                ) {
+                composable<Screen.S_Playback> {
                     if (isTv)
                         TvS_PlaybackScreen()
                     else
                         S_PlaybackScreen(navController)
                 }
-                composable<Screen.S_Misc>(
-                    enterTransition = { enterTransition },
-                    exitTransition = { exitTransition }
-                ) {
+                composable<Screen.S_Misc> {
                     S_MiscScreen(navController)
                 }
             }
