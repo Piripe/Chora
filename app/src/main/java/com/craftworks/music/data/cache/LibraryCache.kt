@@ -17,6 +17,7 @@ import javax.inject.Singleton
  * Nothing is persisted: the cache only lives as long as the app process. It is filled by the
  * repositories on every successful request, and is used to answer the same queries when the
  * provider can't be reached, so already visited parts of the library can still be browsed offline.
+ * At startup, it is also filled with the songs of the [com.craftworks.music.managers.SmartCacheManager].
  */
 @Singleton
 class LibraryCache @Inject constructor() {
@@ -57,6 +58,19 @@ class LibraryCache @Inject constructor() {
                 imageUrl = artist.imageUrl ?: previous?.imageUrl
             )
         }
+    }
+
+    /** Stores [albums] and their songs, without replacing albums already known (they have more details). */
+    fun addMissingAlbums(providerId: String, albums: List<MediaModel.Album>) = withCache(providerId) {
+        albums.forEach { album ->
+            this.albums.putIfAbsent(album.id, album.copy(songs = emptyList()))
+            album.songs.forEach { songs.putIfAbsent(it.id, it) }
+        }
+    }
+
+    /** Stores [artists], without replacing artists already known (they have more details). */
+    fun addMissingArtists(providerId: String, artists: List<MediaModel.Artist>) = withCache(providerId) {
+        artists.forEach { this.artists.putIfAbsent(it.id, it) }
     }
 
     fun putArtistAlbums(providerId: String, artistId: String, albums: List<MediaModel.Album>) {

@@ -5,9 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -194,6 +196,74 @@ fun TranscodingFormatDialog(
                     )
                     Text(
                         text = format,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = MaterialTheme.typography.titleMedium.fontSize,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+/** "Off", "5 GB", "1 TB"... for a smart cache size in GB. */
+@Composable
+fun smartCacheSizeLabel(sizeGb: Int): String = when {
+    sizeGb <= 0 -> stringResource(R.string.smart_cache_off)
+    sizeGb >= 1000 && sizeGb % 1000 == 0 -> stringResource(R.string.smart_cache_size_tb, sizeGb / 1000)
+    else -> stringResource(R.string.smart_cache_size_gb, sizeGb)
+}
+
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun SmartCacheSizeDialog(
+    setShowDialog: (Boolean) -> Unit,
+    selectedSizeGb: Int,
+    onSizeSelected: (Int) -> Unit
+) {
+    Dialog(onDismissRequest = { setShowDialog(false) }) {
+        Column(
+            modifier = Modifier
+                .shadow(12.dp, RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(24.dp)
+                // 11 sizes don't fit on small screens.
+                .verticalScroll(rememberScrollState())
+                .dialogFocusable()
+                .selectableGroup()
+        ) {
+            Text(
+                text = stringResource(R.string.smart_cache_size),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = MaterialTheme.typography.headlineSmall.fontSize,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+            for (sizeGb in PlaybackSettingsManager.SMART_CACHE_SIZES_GB) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .selectable(
+                            selected = sizeGb == selectedSizeGb,
+                            onClick = {
+                                onSizeSelected(sizeGb)
+                                setShowDialog(false)
+                            },
+                            role = Role.RadioButton
+                        ),
+                ) {
+                    RadioButton(
+                        selected = sizeGb == selectedSizeGb,
+                        onClick = {
+                            onSizeSelected(sizeGb)
+                            setShowDialog(false)
+                        },
+                        modifier = Modifier.bounceClick()
+                    )
+                    Text(
+                        text = smartCacheSizeLabel(sizeGb),
                         fontWeight = FontWeight.Normal,
                         fontSize = MaterialTheme.typography.titleMedium.fontSize,
                         color = MaterialTheme.colorScheme.onBackground,

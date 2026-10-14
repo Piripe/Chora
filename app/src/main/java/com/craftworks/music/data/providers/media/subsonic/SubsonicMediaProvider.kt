@@ -739,10 +739,12 @@ open class SubsonicMediaProvider : MediaProvider() {
         submission: Boolean,
         albumId: String?,
         event: ScrobbleEvent?,
-        position: Int?
+        position: Int?,
+        time: Long?
     ) {
         try {
-            service.scrobble(id, position, submission)
+            // "time" is when the song was played (ms since epoch), the server uses now when omitted.
+            service.scrobble(id, time, submission)
         }
         catch (e: Exception) {
             throw Exception("Failed to scrobble", e)

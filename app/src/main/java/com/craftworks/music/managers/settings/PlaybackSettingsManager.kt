@@ -29,6 +29,12 @@ class PlaybackSettingsManager @Inject constructor(
 
         private val PREFETCH_MINUTES_KEY = intPreferencesKey("prefetch_minutes")
         const val MAX_PREFETCH_MINUTES = 60
+
+        private val TRACK_OFFLINE_SCROBBLES_KEY = booleanPreferencesKey("track_offline_scrobbles")
+
+        private val SMART_CACHE_MAX_SIZE_GB_KEY = intPreferencesKey("smart_cache_max_size_gb")
+        /** The smart cache sizes offered to the user, in GB. 0 disables the smart cache. */
+        val SMART_CACHE_SIZES_GB = listOf(0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000)
     }
 
     val wifiTranscodingBitrateFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -99,6 +105,31 @@ class PlaybackSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[PREFETCH_MINUTES_KEY] = minutes.coerceIn(0, MAX_PREFETCH_MINUTES)
+            }
+        }
+    }
+
+    val trackOfflineScrobblesFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[TRACK_OFFLINE_SCROBBLES_KEY] ?: true
+    }
+
+    suspend fun setTrackOfflineScrobbles(enabled: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[TRACK_OFFLINE_SCROBBLES_KEY] = enabled
+            }
+        }
+    }
+
+    /** The maximum size of the smart cache in GB, 0 when it is disabled. */
+    val smartCacheMaxSizeGbFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[SMART_CACHE_MAX_SIZE_GB_KEY] ?: 0
+    }
+
+    suspend fun setSmartCacheMaxSizeGb(sizeGb: Int) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[SMART_CACHE_MAX_SIZE_GB_KEY] = sizeGb
             }
         }
     }

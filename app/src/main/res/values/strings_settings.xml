@@ -59,10 +59,34 @@
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
+        <string name="playback_track_offline_scrobbles">Track Offline Scrobbles</string>
+        <string name="playback_track_offline_scrobbles_pending">Track Offline Scrobbles (%1$d pending)</string>
 
         // Pre-fetching
         <string name="playback_prefetch_minutes">Pre-fetch upcoming tracks: %1$d min</string>
         <string name="playback_prefetch_off">Pre-fetch upcoming tracks: Off</string>
+
+        // Smart cache
+        <string name="smart_cache_size">Smart Cache Size</string>
+        <string name="smart_cache_off">Off</string>
+        <string name="smart_cache_size_gb">%1$d GB</string>
+        <string name="smart_cache_size_tb">%1$d TB</string>
+        <string name="smart_cache_usage">%1$s used of %2$s · %3$d songs</string>
+        <string name="smart_cache_refresh">Refresh Smart Cache</string>
+        <string name="smart_cache_refresh_description">Remove unavailable songs and download your most played music</string>
+        <string name="smart_cache_tap_to_cancel">%1$s · Tap to cancel</string>
+        <string name="smart_cache_status_checking">Checking cached songs… %1$d/%2$d</string>
+        <string name="smart_cache_status_ranking">Finding your most played songs… %1$d found</string>
+        <string name="smart_cache_status_cleaning">Removing songs no longer needed…</string>
+        <string name="smart_cache_status_downloading">Downloading songs… %1$d/%2$d</string>
+        <string name="smart_cache_last_refresh">Last refreshed %1$s</string>
+        <string name="smart_cache_error_unsupported">Not available for this media provider</string>
+        <string name="smart_cache_error_offline">Refresh stopped: the server can\'t be reached</string>
+        <string name="smart_cache_error_no_space">Refresh stopped: not enough storage space</string>
+        <string name="smart_cache_error_failed">Refresh failed: %1$s</string>
+        <string name="smart_cache_notification_channel">Smart Cache</string>
+        <string name="smart_cache_notification_title">Refreshing Smart Cache</string>
+        <string name="smart_cache_notification_cancel">Cancel</string>
     <string name="settings_misc">Miscellaneous</string>
         // Download
     <string name="misc_download_template">Download Template</string>

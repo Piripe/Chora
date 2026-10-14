@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.screens.settings
 
+import android.text.format.Formatter
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,15 +38,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
+import com.craftworks.music.managers.statusText
+import com.craftworks.music.ui.elements.dialogs.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
+import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
@@ -54,13 +60,19 @@ import kotlin.math.roundToInt
     ExperimentalMaterial3Api::class
 )
 @Composable
-fun S_PlaybackScreen(navHostController: NavHostController = rememberNavController()) {
+fun S_PlaybackScreen(
+    navHostController: NavHostController = rememberNavController(),
+    smartCacheViewModel: SmartCacheViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
 
     var showWifiTranscodingDialog by remember { mutableStateOf(false) }
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
 
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
+    var showSmartCacheSizeDialog by remember { mutableStateOf(false) }
+
+    val smartCacheMaxSizeGb by smartCacheViewModel.maxSizeGb.collectAsStateWithLifecycle()
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
@@ -187,6 +199,19 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
                             }
                         }
                     )
+
+                    val trackOfflineScrobbles by smartCacheViewModel.trackOfflineScrobbles.collectAsStateWithLifecycle()
+                    val pendingScrobbles by smartCacheViewModel.pendingScrobbles.collectAsStateWithLifecycle()
+
+                    SettingsSwitch(
+                        selected = trackOfflineScrobbles,
+                        settingsName = if (pendingScrobbles > 0)
+                            stringResource(R.string.playback_track_offline_scrobbles_pending, pendingScrobbles)
+                        else
+                            stringResource(R.string.playback_track_offline_scrobbles),
+                        settingsIcon = ImageVector.vectorResource(R.drawable.s_p_scrobble),
+                        toggleEvent = { smartCacheViewModel.setTrackOfflineScrobbles(!trackOfflineScrobbles) }
+                    )
                 }
 
                 // Pre-fetching
@@ -212,6 +237,47 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
                         }
                     )
                 }
+
+                // Smart cache
+                Column(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val smartCacheState by smartCacheViewModel.state.collectAsStateWithLifecycle()
+                    val smartCacheSupported by smartCacheViewModel.isSupported.collectAsStateWithLifecycle()
+                    val isOffline by smartCacheViewModel.isOffline.collectAsStateWithLifecycle()
+
+                    SettingsDialogButton(
+                        settingsName = stringResource(R.string.smart_cache_size),
+                        settingsSubtitle = if (smartCacheMaxSizeGb > 0)
+                            stringResource(
+                                R.string.smart_cache_usage,
+                                Formatter.formatShortFileSize(context, smartCacheState.usedBytes),
+                                smartCacheSizeLabel(smartCacheMaxSizeGb),
+                                smartCacheState.songCount
+                            )
+                        else
+                            smartCacheSizeLabel(0),
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_storage_24),
+                        toggleEvent = { showSmartCacheSizeDialog = true }
+                    )
+
+                    SettingsDialogButton(
+                        settingsName = stringResource(R.string.smart_cache_refresh),
+                        settingsSubtitle = when {
+                            smartCacheState.isRunning -> stringResource(
+                                R.string.smart_cache_tap_to_cancel,
+                                smartCacheState.statusText(context.resources)
+                            )
+                            !smartCacheSupported -> stringResource(R.string.smart_cache_error_unsupported)
+                            else -> smartCacheState.statusText(context.resources)
+                        },
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
+                        enabled = smartCacheState.isRunning ||
+                                (smartCacheMaxSizeGb > 0 && smartCacheSupported && !isOffline),
+                        toggleEvent = { smartCacheViewModel.toggleRefresh() }
+                    )
+                }
             }
         }
 
@@ -224,5 +290,10 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
         if (showTranscodingFormatDialog) TranscodingFormatDialog(setShowDialog = {
             showTranscodingFormatDialog = it
         })
+        if (showSmartCacheSizeDialog) SmartCacheSizeDialog(
+            setShowDialog = { showSmartCacheSizeDialog = it },
+            selectedSizeGb = smartCacheMaxSizeGb,
+            onSizeSelected = smartCacheViewModel::setMaxSizeGb
+        )
     }
 }

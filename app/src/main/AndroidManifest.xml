@@ -13,6 +13,8 @@
     <!-- Android Auto -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Smart cache refresh -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <uses-feature
         android:name="android.hardware.wifi"
@@ -74,6 +76,12 @@
                 <category android:name="android.intent.category.APP_MUSIC" />
             </intent-filter>
         </service>
+
+        <!-- Smart cache refresh -->
+        <service
+            android:name=".player.SmartCacheService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <!-- Playback Resumption Button Receiver -->
         <receiver android:name="androidx.media3.session.MediaButtonReceiver"

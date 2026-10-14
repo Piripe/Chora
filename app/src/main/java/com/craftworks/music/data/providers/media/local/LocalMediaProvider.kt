@@ -496,7 +496,8 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         submission: Boolean,
         albumId: String?,
         event: ScrobbleEvent?,
-        position: Int?
+        position: Int?,
+        time: Long?
     ) {
         Log.d(TAG, "Not scrobbling on local media $id")
     }

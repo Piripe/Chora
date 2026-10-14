@@ -15,6 +15,9 @@ import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
+import com.craftworks.music.managers.OfflineManager.Companion.requiresNetwork
+import com.craftworks.music.managers.OfflineScrobbleManager
+import com.craftworks.music.managers.SmartCacheManager
 import com.craftworks.music.utils.StringUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.coroutineScope
@@ -25,7 +28,9 @@ import javax.inject.Singleton
 class SongRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val offlineManager: OfflineManager,
-    private val libraryCache: LibraryCache
+    private val libraryCache: LibraryCache,
+    private val offlineScrobbleManager: OfflineScrobbleManager,
+    private val smartCacheManager: SmartCacheManager
 ) {
 
     suspend fun getSongs(query: MediaQuery.SongListQuery): List<MediaItem> = coroutineScope {
@@ -62,7 +67,12 @@ class SongRepository @Inject constructor(
     }
 
     suspend fun scrobbleSong(songId: String, position: Int, playbackRate: Float, event: ScrobbleEvent?, submission: Boolean) {
-        offlineManager.runOrDefault(Unit) {
+        val provider = MediaProviderManager.currentProvider.value ?: return
+        val tracked = submission && provider.requiresNetwork()
+        // The smart cache downloads the songs played the most in the app.
+        if (tracked) smartCacheManager.recordPlay(provider.id, songId)
+
+        val sent = offlineManager.runOrDefault(false, provider) {
             it.scrobble(
                 id = songId,
                 position = position,
@@ -70,7 +80,12 @@ class SongRepository @Inject constructor(
                 event = event,
                 submission = submission
             )
+            true
         }
+        if (!tracked) return
+
+        if (sent) offlineScrobbleManager.flushAsync()
+        else offlineScrobbleManager.onScrobbleFailed(provider.id, songId, playedAt = System.currentTimeMillis() - position)
     }
 
     fun downloadSong(song: MediaMetadata, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {

@@ -96,7 +96,7 @@ interface SubsonicService {
     @GET("rest/scrobble.view")
     suspend fun scrobble(
         @Query("id") id: String,
-        @Query("time") time: Int? = 0,
+        @Query("time") time: Long? = null,
         @Query("submission") submission: Boolean? = true
     )
 

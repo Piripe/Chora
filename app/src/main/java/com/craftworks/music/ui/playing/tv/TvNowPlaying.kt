@@ -67,10 +67,8 @@ import androidx.tv.material3.IconButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.StandardCardContainer
 import androidx.tv.material3.Text
-import coil.compose.AsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.ui.playing.NowPlayingArtwork
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
@@ -194,14 +192,10 @@ fun TvNowPlaying(
                                     .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(metadata?.artworkUri)
-                                        .placeholderMemoryCacheKey(metadata?.id)
-                                        .diskCachePolicy(CachePolicy.DISABLED)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Album Cover Art",
+                                NowPlayingArtwork(
+                                    artworkUri = metadata?.artworkUri,
+                                    songId = metadata?.id,
+                                    crossfade = true,
                                     fallback = painterResource(R.drawable.placeholder),
                                     contentScale = ContentScale.FillWidth,
                                     modifier = Modifier

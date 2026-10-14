@@ -7,6 +7,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
+import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -55,5 +56,20 @@ fun TranscodingFormatDialog(setShowDialog: (Boolean) -> Unit) {
         onOptionSelected = { format ->
             scope.launch { manager.setTranscodingFormat(format) }
         }
+    )
+}
+@Composable
+fun SmartCacheSizeDialog(
+    setShowDialog: (Boolean) -> Unit,
+    selectedSizeGb: Int,
+    onSizeSelected: (Int) -> Unit
+) {
+    GenericListDialog(
+        setShowDialog = setShowDialog,
+        titleRes = R.string.smart_cache_size,
+        options = PlaybackSettingsManager.SMART_CACHE_SIZES_GB,
+        selectedOption = selectedSizeGb,
+        label = { smartCacheSizeLabel(it) },
+        onOptionSelected = onSizeSelected
     )
 }

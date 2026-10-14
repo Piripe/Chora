@@ -56,6 +56,7 @@ import com.craftworks.music.data.repository.RadioRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
+import com.craftworks.music.managers.SmartCacheManager
 import com.craftworks.music.managers.TranscodeManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
@@ -80,14 +81,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import okhttp3.OkHttpClient
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import javax.inject.Inject
-import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.seconds
 
@@ -115,6 +109,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     @Inject lateinit var playbackSettingsManager: PlaybackSettingsManager
     @Inject lateinit var transcodeManager: TranscodeManager
     @Inject lateinit var offlineManager: OfflineManager
+    @Inject lateinit var smartCacheManager: SmartCacheManager
 
     @Inject lateinit var albumRepository: AlbumRepository
     @Inject lateinit var artistRepository: ArtistRepository
@@ -261,24 +256,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             }
         }
 
-        val trustAllCerts = arrayOf<TrustManager>(
-            object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            }
-        )
-
-        val sslContext = SSLContext.getInstance("SSL").apply {
-            init(null, trustAllCerts, SecureRandom())
-        }
-
-        val okHttpClient = OkHttpClient.Builder()
-            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier(HostnameVerifier { _, _ -> true })
-            .followRedirects(true)
-            .followSslRedirects(true)
-            .build()
+        val okHttpClient = createStreamingHttpClient()
 
         val okHttpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
 
@@ -286,7 +264,10 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             okHttpClient,
             currentVariant = ::currentStreamVariant,
             streamUrl = { uri, variant -> getStreamUrl(uri, variant) },
-            isOffline = { offlineManager.isOffline.value }
+            isOffline = { offlineManager.isOffline.value },
+            onPrefetched = { uri, variant, entry ->
+                smartCacheManager.offerPrefetchedTrack(uri, variant, entry.length, entry::writeTo)
+            }
         ).also { it.start(serviceIOScope) }
 
         var seekPosMs: Long? = null
@@ -315,6 +296,11 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             seekPosMs = null
         }
 
+        // Tracks stored on disk by the smart cache are played before anything else.
+        val smartCacheDataSourceFactory = SmartCacheDataSource.Factory(prefetchDataSourceFactory, smartCacheManager) {
+            seekPosMs = null
+        }
+
         val audioOffloadPreferences =
             TrackSelectionParameters.AudioOffloadPreferences.Builder()
                 .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
@@ -322,7 +308,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
 
         player = ExoPlayer.Builder(this)
             .setSeekParameters(SeekParameters.EXACT)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(prefetchDataSourceFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(smartCacheDataSourceFactory))
             .setWakeMode(
                 if (MediaProviderManager.currentProvider.value?.featureFlags?.contains(
                         ProviderFeature.OFFLINE_PLAYBACK
@@ -516,7 +502,8 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             return
         }
 
-        fun MediaItem.toPrefetchItem() = localConfiguration?.uri?.takeIf { it.scheme == "media" }?.let { uri ->
+        // Tracks in the smart cache are already on disk.
+        fun MediaItem.toPrefetchItem() = localConfiguration?.uri?.takeIf { it.scheme == "media" && !smartCacheManager.isCached(it) }?.let { uri ->
             PrefetchItem(uri, mediaMetadata.artworkUri?.toString()?.takeIf { it.startsWith("http") })
         }
 

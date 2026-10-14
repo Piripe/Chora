@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
@@ -45,6 +46,8 @@ class TrackPrefetcher(
     private val currentVariant: () -> StreamVariant,
     private val streamUrl: (uri: Uri, variant: StreamVariant) -> String,
     private val isOffline: () -> Boolean,
+    /** Called once a track is fully downloaded, e.g. to keep it in the smart cache. */
+    private val onPrefetched: (uri: Uri, variant: StreamVariant, entry: Entry) -> Unit = { _, _, _ -> },
 ) {
     /** A fully downloaded track, stored in fixed-size chunks to avoid huge contiguous allocations. */
     class Entry(private val chunks: List<ByteArray>, val length: Long) {
@@ -54,6 +57,15 @@ class TrackPrefetcher(
             val count = min(min(length.toLong(), this.length - position), (CHUNK_SIZE - inChunk).toLong()).toInt()
             System.arraycopy(chunk, inChunk, target, offset, count)
             return count
+        }
+
+        fun writeTo(output: OutputStream) {
+            var remaining = length
+            for (chunk in chunks) {
+                val count = min(chunk.size.toLong(), remaining).toInt()
+                output.write(chunk, 0, count)
+                remaining -= count
+            }
         }
     }
 
@@ -271,6 +283,7 @@ class TrackPrefetcher(
                 }
                 item.artworkUrl?.let { fetchArtwork(it, entry) }
                 Log.d(TAG, "Prefetched $uri ($length bytes, ${cachedBytes.get()} bytes cached)")
+                onPrefetched(uri, variant, entry)
                 return DownloadResult.OK
             }
         } catch (e: Exception) {
@@ -329,20 +342,20 @@ class TrackPrefetcher(
         private const val CHUNK_SIZE = 256 * 1024
 
         private fun key(uri: Uri, variant: StreamVariant) = "$uri|${variant.bitrate}|${variant.format}"
-
-        /**
-         * Identifies a cover regardless of the requested size and of the auth salt/token,
-         * so every screen showing it (now playing, queue...) can use the cached one.
-         */
-        private fun artworkKey(url: String): String =
-            url.toHttpUrlOrNull()?.newBuilder()
-                ?.removeAllQueryParameters("size")
-                ?.removeAllQueryParameters("t")
-                ?.removeAllQueryParameters("s")
-                ?.build()?.toString()
-                ?: url
     }
 }
+
+/**
+ * Identifies a cover regardless of the requested size and of the auth salt/token,
+ * so every screen showing it (now playing, queue...) can use the cached one.
+ */
+fun artworkKey(url: String): String =
+    url.toHttpUrlOrNull()?.newBuilder()
+        ?.removeAllQueryParameters("size")
+        ?.removeAllQueryParameters("t")
+        ?.removeAllQueryParameters("s")
+        ?.build()?.toString()
+        ?: url
 
 /** Serves tracks from [TrackPrefetcher] when they are cached, and from [upstream] otherwise. */
 @UnstableApi

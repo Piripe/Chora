@@ -5,5 +5,12 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
+        <!-- The smart cache can be huge and is downloaded again on refresh. -->
+        <exclude domain="file" path="smart_cache/"/>
+        <exclude domain="database" path="smart_cache.db"/>
     </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="smart_cache/"/>
+        <exclude domain="database" path="smart_cache.db"/>
+    </device-transfer>
 </data-extraction-rules>

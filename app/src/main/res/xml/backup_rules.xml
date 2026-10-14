@@ -6,6 +6,9 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
+    <!-- The smart cache can be huge and is downloaded again on refresh. -->
+    <exclude domain="file" path="smart_cache/"/>
+    <exclude domain="database" path="smart_cache.db"/>
     <!--
    <include domain="sharedpref" path="."/>
    <exclude domain="sharedpref" path="device.xml"/>

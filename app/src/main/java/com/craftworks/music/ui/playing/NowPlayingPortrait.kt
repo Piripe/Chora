@@ -73,9 +73,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import coil.compose.SubcomposeAsyncImage
-import coil.request.CachePolicy
-import coil.request.ImageRequest
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.artists
@@ -248,15 +245,10 @@ fun NowPlayingPortrait(
                                 ),
                                 label = "Crossfade between albums"
                             ) { artworkUri ->
-                                SubcomposeAsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(artworkUri)
-                                        .placeholderMemoryCacheKey(metadata?.id)
-                                        .diskCachePolicy(CachePolicy.DISABLED)
-                                        .build(),
-                                    contentDescription = "Album Cover Art",
+                                NowPlayingArtwork(
+                                    artworkUri = artworkUri,
+                                    songId = metadata?.id,
                                     contentScale = ContentScale.Crop,
-                                    alignment = Alignment.Center,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(horizontal = 24.dp)

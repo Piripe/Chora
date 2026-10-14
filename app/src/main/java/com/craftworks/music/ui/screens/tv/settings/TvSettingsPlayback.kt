@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.screens.tv.settings
 
+import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,20 +28,27 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
+import com.craftworks.music.managers.statusText
+import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
+import com.craftworks.music.ui.elements.dialogs.tv.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingFormatDialog
+import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
 @Preview(device = "id:tv_1080p", showSystemUi = true, showBackground = true)
-fun TvS_PlaybackScreen() {
+fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel()) {
     var showWifiTranscodingDialog by remember { mutableStateOf(false) }
+    var showSmartCacheSizeDialog by remember { mutableStateOf(false) }
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
 
@@ -55,6 +63,13 @@ fun TvS_PlaybackScreen() {
             transcodingBitrateData != "No Transcoding" || transcodingBitrateWifi != "No Transcoding"
         }
     }
+
+    val trackOfflineScrobbles by smartCacheViewModel.trackOfflineScrobbles.collectAsStateWithLifecycle()
+    val pendingScrobbles by smartCacheViewModel.pendingScrobbles.collectAsStateWithLifecycle()
+    val smartCacheState by smartCacheViewModel.state.collectAsStateWithLifecycle()
+    val smartCacheMaxSizeGb by smartCacheViewModel.maxSizeGb.collectAsStateWithLifecycle()
+    val smartCacheSupported by smartCacheViewModel.isSupported.collectAsStateWithLifecycle()
+    val isOffline by smartCacheViewModel.isOffline.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -143,6 +158,18 @@ fun TvS_PlaybackScreen() {
         }
 
         item {
+            SettingsSwitchItem(
+                title = if (pendingScrobbles > 0)
+                    stringResource(R.string.playback_track_offline_scrobbles_pending, pendingScrobbles)
+                else
+                    stringResource(R.string.playback_track_offline_scrobbles),
+                icon = ImageVector.vectorResource(R.drawable.s_p_scrobble),
+                checked = trackOfflineScrobbles,
+                onCheckedChange = { smartCacheViewModel.setTrackOfflineScrobbles(it) }
+            )
+        }
+
+        item {
             val prefetchMinutes by PlaybackSettingsManager(context).prefetchMinutesFlow.collectAsState(5)
 
             Surface(
@@ -197,8 +224,48 @@ fun TvS_PlaybackScreen() {
                 }
             }
         }
+
+        item {
+            SettingsButtonItem(
+                title = stringResource(R.string.smart_cache_size),
+                subtitle = if (smartCacheMaxSizeGb > 0)
+                    stringResource(
+                        R.string.smart_cache_usage,
+                        Formatter.formatShortFileSize(context, smartCacheState.usedBytes),
+                        smartCacheSizeLabel(smartCacheMaxSizeGb),
+                        smartCacheState.songCount
+                    )
+                else
+                    smartCacheSizeLabel(0),
+                icon = ImageVector.vectorResource(R.drawable.rounded_storage_24),
+                onClick = { showSmartCacheSizeDialog = true }
+            )
+        }
+
+        item {
+            SettingsButtonItem(
+                title = stringResource(R.string.smart_cache_refresh),
+                subtitle = when {
+                    smartCacheState.isRunning -> stringResource(
+                        R.string.smart_cache_tap_to_cancel,
+                        smartCacheState.statusText(context.resources)
+                    )
+                    !smartCacheSupported -> stringResource(R.string.smart_cache_error_unsupported)
+                    else -> smartCacheState.statusText(context.resources)
+                },
+                icon = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
+                enabled = smartCacheState.isRunning ||
+                        (smartCacheMaxSizeGb > 0 && smartCacheSupported && !isOffline),
+                onClick = { smartCacheViewModel.toggleRefresh() }
+            )
+        }
     }
 
+    if (showSmartCacheSizeDialog) SmartCacheSizeDialog(
+        setShowDialog = { showSmartCacheSizeDialog = it },
+        selectedSizeGb = smartCacheMaxSizeGb,
+        onSizeSelected = smartCacheViewModel::setMaxSizeGb
+    )
     if (showWifiTranscodingDialog) TranscodingBitrateDialog(setShowDialog = {
         showWifiTranscodingDialog = it
     }, true)
