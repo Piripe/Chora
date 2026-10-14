@@ -55,7 +55,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
-import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
@@ -168,9 +167,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 Box {
                     IconButton(
                         onClick = {
-                            navHostController.navigate(Screen.Settings) {
-                                launchSingleTop = true
-                            }
+                            navHostController.popBackStack()
                         },
                         modifier = Modifier
                             .size(56.dp, 70.dp)

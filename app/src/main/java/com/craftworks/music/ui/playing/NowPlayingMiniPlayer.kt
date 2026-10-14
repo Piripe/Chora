@@ -45,6 +45,9 @@ import coil.request.ImageRequest
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
 
+/** Radius of the top corners of the now playing sheet, which holds the mini player. */
+val MiniPlayerCornerRadius = 12.dp
+
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview

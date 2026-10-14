@@ -62,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
@@ -116,6 +117,7 @@ import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.OfflineBannerHost
 import com.craftworks.music.ui.elements.dialogs.tv.OnboardingDialog
 import com.craftworks.music.ui.playing.NowPlayingContent
+import com.craftworks.music.ui.playing.MiniPlayerCornerRadius
 import com.craftworks.music.ui.playing.NowPlayingMiniPlayer
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.theme.MusicPlayerTheme
@@ -247,19 +249,21 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize()
                         ) { paddingValues ->
                             if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
+                                val miniPlayerShape = RoundedCornerShape(MiniPlayerCornerRadius, MiniPlayerCornerRadius, 0.dp, 0.dp)
                                 BottomSheetScaffold(
                                     sheetContainerColor = Color.Transparent,
                                     containerColor = Color.Transparent,
                                     sheetPeekHeight = peekHeight + 80.dp + WindowInsets.navigationBars.asPaddingValues()
                                         .calculateBottomPadding(),
                                     //sheetShadowElevation = 6.dp,
-                                    sheetShape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+                                    sheetShape = miniPlayerShape,
                                     sheetDragHandle = { },
                                     scaffoldState = scaffoldState,
                                     sheetContent = {
                                         val coroutineScope = rememberCoroutineScope()
 
-                                        Box {
+                                        // Nothing in the sheet draws outside its rounded corners.
+                                        Box(Modifier.clip(miniPlayerShape)) {
                                             NowPlayingMiniPlayer(
                                                 scaffoldState = scaffoldState,
                                                 metadata = metadata,
@@ -321,9 +325,12 @@ class MainActivity : ComponentActivity() {
                                             }
                                         }
                                     }) {
+                                    // The screens go on under the rounded corners of the mini player, so their
+                                    // background shows there rather than the window background.
+                                    val miniPlayerOverlap = MiniPlayerCornerRadius * (peekHeight / 72.dp)
                                     SetupNavGraph(
                                         navController,
-                                        peekHeight + paddingValues.calculateBottomPadding(),
+                                        peekHeight + paddingValues.calculateBottomPadding() - miniPlayerOverlap,
                                         mediaController
                                     )
                                 }
