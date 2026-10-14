@@ -1,6 +1,7 @@
 package com.craftworks.music.data.repository
 
 import androidx.media3.common.MediaItem
+import com.craftworks.music.data.cache.LibraryCache
 import com.craftworks.music.data.model.AlbumArtistDetailResponse
 import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.AlbumListSort
@@ -8,33 +9,61 @@ import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.OfflineManager
 import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ArtistRepository @Inject constructor() {
+class ArtistRepository @Inject constructor(
+    private val offlineManager: OfflineManager,
+    private val libraryCache: LibraryCache
+) {
 
     suspend fun getArtists(
         query: MediaQuery.AlbumArtistListQuery
     ): List<MediaModel.Artist> = coroutineScope {
-        MediaProviderManager.currentProvider.value?.getAlbumArtistList(query) ?: listOf()
+        offlineManager.fetchOrCache(
+            online = { it.getAlbumArtistList(query) },
+            onSuccess = { providerId, artists -> libraryCache.putArtists(providerId, artists) },
+            offline = { providerId ->
+                val naturalOrder = MediaProviderManager.currentProvider.value?.supportAlbumArtistSortOrder == false
+                libraryCache.getArtists(providerId, query, naturalOrder)
+            }
+        ) ?: listOf()
     }
 
     suspend fun getArtistAlbums(artistId: String): List<MediaItem> = coroutineScope {
-        MediaProviderManager.currentProvider.value?.getAlbumList(MediaQuery.AlbumListQuery(
-            AlbumListSort.NAME,
-            SortOrder.ASC,
-            startIndex = 0,
-            artistIds = listOf(artistId)
-        ))?.map { it.toMediaItem() } ?: listOf()
+        offlineManager.fetchOrCache(
+            online = {
+                it.getAlbumList(MediaQuery.AlbumListQuery(
+                    AlbumListSort.NAME,
+                    SortOrder.ASC,
+                    startIndex = 0,
+                    artistIds = listOf(artistId)
+                ))
+            },
+            onSuccess = { providerId, albums -> libraryCache.putArtistAlbums(providerId, artistId, albums) },
+            offline = { providerId -> libraryCache.getArtistAlbums(providerId, artistId) }
+        )?.map { it.toMediaItem() } ?: listOf()
     }
 
     suspend fun getArtistDetail(artistId: String): AlbumArtistDetailResponse? = coroutineScope {
-        MediaProviderManager.currentProvider.value?.getAlbumArtistDetail(artistId)
+        offlineManager.fetchOrCache(
+            online = { it.getAlbumArtistDetail(artistId) },
+            onSuccess = { providerId, detail ->
+                detail?.artist?.let { libraryCache.putArtists(providerId, listOf(it)) }
+                detail?.albums?.let { libraryCache.putArtistAlbums(providerId, artistId, it) }
+            },
+            offline = { providerId -> libraryCache.getArtistDetail(providerId, artistId) }
+        )
     }
 
     suspend fun getArtistInfo(artistId: String): AlbumArtistInfo? = coroutineScope {
-        MediaProviderManager.currentProvider.value?.getAlbumArtistInfo(artistId)
+        offlineManager.fetchOrCache(
+            online = { it.getAlbumArtistInfo(artistId) },
+            onSuccess = { providerId, info -> info?.let { libraryCache.putArtistInfo(providerId, artistId, it) } },
+            offline = { providerId -> libraryCache.getArtistInfo(providerId, artistId) }
+        )
     }
 }

@@ -109,9 +109,11 @@ import com.craftworks.music.data.BottomNavItem
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.rememberManagedMediaController
+import com.craftworks.music.ui.elements.OfflineBannerHost
 import com.craftworks.music.ui.elements.dialogs.tv.OnboardingDialog
 import com.craftworks.music.ui.playing.NowPlayingContent
 import com.craftworks.music.ui.playing.NowPlayingMiniPlayer
@@ -123,12 +125,16 @@ import com.gigamole.composefadingedges.content.scrollconfig.FadingEdgesScrollCon
 import com.gigamole.composefadingedges.verticalFadingEdges
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     lateinit var navController: NavHostController
+
+    @Inject
+    lateinit var offlineManager: OfflineManager
 
     @androidx.annotation.OptIn(UnstableApi::class)
     @OptIn(ExperimentalMaterial3Api::class)
@@ -206,124 +212,128 @@ class MainActivity : ComponentActivity() {
                 val isTv = LocalConfiguration.current.uiMode and
                         Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
 
-                if (isTv) {
-                    // Set background color to colorScheme.background
-                    window.decorView.setBackgroundColor(androidx.tv.material3.MaterialTheme.colorScheme.background.toArgb())
+                val isOffline by offlineManager.isOffline.collectAsStateWithLifecycle()
 
-                    SetupNavGraph(
-                        navController = navController,
-                        bottomPadding = 0.dp,
-                        mediaController = mediaController
-                    )
-                } else {
-                    // Set background color to colorScheme.background
-                    window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
+                OfflineBannerHost(isOffline = isOffline, isTv = isTv) {
+                    if (isTv) {
+                        // Set background color to colorScheme.background
+                        window.decorView.setBackgroundColor(androidx.tv.material3.MaterialTheme.colorScheme.background.toArgb())
 
-                    val backCallback = object : OnBackPressedCallback(false) {
-                        override fun handleOnBackPressed() {
-                            coroutineScope.launch {
-                                scaffoldState.bottomSheetState.partialExpand()
+                        SetupNavGraph(
+                            navController = navController,
+                            bottomPadding = 0.dp,
+                            mediaController = mediaController
+                        )
+                    } else {
+                        // Set background color to colorScheme.background
+                        window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
+
+                        val backCallback = object : OnBackPressedCallback(false) {
+                            override fun handleOnBackPressed() {
+                                coroutineScope.launch {
+                                    scaffoldState.bottomSheetState.partialExpand()
+                                }
                             }
                         }
-                    }
 
-                    onBackPressedDispatcher.addCallback(this, backCallback)
+                        onBackPressedDispatcher.addCallback(this, backCallback)
 
-                    Scaffold(
-                        bottomBar = {
-                            AnimatedBottomNavBar(navController, scaffoldState)
-                        },
-                        contentColor = MaterialTheme.colorScheme.onBackground,
-                        containerColor = Color.Transparent,
-                        modifier = Modifier.fillMaxSize()
-                    ) { paddingValues ->
-                        if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
-                            BottomSheetScaffold(
-                                sheetContainerColor = Color.Transparent,
-                                containerColor = Color.Transparent,
-                                sheetPeekHeight = peekHeight + 80.dp + WindowInsets.navigationBars.asPaddingValues()
-                                    .calculateBottomPadding(),
-                                //sheetShadowElevation = 6.dp,
-                                sheetShape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
-                                sheetDragHandle = { },
-                                scaffoldState = scaffoldState,
-                                sheetContent = {
-                                    val coroutineScope = rememberCoroutineScope()
+                        Scaffold(
+                            bottomBar = {
+                                AnimatedBottomNavBar(navController, scaffoldState)
+                            },
+                            contentColor = MaterialTheme.colorScheme.onBackground,
+                            containerColor = Color.Transparent,
+                            modifier = Modifier.fillMaxSize()
+                        ) { paddingValues ->
+                            if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
+                                BottomSheetScaffold(
+                                    sheetContainerColor = Color.Transparent,
+                                    containerColor = Color.Transparent,
+                                    sheetPeekHeight = peekHeight + 80.dp + WindowInsets.navigationBars.asPaddingValues()
+                                        .calculateBottomPadding(),
+                                    //sheetShadowElevation = 6.dp,
+                                    sheetShape = RoundedCornerShape(12.dp, 12.dp, 0.dp, 0.dp),
+                                    sheetDragHandle = { },
+                                    scaffoldState = scaffoldState,
+                                    sheetContent = {
+                                        val coroutineScope = rememberCoroutineScope()
 
-                                    Box {
-                                        NowPlayingMiniPlayer(
-                                            scaffoldState = scaffoldState,
-                                            metadata = metadata,
-                                            onClick = {
-                                                coroutineScope.launch {
-                                                    scaffoldState.bottomSheetState.expand()
+                                        Box {
+                                            NowPlayingMiniPlayer(
+                                                scaffoldState = scaffoldState,
+                                                metadata = metadata,
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        scaffoldState.bottomSheetState.expand()
+                                                    }
+                                                })
+
+                                            println("Recomposing sheetcontent")
+                                            NowPlayingContent(
+                                                mediaController = mediaController,
+                                                metadata = metadata,
+                                                navController,
+                                                onHide = {
+                                                    coroutineScope.launch {
+                                                        scaffoldState.bottomSheetState.partialExpand()
+                                                    }
                                                 }
-                                            })
+                                            )
+                                        }
 
-                                        println("Recomposing sheetcontent")
-                                        NowPlayingContent(
-                                            mediaController = mediaController,
-                                            metadata = metadata,
-                                            navController,
-                                            onHide = {
-                                                coroutineScope.launch {
-                                                    scaffoldState.bottomSheetState.partialExpand()
-                                                }
+                                        val currentView = LocalView.current
+                                        val disableScreenStandy by AppearanceSettingsManager(LocalContext.current).disableScreenStandby.collectAsStateWithLifecycle(true)
+                                        DisposableEffect(scaffoldState.bottomSheetState.targetValue) {
+                                            if (scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded) {
+                                                if (disableScreenStandy)
+                                                    currentView.keepScreenOn = true
+
+                                                backCallback.isEnabled  = true
+
+                                                /* Restore nav bars.
+                                                @Suppress("DEPRECATION")
+                                                currentView.systemUiVisibility =
+                                                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                                                            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                                                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                                                            View.SYSTEM_UI_FLAG_FULLSCREEN or
+                                                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                                */
+
+                                                Log.d("NOW-PLAYING", "KeepScreenOn: True")
+                                            } else {
+                                                currentView.keepScreenOn = false
+                                                backCallback.isEnabled = false
+
+                                                /* Restore nav bars.
+                                                @Suppress("DEPRECATION")
+                                                currentView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                                */
+                                                Log.d("NOW-PLAYING", "KeepScreenOn: False")
                                             }
-                                        )
-                                    }
 
-                                    val currentView = LocalView.current
-                                    val disableScreenStandy by AppearanceSettingsManager(LocalContext.current).disableScreenStandby.collectAsStateWithLifecycle(true)
-                                    DisposableEffect(scaffoldState.bottomSheetState.targetValue) {
-                                        if (scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded) {
-                                            if (disableScreenStandy)
-                                                currentView.keepScreenOn = true
-
-                                            backCallback.isEnabled  = true
-
-                                            /* Restore nav bars.
-                                            @Suppress("DEPRECATION")
-                                            currentView.systemUiVisibility =
-                                                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                                                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                                                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                                                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                                                        View.SYSTEM_UI_FLAG_FULLSCREEN or
-                                                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                                            */
-
-                                            Log.d("NOW-PLAYING", "KeepScreenOn: True")
-                                        } else {
-                                            currentView.keepScreenOn = false
-                                            backCallback.isEnabled = false
-
-                                            /* Restore nav bars.
-                                            @Suppress("DEPRECATION")
-                                            currentView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                            */
-                                            Log.d("NOW-PLAYING", "KeepScreenOn: False")
+                                            onDispose {
+                                                currentView.keepScreenOn = false
+                                                backCallback.isEnabled = false
+                                                Log.d("NOW-PLAYING", "KeepScreenOn: False")
+                                            }
                                         }
-
-                                        onDispose {
-                                            currentView.keepScreenOn = false
-                                            backCallback.isEnabled = false
-                                            Log.d("NOW-PLAYING", "KeepScreenOn: False")
-                                        }
-                                    }
-                                }) {
+                                    }) {
+                                    SetupNavGraph(
+                                        navController,
+                                        peekHeight + paddingValues.calculateBottomPadding(),
+                                        mediaController
+                                    )
+                                }
+                            } else {
                                 SetupNavGraph(
                                     navController,
-                                    peekHeight + paddingValues.calculateBottomPadding(),
+                                    0.dp,
                                     mediaController
                                 )
                             }
-                        } else {
-                            SetupNavGraph(
-                                navController,
-                                0.dp,
-                                mediaController
-                            )
                         }
                     }
                 }

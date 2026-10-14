@@ -13,6 +13,7 @@ import com.craftworks.music.data.providers.lyrics.binimum.BiniLyricsDataSource
 import com.craftworks.music.data.providers.lyrics.lrclib.LrclibDataSource
 import com.craftworks.music.data.providers.lyrics.netease.NeteaseDataSource
 import com.craftworks.music.data.providers.lyrics.unison.UnisonLyricsDataSource
+import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -39,7 +40,8 @@ class LyricsRepository @Inject constructor(
     val lrclibDataSource: LrclibDataSource,
     val biniLyricsDataSource: BiniLyricsDataSource,
     val unisonLyricsDataSource: UnisonLyricsDataSource,
-    val neteaseDataSource: NeteaseDataSource
+    val neteaseDataSource: NeteaseDataSource,
+    private val offlineManager: OfflineManager
 ) {
     private var lyricsFetchJob: Job? = null
 
@@ -61,7 +63,9 @@ class LyricsRepository @Inject constructor(
                     val results = providers.map {
                         async {
                             when (it.source) {
-                                LyricSource.MEDIA_PROVIDER -> metadata?.id?.let { metadata.getProvider()?.getLyrics(it) }?.firstOrNull()
+                                LyricSource.MEDIA_PROVIDER -> metadata?.id?.let { id ->
+                                    offlineManager.runOrDefault(listOf(), metadata.getProvider()) { it.getLyrics(id) }
+                                }?.firstOrNull()
                                 LyricSource.LRCLIB -> lrclibDataSource.getLyrics(metadata, ignoreCachedResponse)
                                 LyricSource.BINI_LYRICS -> biniLyricsDataSource.getLyrics(metadata, ignoreCachedResponse)
                                 LyricSource.UNISON -> unisonLyricsDataSource.getLyrics(metadata, ignoreCachedResponse)

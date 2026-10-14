@@ -1,8 +1,8 @@
 package com.craftworks.music.data.repository
 
-import android.util.Log
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.OfflineManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -20,7 +20,9 @@ import javax.inject.Singleton
  * reads [isStarred] with the item's own value as fallback.
  */
 @Singleton
-class StarredRepository @Inject constructor() {
+class StarredRepository @Inject constructor(
+    private val offlineManager: OfflineManager
+) {
     data class StarKey(val providerId: String?, val id: String, val type: LibraryType)
 
     private fun key(id: String, type: LibraryType) =
@@ -53,13 +55,9 @@ class StarredRepository @Inject constructor() {
         // Optimistic update so every screen reflects the change immediately
         _overrides.update { current -> current + keys.associateWith { starred } }
 
-        val success = try {
-            val provider = MediaProviderManager.currentProvider.value
-            if (starred) provider?.createFavorite(ids, type) ?: false
-            else provider?.deleteFavorite(ids, type) ?: false
-        } catch (e: Exception) {
-            Log.e("StarredRepository", "Failed to ${if (starred) "star" else "unstar"} $ids", e)
-            false
+        val success = offlineManager.runOrDefault(false) { provider ->
+            if (starred) provider.createFavorite(ids, type)
+            else provider.deleteFavorite(ids, type)
         }
 
         if (!success) {
