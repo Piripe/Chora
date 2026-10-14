@@ -43,6 +43,7 @@ import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.ui.elements.ArtistsGrid
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.TopBarWithSearch
+import com.craftworks.music.ui.elements.cardImageUrl
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
 
@@ -111,7 +112,7 @@ fun ArtistsScreen(
                                 navHostController.navigate(
                                     Screen.ArtistDetails(
                                         artistId = artist.id,
-                                        imageUri = artist.imageUrl
+                                        imageUri = artist.cardImageUrl()
                                     )
                                 ) {
                                     launchSingleTop = true
@@ -188,7 +189,7 @@ fun ArtistsScreen(
                         navHostController.navigate(
                             Screen.ArtistDetails(
                                 artistId = artist.id,
-                                imageUri = artist.imageUrl
+                                imageUri = artist.cardImageUrl()
                             )
                         ) {
                             launchSingleTop = true

@@ -55,6 +55,7 @@ class AppearanceSettingsManager @Inject constructor(
         private val LYRICS_WORD_BOUNCE = booleanPreferencesKey("lyrics_word_bounce")
         private val USE_REFRESH_ANIMATION = booleanPreferencesKey("use_refresh_animation")
         private val SHOW_TRACK_NUMBERS = booleanPreferencesKey("show_track_numbers")
+        private val DETAILS_DYNAMIC_COLORS = booleanPreferencesKey("details_dynamic_colors")
 
         private val OLED_PROTECTION_MODE = stringPreferencesKey("oled_protection")
         private val DISABLE_SCREEN_STANDBY = booleanPreferencesKey("disable_screen_standby")
@@ -239,6 +240,18 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[SHOW_TRACK_NUMBERS] = showTrackNumbers
+            }
+        }
+    }
+
+    val detailsDynamicColorsFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[DETAILS_DYNAMIC_COLORS] ?: false
+    }
+
+    suspend fun setDetailsDynamicColors(enabled: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[DETAILS_DYNAMIC_COLORS] = enabled
             }
         }
     }

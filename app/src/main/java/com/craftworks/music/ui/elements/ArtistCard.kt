@@ -33,6 +33,10 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 
+/** The image URL artist cards load, also passed to the artist details screen so it can reuse the cached thumbnail. */
+fun MediaModel.Artist.cardImageUrl(): String? =
+    imageUrl ?: imageId?.let { getProvider()?.getImageUrl(it, LibraryType.ALBUM_ARTIST, 300) }
+
 @Stable
 @Composable
 fun ArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
@@ -48,7 +52,7 @@ fun ArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
     ) {
         SubcomposeAsyncImage (
             model = ImageRequest.Builder(LocalContext.current)
-                .data(artist.imageUrl ?: artist.imageId?.let {artist.getProvider()?.getImageUrl(it, LibraryType.ALBUM_ARTIST, 300)})
+                .data(artist.cardImageUrl())
                 .crossfade(true)
                 .diskCacheKey(artist.id)
                 .diskCachePolicy(CachePolicy.ENABLED)

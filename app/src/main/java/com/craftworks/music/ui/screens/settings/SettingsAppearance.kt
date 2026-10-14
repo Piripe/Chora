@@ -506,6 +506,20 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                             }
                         }
                     )
+
+                    // Artwork colors in details screens
+                    val detailsDynamicColors =
+                        appearanceSettingsManager.detailsDynamicColorsFlow.collectAsState(false)
+                    SettingsSwitch(
+                        detailsDynamicColors.value,
+                        stringResource(R.string.appearance_details_dynamic_colors),
+                        ImageVector.vectorResource(R.drawable.s_a_palette),
+                        toggleEvent = {
+                            coroutineScope.launch {
+                                appearanceSettingsManager.setDetailsDynamicColors(!detailsDynamicColors.value)
+                            }
+                        }
+                    )
                 }
                 Column(
                     modifier = Modifier.clip(RoundedCornerShape(16.dp)),

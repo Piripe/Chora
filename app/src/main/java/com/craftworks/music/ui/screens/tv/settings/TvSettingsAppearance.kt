@@ -314,6 +314,21 @@ fun TvS_AppearanceScreen() {
                         }
                     }
                 )
+
+                // Artwork colors in details screens
+                val detailsDynamicColors by AppearanceSettingsManager(context).detailsDynamicColorsFlow.collectAsState(
+                    false
+                )
+                SettingsSwitchItem(
+                    title = stringResource(R.string.appearance_details_dynamic_colors),
+                    icon = ImageVector.vectorResource(R.drawable.s_a_palette),
+                    checked = detailsDynamicColors,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            AppearanceSettingsManager(context).setDetailsDynamicColors(it)
+                        }
+                    }
+                )
             }
         }
 

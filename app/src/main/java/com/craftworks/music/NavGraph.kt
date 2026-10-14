@@ -46,6 +46,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
+import com.craftworks.music.ui.elements.cardImageUrl
 import com.craftworks.music.ui.playing.NowPlayingContent
 import com.craftworks.music.ui.playing.NowPlayingViewModel
 import com.craftworks.music.ui.playing.dpToPx
@@ -76,6 +77,7 @@ import com.craftworks.music.ui.screens.tv.TvRadioScreen
 import com.craftworks.music.ui.screens.tv.TvSearchScreen
 import com.craftworks.music.ui.screens.tv.TvSettingScreen
 import com.craftworks.music.ui.screens.tv.TvSongsScreen
+import com.craftworks.music.ui.theme.ArtworkTheme
 import com.craftworks.music.ui.screens.tv.settings.TvS_AppearanceScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_PlaybackScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_ProviderScreen
@@ -214,20 +216,22 @@ fun SetupNavGraph(
                 composable<Screen.AlbumDetails> { backStackEntry ->
                     val albumId = backStackEntry.toRoute<Screen.AlbumDetails>().albumId
                     val imageUri = backStackEntry.toRoute<Screen.AlbumDetails>().imageUri
-                    if (isTv)
-                        TvAlbumDetails(
-                            albumId,
-                            imageUri.toUri(),
-                            mediaController,
-                            navController
-                        )
-                    else
-                        AlbumDetails(
-                            albumId,
-                            imageUri.toUri(),
-                            navController,
-                            mediaController,
-                        )
+                    ArtworkTheme(imageUri, albumId) {
+                        if (isTv)
+                            TvAlbumDetails(
+                                albumId,
+                                imageUri.toUri(),
+                                mediaController,
+                                navController
+                            )
+                        else
+                            AlbumDetails(
+                                albumId,
+                                imageUri.toUri(),
+                                navController,
+                                mediaController,
+                            )
+                    }
                 }
             }
             //Artist
@@ -255,10 +259,17 @@ fun SetupNavGraph(
 
                     val viewModel: ArtistsScreenViewModel = hiltViewModel(parentEntry)
 
-                    if (isTv)
-                        TvArtistDetailsScreen(artistId, imageUri, navController, mediaController, viewModel)
-                    else
-                        ArtistDetails(artistId, imageUri, navController, mediaController, viewModel)
+                    // Artist links (from songs and albums) don't know the artist image: use the one of the loaded artist.
+                    val selectedArtist by viewModel.selectedArtist.collectAsStateWithLifecycle()
+                    val artistImage = imageUri?.takeIf { it.isNotBlank() }
+                        ?: selectedArtist?.takeIf { it.id == artistId }?.cardImageUrl()
+
+                    ArtworkTheme(artistImage, artistId) {
+                        if (isTv)
+                            TvArtistDetailsScreen(artistId, imageUri, navController, mediaController, viewModel)
+                        else
+                            ArtistDetails(artistId, imageUri, navController, mediaController, viewModel)
+                    }
                 }
             }
 
@@ -287,10 +298,12 @@ fun SetupNavGraph(
 
                     val viewModel: PlaylistScreenViewModel = hiltViewModel(parentEntry)
 
-                    if (isTv)
-                        TvPlaylistDetails(playlistId, imageUri, navController, mediaController, viewModel)
-                    else
-                        PlaylistDetails(playlistId, imageUri, navController, mediaController, viewModel)
+                    ArtworkTheme(imageUri, playlistId) {
+                        if (isTv)
+                            TvPlaylistDetails(playlistId, imageUri, navController, mediaController, viewModel)
+                        else
+                            PlaylistDetails(playlistId, imageUri, navController, mediaController, viewModel)
+                    }
                 }
             }
 
