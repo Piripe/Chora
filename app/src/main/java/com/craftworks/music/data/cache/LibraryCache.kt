@@ -125,8 +125,15 @@ class LibraryCache @Inject constructor() {
 
     fun getArtistAlbums(providerId: String, artistId: String): List<MediaModel.Album> = withCache(providerId) {
         val knownIds = artistAlbums[artistId].orEmpty()
+        // Albums only known through their songs (smart cache, played songs) may lack their artists.
+        val songAlbumIds = songs.values
+            .filter { song -> song.albumArtists.ifEmpty { song.artists }.any { it.id == artistId } }
+            .mapTo(HashSet()) { it.albumId }
         albums.values
-            .filter { album -> album.id in knownIds || album.artists.any { it.id == artistId } }
+            .filter { album ->
+                album.id in knownIds || album.id in songAlbumIds || album.artists.any { it.id == artistId }
+                    || album.participants["albumartist"]?.any { it.id == artistId } == true
+            }
             .sortedBy { it.name.lowercase() }
     }
 

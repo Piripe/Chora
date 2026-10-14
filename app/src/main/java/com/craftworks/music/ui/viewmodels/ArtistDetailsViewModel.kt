@@ -73,7 +73,8 @@ class ArtistDetailsViewModel @Inject constructor(
 
                 val artistDetail = artistRepository.getArtistDetail(artistId)
 
-                _selectedArtist.value = artistDetail?.artist
+                // Offline, the artist may not be cached: keep the one shown while loading.
+                _selectedArtist.value = artistDetail?.artist ?: _selectedArtist.value
                 if (artistDetail?.albums.isNullOrEmpty()) {
                     _artistAlbums.value = artistRepository.getArtistAlbums(artistId)
                 } else {
@@ -82,8 +83,8 @@ class ArtistDetailsViewModel @Inject constructor(
 
                 val artistInfo = infoDeferred.await()
                 _selectedArtist.value = _selectedArtist.value?.copy(
-                    biography = artistInfo?.biography,
-                    similarArtists = artistInfo?.similarArtists ?: emptyList()
+                    biography = artistInfo?.biography ?: _selectedArtist.value?.biography,
+                    similarArtists = artistInfo?.similarArtists ?: _selectedArtist.value?.similarArtists ?: emptyList()
                 )
             }
             finally {
