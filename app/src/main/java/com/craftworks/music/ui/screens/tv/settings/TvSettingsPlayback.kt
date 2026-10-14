@@ -141,6 +141,62 @@ fun TvS_PlaybackScreen() {
                 }
             }
         }
+
+        item {
+            val prefetchMinutes by PlaybackSettingsManager(context).prefetchMinutesFlow.collectAsState(5)
+
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = if (prefetchMinutes > 0)
+                            stringResource(R.string.playback_prefetch_minutes, prefetchMinutes)
+                        else
+                            stringResource(R.string.playback_prefetch_off),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Slider(
+                        value = prefetchMinutes.toFloat(),
+                        onValueChange = {
+                            coroutineScope.launch {
+                                PlaybackSettingsManager(context).setPrefetchMinutes(it.roundToInt())
+                            }
+                        },
+                        valueRange = 0f..PlaybackSettingsManager.MAX_PREFETCH_MINUTES.toFloat(),
+                        steps = PlaybackSettingsManager.MAX_PREFETCH_MINUTES / 5 - 1,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onKeyEvent { keyEvent ->
+                                when (keyEvent.key) {
+                                    Key.DirectionRight -> {
+                                        coroutineScope.launch {
+                                            PlaybackSettingsManager(context).setPrefetchMinutes(prefetchMinutes + 5)
+                                        }
+                                        true
+                                    }
+
+                                    Key.DirectionLeft -> {
+                                        coroutineScope.launch {
+                                            PlaybackSettingsManager(context).setPrefetchMinutes(prefetchMinutes - 5)
+                                        }
+                                        true
+                                    }
+
+                                    else -> false
+                                }
+                            }
+                    )
+                }
+            }
+        }
     }
 
     if (showWifiTranscodingDialog) TranscodingBitrateDialog(setShowDialog = {

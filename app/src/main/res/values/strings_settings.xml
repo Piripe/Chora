@@ -59,6 +59,10 @@
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
+
+        // Pre-fetching
+        <string name="playback_prefetch_minutes">Pre-fetch upcoming tracks: %1$d min</string>
+        <string name="playback_prefetch_off">Pre-fetch upcoming tracks: Off</string>
     <string name="settings_misc">Miscellaneous</string>
         // Download
     <string name="misc_download_template">Download Template</string>

@@ -188,6 +188,30 @@ fun S_PlaybackScreen(navHostController: NavHostController = rememberNavControlle
                         }
                     )
                 }
+
+                // Pre-fetching
+                Column(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val prefetchMinutes by
+                        PlaybackSettingsManager(context).prefetchMinutesFlow.collectAsState(5)
+
+                    SettingsSlider(
+                        settingsName = if (prefetchMinutes > 0)
+                            stringResource(R.string.playback_prefetch_minutes, prefetchMinutes)
+                        else
+                            stringResource(R.string.playback_prefetch_off),
+                        value = prefetchMinutes.toFloat(),
+                        steps = PlaybackSettingsManager.MAX_PREFETCH_MINUTES / 5 - 1,
+                        minValue = 0f, maxValue = PlaybackSettingsManager.MAX_PREFETCH_MINUTES.toFloat(),
+                        onValueChange = {
+                            runBlocking {
+                                PlaybackSettingsManager(context).setPrefetchMinutes(it.roundToInt())
+                            }
+                        }
+                    )
+                }
             }
         }
 

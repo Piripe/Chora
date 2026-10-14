@@ -95,6 +95,7 @@ import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
 import kotlin.math.roundToInt
 
@@ -487,12 +488,20 @@ fun ReorderableCollectionItemScope.QueueItemContent(
                             SubcomposeAsyncImage(
                                 model = ImageRequest.Builder(context)
                                     .data(
-                                        item.mediaItem.mediaMetadata.getProvider()
-                                            ?.getImageUrl(
-                                                id = item.mediaItem.mediaMetadata.id ?: "",
-                                                itemType = LibraryType.SONG,
-                                                size = 128
-                                            )
+                                        // Same cover as now playing (so pre-fetched covers work offline), at a smaller size.
+                                        item.mediaItem.mediaMetadata.artworkUri?.toString()
+                                            ?.let { url ->
+                                                url.toHttpUrlOrNull()?.newBuilder()
+                                                    ?.setQueryParameter("size", "128")
+                                                    ?.build()?.toString()
+                                                    ?: url
+                                            }
+                                            ?: item.mediaItem.mediaMetadata.getProvider()
+                                                ?.getImageUrl(
+                                                    id = item.mediaItem.mediaMetadata.id ?: "",
+                                                    itemType = LibraryType.SONG,
+                                                    size = 128
+                                                )
                                     )
                                     .crossfade(true)
                                     .diskCacheKey(item.mediaItem.mediaMetadata.id)

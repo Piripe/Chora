@@ -117,8 +117,9 @@ class NowPlayingViewModel @Inject constructor (
             val extractedColors = palette.filterNotNull()
             _paletteColors.value = extractedColors
 
-            val averageLuminance = extractedColors.map { ColorUtils.calculateLuminance(it.toArgb()) }.average()
-            _isBackgroundDark.value = averageLuminance <= 0.5f
+            // Without colors (e.g. artwork unavailable offline), the plain background follows the system theme.
+            _isBackgroundDark.value = if (extractedColors.isEmpty()) isSystemDark
+                else extractedColors.map { ColorUtils.calculateLuminance(it.toArgb()) }.average() <= 0.5f
 
             _iconTextColor.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (_isBackgroundDark.value) dynamicDarkColorScheme(context).onBackground

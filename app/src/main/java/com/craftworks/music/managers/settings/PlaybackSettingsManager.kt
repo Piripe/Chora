@@ -26,6 +26,9 @@ class PlaybackSettingsManager @Inject constructor(
         private val AUTOPLAY_SONGS = booleanPreferencesKey("autoplay")
 
         private val SCROBBLE_PERCENT_KEY = intPreferencesKey("scrobble_percent")
+
+        private val PREFETCH_MINUTES_KEY = intPreferencesKey("prefetch_minutes")
+        const val MAX_PREFETCH_MINUTES = 60
     }
 
     val wifiTranscodingBitrateFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -84,6 +87,18 @@ class PlaybackSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[AUTOPLAY_SONGS] = autoPlay
+            }
+        }
+    }
+
+    val prefetchMinutesFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PREFETCH_MINUTES_KEY] ?: 5
+    }
+
+    suspend fun setPrefetchMinutes(minutes: Int) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[PREFETCH_MINUTES_KEY] = minutes.coerceIn(0, MAX_PREFETCH_MINUTES)
             }
         }
     }

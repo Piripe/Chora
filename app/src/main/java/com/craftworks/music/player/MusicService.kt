@@ -2,6 +2,7 @@ package com.craftworks.music.player
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -17,6 +18,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Rating
 import androidx.media3.common.StarRating
+import androidx.media3.common.Timeline
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
@@ -53,6 +55,7 @@ import com.craftworks.music.data.repository.PlaylistRepository
 import com.craftworks.music.data.repository.RadioRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.TranscodeManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.LocalDataSettingsManager
@@ -101,6 +104,9 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     var session: MediaLibrarySession? = null
 
     private var scrobbleJob: Job? = null
+
+    private lateinit var prefetcher: TrackPrefetcher
+    private var prefetchMinutes = 0
     private var sleepTimerJob: Job? = null
     private var _sleepTimerRemainingTime = MutableStateFlow(0)
     val sleepTimerRemainingTime: StateFlow<Int> = _sleepTimerRemainingTime.asStateFlow()
@@ -108,6 +114,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     @Inject lateinit var appearanceSettingsManager: AppearanceSettingsManager
     @Inject lateinit var playbackSettingsManager: PlaybackSettingsManager
     @Inject lateinit var transcodeManager: TranscodeManager
+    @Inject lateinit var offlineManager: OfflineManager
 
     @Inject lateinit var albumRepository: AlbumRepository
     @Inject lateinit var artistRepository: ArtistRepository
@@ -118,6 +125,9 @@ class ChoraMediaLibraryService : MediaLibraryService() {
 
     companion object {
         private var instance: ChoraMediaLibraryService? = null
+
+        // Used to estimate the queue length when a track has no duration.
+        private const val DEFAULT_TRACK_DURATION_MS = 4 * 60_000L
 
         fun getInstance(): ChoraMediaLibraryService? {
             return instance
@@ -263,14 +273,21 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             init(null, trustAllCerts, SecureRandom())
         }
 
-        val okHttpDataSourceFactory = OkHttpDataSource.Factory(
-            OkHttpClient.Builder()
-                .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-                .hostnameVerifier(HostnameVerifier { _, _ -> true })
-                .followRedirects(true)
-                .followSslRedirects(true)
-                .build()
-        )
+        val okHttpClient = OkHttpClient.Builder()
+            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier(HostnameVerifier { _, _ -> true })
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .build()
+
+        val okHttpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
+
+        prefetcher = TrackPrefetcher(
+            okHttpClient,
+            currentVariant = ::currentStreamVariant,
+            streamUrl = { uri, variant -> getStreamUrl(uri, variant) },
+            isOffline = { offlineManager.isOffline.value }
+        ).also { it.start(serviceIOScope) }
 
         var seekPosMs: Long? = null
         val resolvingDataSourceFactory = ResolvingDataSource.Factory(
@@ -283,29 +300,20 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                     if (scheme != "media")
                         return dataSpec
 
-                    val providerId = uri.authority ?: throw Exception("No provider for MediaItem")
-                    val songId = uri.lastPathSegment ?: throw Exception("No ID for MediaItem")
+                    val variant = currentStreamVariant()
+                    val offset = if (variant.bitrate != "No Transcoding") seekPosMs?.div(1000)?.toInt() else null
+                    if (offset != null) seekPosMs = null
 
-                    val provider = MediaProviderManager.getProvider(providerId)
-                    var actualStreamUrl = provider?.getStreamUrl(songId, false)
-                        ?: throw Exception("Can't get streamUrl for mediaitem $songId")
-
-                    val bitrate = runBlocking { transcodeManager.currentBitrateFlow.first() }
-                    if (bitrate != "No Transcoding") {
-                        val format = runBlocking { transcodeManager.currentFormatFlow.first() }
-
-                        if (seekPosMs != null) {
-                            actualStreamUrl = provider.getStreamUrl(songId, true, bitrate.toInt(), format, offset = seekPosMs!!.div(1000).toInt())
-                            seekPosMs = null
-                        }
-                        else
-                            actualStreamUrl = provider.getStreamUrl(songId, true, bitrate.toInt(), format)
-                    }
-
-                    return dataSpec.withUri(actualStreamUrl.toUri())
+                    return dataSpec.withUri(getStreamUrl(uri, variant, offset).toUri())
                 }
             }
         )
+
+        // Upcoming tracks pre-fetched in RAM are served before going to the network.
+        val prefetchDataSourceFactory = PrefetchDataSource.Factory(resolvingDataSourceFactory, prefetcher) {
+            // The whole file is available, so the transcoding offset hack must not apply to the next stream.
+            seekPosMs = null
+        }
 
         val audioOffloadPreferences =
             TrackSelectionParameters.AudioOffloadPreferences.Builder()
@@ -314,7 +322,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
 
         player = ExoPlayer.Builder(this)
             .setSeekParameters(SeekParameters.EXACT)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(resolvingDataSourceFactory))
+            .setMediaSourceFactory(DefaultMediaSourceFactory(prefetchDataSourceFactory))
             .setWakeMode(
                 if (MediaProviderManager.currentProvider.value?.featureFlags?.contains(
                         ProviderFeature.OFFLINE_PLAYBACK
@@ -360,6 +368,8 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                     songRepository.scrobbleSong(mediaId, 0, 1f, ScrobbleEvent.START, false)
                 }
 
+                updatePrefetchQueue()
+
                 /*
                 serviceMainScope.launch {
                     playbackSettingsManager.autoPlayFlow.collect {
@@ -368,6 +378,18 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                     }
                 }
                 */
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                updatePrefetchQueue()
+            }
+
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                updatePrefetchQueue()
+            }
+
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                updatePrefetchQueue()
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -445,7 +467,101 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 }
         }
 
+        serviceMainScope.launch {
+            playbackSettingsManager.prefetchMinutesFlow
+                .distinctUntilChanged()
+                .collect {
+                    prefetchMinutes = it
+                    updatePrefetchQueue()
+                }
+        }
+
+        // Tracks kept while offline are only dropped once back online.
+        serviceMainScope.launch {
+            offlineManager.isOffline.collect { updatePrefetchQueue() }
+        }
+
         Log.d("AA", "Initialized MediaLibraryService.")
+    }
+
+    private fun currentStreamVariant(): StreamVariant = runBlocking {
+        StreamVariant(transcodeManager.currentBitrateFlow.first(), transcodeManager.currentFormatFlow.first())
+    }
+
+    private fun getStreamUrl(uri: Uri, variant: StreamVariant, offsetSeconds: Int? = null): String {
+        val providerId = uri.authority ?: throw Exception("No provider for MediaItem")
+        val songId = uri.lastPathSegment ?: throw Exception("No ID for MediaItem")
+
+        val provider = MediaProviderManager.getProvider(providerId)
+            ?: throw Exception("Can't get streamUrl for mediaitem $songId")
+
+        return when {
+            variant.bitrate == "No Transcoding" -> provider.getStreamUrl(songId, false)
+            offsetSeconds != null -> provider.getStreamUrl(songId, true, variant.bitrate.toInt(), variant.format, offset = offsetSeconds)
+            else -> provider.getStreamUrl(songId, true, variant.bitrate.toInt(), variant.format)
+        }
+    }
+
+    /**
+     * Sends the queue to the prefetcher: the next [prefetchMinutes] minutes of tracks are downloaded,
+     * the current track and the previous [prefetchMinutes] / 2 minutes are kept. Main thread only.
+     */
+    private fun updatePrefetchQueue() {
+        if (!::prefetcher.isInitialized) return
+
+        val currentIndex = player.currentMediaItemIndex
+        val timeline = player.currentTimeline
+        if (prefetchMinutes <= 0 || timeline.isEmpty || currentIndex == C.INDEX_UNSET) {
+            prefetcher.submit(null, emptyList(), emptyList())
+            return
+        }
+
+        fun MediaItem.toPrefetchItem() = localConfiguration?.uri?.takeIf { it.scheme == "media" }?.let { uri ->
+            PrefetchItem(uri, mediaMetadata.artworkUri?.toString()?.takeIf { it.startsWith("http") })
+        }
+
+        // Repeat one would only ever return the current track.
+        val repeatMode = if (player.repeatMode == Player.REPEAT_MODE_ONE) Player.REPEAT_MODE_OFF else player.repeatMode
+        val shuffle = player.shuffleModeEnabled
+
+        // Walks the queue in play order from the current track until budgetMs of tracks are collected.
+        fun collect(budgetMs: Long, step: (Int) -> Int): List<PrefetchItem> {
+            val visited = mutableSetOf(currentIndex)
+            val items = mutableListOf<PrefetchItem>()
+            var totalMs = 0L
+            var index = currentIndex
+
+            while (totalMs < budgetMs) {
+                index = step(index)
+                if (index == C.INDEX_UNSET || !visited.add(index)) break
+
+                val item = player.getMediaItemAt(index)
+                val prefetchItem = item.toPrefetchItem() ?: continue
+                if (items.any { it.uri == prefetchItem.uri }) continue
+
+                items += prefetchItem
+                totalMs += item.mediaMetadata.durationMs?.takeIf { it > 0 } ?: DEFAULT_TRACK_DURATION_MS
+            }
+            return items
+        }
+
+        val budgetMs = prefetchMinutes * 60_000L
+        val upcoming = collect(budgetMs) { timeline.getNextWindowIndex(it, repeatMode, shuffle) }
+        val previous = collect(budgetMs / 2) { timeline.getPreviousWindowIndex(it, repeatMode, shuffle) }
+
+        prefetcher.submit(player.currentMediaItem?.toPrefetchItem(), upcoming, previous)
+    }
+
+    /** The cover of a pre-fetched track, so it can be shown while offline. */
+    fun getPrefetchedArtwork(url: String): ByteArray? =
+        if (::prefetcher.isInitialized) prefetcher.getArtwork(url) else null
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (::prefetcher.isInitialized && (level == TRIM_MEMORY_RUNNING_CRITICAL || level == TRIM_MEMORY_COMPLETE)) {
+            Log.d("PREFETCH", "Low memory, dropping pre-fetched tracks")
+            prefetcher.clear()
+        }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
@@ -748,6 +864,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         session?.release()
         scrobbleJob?.cancel()
         sleepTimerJob?.cancel()
+        if (::prefetcher.isInitialized) prefetcher.stop()
         instance = null
         super.onDestroy()
     }
