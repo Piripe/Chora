@@ -19,4 +19,5 @@
     // Misc
     <string name="label_separator">Separator</string>
     <string name="label_offline_mode">Offline mode</string>
+    <string name="label_back_online">Back online</string>
 </resources>
