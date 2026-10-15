@@ -23,6 +23,9 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import com.craftworks.music.ui.elements.RandomShapeRefreshIndicator
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -63,7 +66,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LyricsView(
     color: Color,
@@ -76,6 +79,7 @@ fun LyricsView(
 
     val loading by LyricsState.loading.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
+    val pullState = rememberPullToRefreshState()
 
     val appearanceSettingsManager = AppearanceSettingsManager(LocalContext.current)
 
@@ -347,6 +351,7 @@ fun LyricsView(
             }
         } else {
             PullToRefreshBox(
+                state = pullState,
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     if (mediaController?.currentMediaItem != null) {
@@ -357,6 +362,13 @@ fun LyricsView(
                             isRefreshing = false
                         }
                     }
+                },
+                indicator = {
+                    RandomShapeRefreshIndicator(
+                        state = pullState,
+                        isRefreshing = isRefreshing,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
                 },
                 modifier = if (isLandscape) {
                     Modifier

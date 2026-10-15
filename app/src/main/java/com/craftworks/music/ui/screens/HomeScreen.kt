@@ -38,6 +38,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.craftworks.music.ui.elements.RandomShapeRefreshIndicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -142,7 +143,14 @@ fun HomeScreen(
         modifier = Modifier,
         state = state,
         isRefreshing = isLoading,
-        onRefresh = onRefresh
+        onRefresh = onRefresh,
+        indicator = {
+            RandomShapeRefreshIndicator(
+                state = state,
+                isRefreshing = isLoading,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
