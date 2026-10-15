@@ -73,6 +73,7 @@ import com.craftworks.music.data.providers.media.subsonic.SubsonicProviderData
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -339,11 +340,13 @@ fun CreateMediaProviderDialog(
                             val description =
                                 if (passwordVisible) "Hide password" else "Show password"
 
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(id = image),
-                                    description
-                                )
+                            ActionTooltip(stringResource(if (passwordVisible) R.string.action_hide_password else R.string.action_show_password)) {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(id = image),
+                                        description
+                                    )
+                                }
                             }
                         },
                         isError = isError // TODO("Check URL error")

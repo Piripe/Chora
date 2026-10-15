@@ -93,6 +93,7 @@ import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.ui.elements.ActionButton
 import com.craftworks.music.ui.elements.ActionButtonType
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.getActionButtonIconText
 import kotlinx.coroutines.delay
 import kotlin.uuid.ExperimentalUuidApi
@@ -377,8 +378,10 @@ fun SongListActionButtonsDialog(
                 TopAppBar(
                     title = { Text(title) },
                     navigationIcon = {
-                        IconButton(onClick = onDismissRequest) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
+                        ActionTooltip(stringResource(R.string.action_close)) {
+                            IconButton(onClick = onDismissRequest) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
+                            }
                         }
                     },
                     actions = {
@@ -419,8 +422,10 @@ fun SongListActionButtonsDialog(
                                 }
                             } else {
                                 Box(modifier = Modifier.onGloballyPositioned { trashZoneCoords = it }) {
-                                    IconButton(onClick = { showAddButtonMenu = true }) {
-                                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add))
+                                    ActionTooltip(stringResource(R.string.action_add_button)) {
+                                        IconButton(onClick = { showAddButtonMenu = true }) {
+                                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add))
+                                        }
                                     }
                                     DropdownMenu(
                                         expanded = showAddButtonMenu,

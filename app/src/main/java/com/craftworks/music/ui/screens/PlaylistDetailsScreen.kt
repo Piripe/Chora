@@ -65,6 +65,7 @@ import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.ActionButtonType
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
@@ -190,15 +191,17 @@ fun PlaylistDetails(
                             .padding(horizontal = 24.dp)
                     ) {
                         // Back button
-                        FilledTonalIconButton(
-                            onClick = { navHostController.popBackStack() },
-                            modifier = Modifier
-                                .size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = "back"
-                            )
+                        ActionTooltip(stringResource(R.string.action_back)) {
+                            FilledTonalIconButton(
+                                onClick = { navHostController.popBackStack() },
+                                modifier = Modifier
+                                    .size(36.dp)
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.ArrowBack,
+                                    contentDescription = "back"
+                                )
+                            }
                         }
 
                         Spacer(Modifier.weight(1f))

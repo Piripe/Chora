@@ -49,6 +49,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,6 +62,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import com.craftworks.music.R
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
@@ -350,8 +352,10 @@ internal fun PlayPauseButton(player: Player, color: Color, modifier: Modifier = 
         if (state.showPlay) "play"
         else "pause"
 
-    IconButton(onClick = state::onClick, modifier = modifier.bounceClick(state.isEnabled), enabled = state.isEnabled) {
-        Icon(icon, contentDescription = contentDescription, modifier = modifier, tint = if (state.isEnabled) color else color.copy(0.5f))
+    ActionTooltip(stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)) {
+        IconButton(onClick = state::onClick, modifier = modifier.bounceClick(state.isEnabled), enabled = state.isEnabled) {
+            Icon(icon, contentDescription = contentDescription, modifier = modifier, tint = if (state.isEnabled) color else color.copy(0.5f))
+        }
     }
 //    ToggleButton(
 //        checked = state.showPlay,

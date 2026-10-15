@@ -104,6 +104,7 @@ import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.SortDialog
@@ -341,15 +342,17 @@ fun AdvancedPlayQueueContent(
                     PlayPauseButton(player, MaterialTheme.colorScheme.onSurfaceVariant, Modifier.size(40.dp))
                 }
 
-                IconButton(onClick = {
-                    showSortDialog = true
-                }, modifier = Modifier.size(40.dp).bounceClick() ) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                        contentDescription = stringResource(R.string.button_sort_by),
-                        modifier = Modifier.size(30.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                ActionTooltip(stringResource(R.string.button_sort_by)) {
+                    IconButton(onClick = {
+                        showSortDialog = true
+                    }, modifier = Modifier.size(40.dp).bounceClick() ) {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                            contentDescription = stringResource(R.string.button_sort_by),
+                            modifier = Modifier.size(30.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 Column(
@@ -385,26 +388,30 @@ fun AdvancedPlayQueueContent(
                     }
                 }
 
-                IconButton(onClick = {
-                    showAddToPlaylistDialog = true
-                }, modifier = Modifier.size(40.dp).bounceClick()) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.save_24px),
-                        contentDescription = stringResource(R.string.action_add_to_playlist),
-                        modifier = Modifier.size(30.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                ActionTooltip(stringResource(R.string.action_add_to_playlist)) {
+                    IconButton(onClick = {
+                        showAddToPlaylistDialog = true
+                    }, modifier = Modifier.size(40.dp).bounceClick()) {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.save_24px),
+                            contentDescription = stringResource(R.string.action_add_to_playlist),
+                            modifier = Modifier.size(30.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
-                IconButton(onClick = {
-                    showClearDialog = true
-                }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.delete_sweep_24px),
-                        contentDescription = stringResource(R.string.action_clear_queue),
-                        modifier = Modifier.size(30.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                ActionTooltip(stringResource(R.string.action_clear_queue)) {
+                    IconButton(onClick = {
+                        showClearDialog = true
+                    }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.delete_sweep_24px),
+                            contentDescription = stringResource(R.string.action_clear_queue),
+                            modifier = Modifier.size(30.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
@@ -674,18 +681,20 @@ private val QueueTopBarHeight = 48.dp
 
 @Composable
 private fun QueueTopBarButton(icon: Int, text: Int, enabled: Boolean = true, onClick: () -> Unit) {
-    IconButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.size(40.dp).bounceClick()
-    ) {
-        Icon(
-            ImageVector.vectorResource(icon),
-            contentDescription = stringResource(text),
-            modifier = Modifier.size(28.dp),
-            tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-        )
+    ActionTooltip(stringResource(text)) {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.size(40.dp).bounceClick()
+        ) {
+            Icon(
+                ImageVector.vectorResource(icon),
+                contentDescription = stringResource(text),
+                modifier = Modifier.size(28.dp),
+                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+            )
+        }
     }
 }
 

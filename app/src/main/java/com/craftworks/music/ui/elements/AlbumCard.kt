@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,7 @@ import androidx.media3.common.MediaMetadata
 import coil.compose.SubcomposeAsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import com.craftworks.music.R
 import com.craftworks.music.data.model.id
 
 @Stable
@@ -84,26 +86,30 @@ fun AlbumCard(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             )
 
-            IconButton(
-                onClick = {
-                    onPlay(album)
-                },
-                modifier = Modifier
-                    .padding(6.dp)
-                    .background(
-                        MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
-                        shape = CircleShape
-                    )
-                    .height(36.dp)
-                    .size(36.dp)
-                    .align(Alignment.BottomStart)
+            ActionTooltip(
+                text = stringResource(R.string.action_play_album),
+                modifier = Modifier.align(Alignment.BottomStart)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    contentDescription = "Play Album",
-                    modifier = Modifier.fillMaxSize()
-                )
+                IconButton(
+                    onClick = {
+                        onPlay(album)
+                    },
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .background(
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
+                            shape = CircleShape
+                        )
+                        .height(36.dp)
+                        .size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PlayArrow,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        contentDescription = "Play Album",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
 

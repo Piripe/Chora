@@ -62,4 +62,33 @@
 
     // Sort order
     <string name="button_toggle_sort_order">Toggle Sort Order</string>
+
+    // Tooltips (shown when long-pressing icon buttons)
+    <string name="action_back">Back</string>
+    <string name="action_close_search">Close Search</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_more_options">More Options</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_play_album">Play Album</string>
+    <string name="action_show_favorites_only">Show Favorites Only</string>
+    <string name="action_show_all">Show All</string>
+    <string name="action_sort_ascending">Sort Ascending</string>
+    <string name="action_sort_descending">Sort Descending</string>
+    <string name="action_rate_stars">Rate %1$d / 5</string>
+    <string name="action_delete_provider">Delete Provider</string>
+    <string name="action_edit_url">Edit URL</string>
+    <string name="action_show_password">Show Password</string>
+    <string name="action_hide_password">Hide Password</string>
+    <string name="action_add_button">Add Button</string>
+    <string name="action_remove_button">Remove Button</string>
+    <string name="action_shuffle_on">Turn On Shuffle</string>
+    <string name="action_shuffle_off">Turn Off Shuffle</string>
+    <string name="action_repeat_one">Repeat Current Song</string>
+    <string name="action_repeat_all">Repeat Queue</string>
+    <string name="action_repeat_off">Turn Off Repeat</string>
+    <string name="action_show_lyrics">Show Lyrics</string>
+    <string name="action_hide_lyrics">Hide Lyrics</string>
+    <string name="action_show_queue">Show Queue</string>
+    <string name="action_set_sleep_timer">Set Sleep Timer</string>
+    <string name="action_download_song">Download Song</string>
 </resources>

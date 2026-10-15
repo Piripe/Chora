@@ -20,10 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
+import com.craftworks.music.ui.elements.ActionTooltip
 
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
@@ -42,15 +44,17 @@ fun RatingDialog(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 for (star in 1..5) {
-                    IconButton(onClick = { selectedRating = star }) {
-                        Icon(
-                            imageVector = if (star <= selectedRating) Icons.Rounded.Star
-                            else ImageVector.vectorResource(R.drawable.rounded_star_outline_24),
-                            contentDescription = "Star $star",
-                            tint = if (star <= selectedRating) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(32.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_rate_stars, star)) {
+                        IconButton(onClick = { selectedRating = star }) {
+                            Icon(
+                                imageVector = if (star <= selectedRating) Icons.Rounded.Star
+                                else ImageVector.vectorResource(R.drawable.rounded_star_outline_24),
+                                contentDescription = "Star $star",
+                                tint = if (star <= selectedRating) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
                 }
             }

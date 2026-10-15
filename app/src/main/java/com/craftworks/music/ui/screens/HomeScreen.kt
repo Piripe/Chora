@@ -78,6 +78,7 @@ import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.AlbumRow
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.playing.dpToPx
@@ -160,21 +161,23 @@ fun HomeScreen(
                             //.offset(x = if (showProviderLogo) (-84).dp else 0.dp),
                     )
                 }
-                IconButton(
-                    onClick = {
-                        navHostController.navigate(Screen.Settings) {
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }, modifier = Modifier
-                        .padding(end = 12.dp)
-                        .size(48.dp)
-                ) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.rounded_settings_24),
-                        contentDescription = "Settings",
-                        modifier = Modifier.size(32.dp)
-                    )
+                ActionTooltip(stringResource(R.string.action_open_settings)) {
+                    IconButton(
+                        onClick = {
+                            navHostController.navigate(Screen.Settings) {
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }, modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(48.dp)
+                    ) {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.rounded_settings_24),
+                            contentDescription = "Settings",
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
 

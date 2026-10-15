@@ -39,6 +39,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.ProviderCard
 import com.craftworks.music.ui.elements.dialogs.CreateMediaProviderDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
@@ -57,19 +58,21 @@ fun S_ProviderScreen(navHostController: NavHostController = rememberNavControlle
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_media_providers)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Previous Song",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = "Previous Song",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

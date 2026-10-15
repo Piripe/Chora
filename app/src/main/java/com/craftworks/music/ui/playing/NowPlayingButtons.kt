@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.media3.ui.compose.state.rememberRepeatButtonState
 import androidx.media3.ui.compose.state.rememberShuffleButtonState
 import com.craftworks.music.R
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.moveClick
 
@@ -49,6 +51,8 @@ internal data class ActionButtonState(
     val icon: ImageVector,
     val enabled: Boolean,
     val active: Boolean,
+    /** What a click does, shown when long-pressing the button. Defaults to the action label. */
+    val tooltip: String? = null,
 )
 
 /** Actions whose state is only shown by the button color (their icon doesn't change). */
@@ -75,7 +79,10 @@ internal fun rememberActionButtonState(
     return when (action) {
         NowPlayingAction.PLAY_PAUSE -> {
             val state = rememberPlayPauseButtonState(player)
-            ActionButtonState(nowPlayingActionIcon(action, !state.showPlay), state.isEnabled, !state.showPlay)
+            ActionButtonState(
+                nowPlayingActionIcon(action, !state.showPlay), state.isEnabled, !state.showPlay,
+                stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)
+            )
         }
         NowPlayingAction.PREVIOUS -> {
             val state = rememberPreviousButtonState(player)
@@ -87,7 +94,10 @@ internal fun rememberActionButtonState(
         }
         NowPlayingAction.SHUFFLE -> {
             val state = rememberShuffleButtonState(player)
-            ActionButtonState(nowPlayingActionIcon(action), state.isEnabled, state.shuffleOn)
+            ActionButtonState(
+                nowPlayingActionIcon(action), state.isEnabled, state.shuffleOn,
+                stringResource(if (state.shuffleOn) R.string.action_shuffle_off else R.string.action_shuffle_on)
+            )
         }
         NowPlayingAction.REPEAT -> {
             val state = rememberRepeatButtonState(player)
@@ -96,7 +106,15 @@ internal fun rememberActionButtonState(
                     ImageVector.vectorResource(R.drawable.rounded_repeat1_24)
                 else nowPlayingActionIcon(action),
                 enabled = state.isEnabled,
-                active = state.repeatModeState != Player.REPEAT_MODE_OFF
+                active = state.repeatModeState != Player.REPEAT_MODE_OFF,
+                // Same order as the repeat action: off, one, all.
+                tooltip = stringResource(
+                    when (state.repeatModeState) {
+                        Player.REPEAT_MODE_OFF -> R.string.action_repeat_one
+                        Player.REPEAT_MODE_ONE -> R.string.action_repeat_all
+                        else -> R.string.action_repeat_off
+                    }
+                )
             )
         }
         else -> staticActionButtonState(action, context, available)
@@ -116,7 +134,17 @@ private fun staticActionButtonState(
         NowPlayingAction.SLEEP_TIMER -> context.sleepTimerMinutes > 0
         else -> false
     }
-    return ActionButtonState(nowPlayingActionIcon(action, active), available, active)
+    val tooltip = when (action) {
+        NowPlayingAction.LYRICS -> stringResource(if (active) R.string.action_hide_lyrics else R.string.action_show_lyrics)
+        NowPlayingAction.FAVORITE ->
+            stringResource(if (active) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
+        NowPlayingAction.QUEUE -> stringResource(R.string.action_show_queue)
+        NowPlayingAction.SLEEP_TIMER -> stringResource(R.string.action_set_sleep_timer)
+        NowPlayingAction.DOWNLOAD -> stringResource(R.string.action_download_song)
+        NowPlayingAction.MENU -> stringResource(R.string.action_more_options)
+        else -> null
+    }
+    return ActionButtonState(nowPlayingActionIcon(action, active), available, active, tooltip)
 }
 
 /** The sleep timer badge, e.g. "15m" or "2h". */
@@ -159,31 +187,32 @@ fun NowPlayingActionButton(
         Modifier.moveClick(action == NowPlayingAction.NEXT, state.enabled)
     else Modifier
 
-    BadgedBox(
-        badge = {
-            if (action == NowPlayingAction.SLEEP_TIMER)
-                sleepTimerBadge(context.sleepTimerMinutes)?.let { Badge { Text(it) } }
-        },
-        modifier = modifier
-    ) {
-        IconButton(
-            onClick = { onAction(action) },
-            enabled = state.enabled,
-            modifier = Modifier
-                .size(iconSize + 16.dp)
-                .bounceClick(state.enabled)
-                .then(moveModifier),
-            colors = IconButtonDefaults.iconButtonColors(
-                contentColor = tint,
-                disabledContentColor = tint
-            )
+    ActionTooltip(state.tooltip ?: nowPlayingActionLabel(action), modifier = modifier) {
+        BadgedBox(
+            badge = {
+                if (action == NowPlayingAction.SLEEP_TIMER)
+                    sleepTimerBadge(context.sleepTimerMinutes)?.let { Badge { Text(it) } }
+            }
         ) {
-            Icon(
-                imageVector = state.icon,
-                contentDescription = nowPlayingActionLabel(action),
-                tint = tint,
-                modifier = Modifier.size(iconSize)
-            )
+            IconButton(
+                onClick = { onAction(action) },
+                enabled = state.enabled,
+                modifier = Modifier
+                    .size(iconSize + 16.dp)
+                    .bounceClick(state.enabled)
+                    .then(moveModifier),
+                colors = IconButtonDefaults.iconButtonColors(
+                    contentColor = tint,
+                    disabledContentColor = tint
+                )
+            ) {
+                Icon(
+                    imageVector = state.icon,
+                    contentDescription = nowPlayingActionLabel(action),
+                    tint = tint,
+                    modifier = Modifier.size(iconSize)
+                )
+            }
         }
     }
 }

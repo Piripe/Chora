@@ -42,6 +42,7 @@ import com.craftworks.music.data.model.SimpleFilterOption
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.managers.MediaProviderManager
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.ArtistsGrid
 import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.elements.TopBarWithSearch
@@ -132,13 +133,15 @@ fun ArtistsScreen(
                         Row {
                             if (currentProvider?.featureFlags?.contains(ProviderFeature.FAVORITES) ?: false) {
                                 Box {
-                                    IconButton(
-                                        onClick = { viewModel.setShowFavoritesOnly(!showFavoritesOnly) }
-                                    ) {
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(if (showFavoritesOnly) androidx.media3.session.R.drawable.media3_icon_heart_filled else androidx.media3.session.R.drawable.media3_icon_heart_unfilled),
-                                            contentDescription = stringResource(R.string.button_toggle_favorites),
-                                        )
+                                    ActionTooltip(stringResource(if (showFavoritesOnly) R.string.action_show_all else R.string.action_show_favorites_only)) {
+                                        IconButton(
+                                            onClick = { viewModel.setShowFavoritesOnly(!showFavoritesOnly) }
+                                        ) {
+                                            Icon(
+                                                imageVector = ImageVector.vectorResource(if (showFavoritesOnly) androidx.media3.session.R.drawable.media3_icon_heart_filled else androidx.media3.session.R.drawable.media3_icon_heart_unfilled),
+                                                contentDescription = stringResource(R.string.button_toggle_favorites),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -158,25 +161,29 @@ fun ArtistsScreen(
                             } else {
                                 if (currentProvider?.supportAlbumArtistSortOrder ?: false) {
                                     Box {
-                                        IconButton(
-                                            onClick = { viewModel.setOrder(sortOrder.invert()) }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(if (sortOrder == SortOrder.ASC) R.drawable.arrow_upward_24px else R.drawable.arrow_downward_24px),
-                                                contentDescription = stringResource(R.string.button_toggle_sort_order),
-                                            )
+                                        ActionTooltip(stringResource(if (sortOrder == SortOrder.ASC) R.string.action_sort_descending else R.string.action_sort_ascending)) {
+                                            IconButton(
+                                                onClick = { viewModel.setOrder(sortOrder.invert()) }
+                                            ) {
+                                                Icon(
+                                                    imageVector = ImageVector.vectorResource(if (sortOrder == SortOrder.ASC) R.drawable.arrow_upward_24px else R.drawable.arrow_downward_24px),
+                                                    contentDescription = stringResource(R.string.button_toggle_sort_order),
+                                                )
+                                            }
                                         }
                                     }
                                 }
                                 if (currentProvider?.supportedAlbumArtistSort.orEmpty().size > 1) {
                                     Box {
-                                        IconButton(
-                                            onClick = { showSortMenu = true }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                                                contentDescription = stringResource(R.string.button_sort_by),
-                                            )
+                                        ActionTooltip(stringResource(R.string.button_sort_by)) {
+                                            IconButton(
+                                                onClick = { showSortMenu = true }
+                                            ) {
+                                                Icon(
+                                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                                                    contentDescription = stringResource(R.string.button_sort_by),
+                                                )
+                                            }
                                         }
                                         DropdownMenu(
                                             expanded = showSortMenu,

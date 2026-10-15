@@ -37,6 +37,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
+import com.craftworks.music.ui.elements.ActionTooltip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(
@@ -53,19 +54,21 @@ fun SettingScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.home_settings)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Previous Song",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = "Previous Song",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

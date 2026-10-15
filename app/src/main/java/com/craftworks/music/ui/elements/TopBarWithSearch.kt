@@ -25,7 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.craftworks.music.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,27 +56,29 @@ fun TopBarWithSearch(
                     onSearch(it)
                 },
                 leadingIcon = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                if (searchBarState.currentValue == SearchBarValue.Expanded)
-                                    searchBarState.animateToCollapsed()
+                    ActionTooltip(stringResource(if (searchBarState.targetValue == SearchBarValue.Expanded) R.string.action_close_search else R.string.action_search)) {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    if (searchBarState.currentValue == SearchBarValue.Expanded)
+                                        searchBarState.animateToCollapsed()
+                                    else
+                                        searchBarState.animateToExpanded()
+                                }
+                            },
+                        ) {
+                            Crossfade(searchBarState.targetValue == SearchBarValue.Expanded) {
+                                if (it)
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = "Back",
+                                    )
                                 else
-                                    searchBarState.animateToExpanded()
+                                    Icon(
+                                        Icons.Rounded.Search,
+                                        contentDescription = "Back",
+                                    )
                             }
-                        },
-                    ) {
-                        Crossfade(searchBarState.targetValue == SearchBarValue.Expanded) {
-                            if (it)
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = "Back",
-                                )
-                            else
-                                Icon(
-                                    Icons.Rounded.Search,
-                                    contentDescription = "Back",
-                                )
                         }
                     }
                 },

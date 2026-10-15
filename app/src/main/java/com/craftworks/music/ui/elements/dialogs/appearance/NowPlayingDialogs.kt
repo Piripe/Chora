@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.craftworks.music.R
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.playing.NowPlayingAction
 import com.craftworks.music.ui.playing.NowPlayingButton
 import com.craftworks.music.ui.playing.NowPlayingButtonSlot
@@ -152,8 +153,10 @@ fun NowPlayingButtonsDialog(
                 TopAppBar(
                     title = { Text(stringResource(R.string.now_playing_buttons)) },
                     navigationIcon = {
-                        IconButton(onClick = onDismissRequest) {
-                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
+                        ActionTooltip(stringResource(R.string.action_close)) {
+                            IconButton(onClick = onDismissRequest) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
+                            }
                         }
                     },
                     actions = {
@@ -243,8 +246,10 @@ fun NowPlayingButtonsDialog(
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.weight(1f)
                                             )
-                                            IconButton(onClick = { entries.remove(entry) }) {
-                                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_remove))
+                                            ActionTooltip(stringResource(R.string.action_remove_button)) {
+                                                IconButton(onClick = { entries.remove(entry) }) {
+                                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_remove))
+                                                }
                                             }
                                             IconButton(
                                                 onClick = {},
@@ -291,11 +296,13 @@ private fun ButtonsEditorHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Box {
-                IconButton(
-                    onClick = { showAddMenu = true },
-                    enabled = count < slot.maxButtons && addableActions.isNotEmpty()
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add))
+                ActionTooltip(stringResource(R.string.action_add_button)) {
+                    IconButton(
+                        onClick = { showAddMenu = true },
+                        enabled = count < slot.maxButtons && addableActions.isNotEmpty()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.action_add))
+                    }
                 }
                 DropdownMenu(
                     expanded = showAddMenu,

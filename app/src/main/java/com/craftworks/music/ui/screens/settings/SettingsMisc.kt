@@ -43,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.dialogs.DownloadTemplateDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import kotlinx.coroutines.launch
@@ -68,19 +69,21 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_misc)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Previous Song",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = "Previous Song",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

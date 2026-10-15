@@ -89,6 +89,7 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.utils.StringUtils
@@ -190,15 +191,17 @@ fun PlayQueueContent(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         )  {
-            IconButton(onClick = {
-                showAddToPlaylistDialog = true
-            }, modifier = Modifier.size(40.dp).bounceClick()) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.save_24px),
-                    contentDescription = stringResource(R.string.action_add_to_playlist),
-                    modifier = Modifier.size(30.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            ActionTooltip(stringResource(R.string.action_add_to_playlist)) {
+                IconButton(onClick = {
+                    showAddToPlaylistDialog = true
+                }, modifier = Modifier.size(40.dp).bounceClick()) {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.save_24px),
+                        contentDescription = stringResource(R.string.action_add_to_playlist),
+                        modifier = Modifier.size(30.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Column(
@@ -234,15 +237,17 @@ fun PlayQueueContent(
                 }
             }
 
-            IconButton(onClick = {
-                showClearDialog = true
-            }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.delete_sweep_24px),
-                    contentDescription = stringResource(R.string.action_clear_queue),
-                    modifier = Modifier.size(30.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            ActionTooltip(stringResource(R.string.action_clear_queue)) {
+                IconButton(onClick = {
+                    showClearDialog = true
+                }, modifier = Modifier.padding(4.dp).size(40.dp).bounceClick()) {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.delete_sweep_24px),
+                        contentDescription = stringResource(R.string.action_clear_queue),
+                        modifier = Modifier.size(30.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
         LazyColumn(
@@ -415,13 +420,15 @@ fun ReorderableCollectionItemScope.QueueItemContent(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    FilledIconButton(
-                        onClick = {
-                            mediaController.removeMediaItem(index)
-                        },
-                        colors = IconButtonDefaults.filledTonalIconButtonColors()
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = "DELETE", tint = Color.White)
+                    ActionTooltip(stringResource(R.string.action_remove_from_queue)) {
+                        FilledIconButton(
+                            onClick = {
+                                mediaController.removeMediaItem(index)
+                            },
+                            colors = IconButtonDefaults.filledTonalIconButtonColors()
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "DELETE", tint = Color.White)
+                        }
                     }
                 }
             })

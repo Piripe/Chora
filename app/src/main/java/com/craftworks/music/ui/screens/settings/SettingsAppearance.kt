@@ -55,6 +55,7 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.dialogs.appearance.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NameDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NavbarItemsDialog
@@ -101,19 +102,21 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_appearance)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Previous Song",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = "Previous Song",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -149,18 +152,20 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     modifier = Modifier.weight(1f)
                 )
                 Box {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier
-                            .size(56.dp, 70.dp)
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back To Settings",
-                            modifier = Modifier.size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier
+                                .size(56.dp, 70.dp)
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = "Back To Settings",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }

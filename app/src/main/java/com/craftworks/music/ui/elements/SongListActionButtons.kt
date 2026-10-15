@@ -8,6 +8,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -100,16 +102,22 @@ fun SongListActionButtons(
     ) {
         customItem(
             buttonGroupContent = {
-                FilledTonalIconButton(
-                    onClick = { showBottomSheet = true },
+                // The button group modifiers must be on its direct child: the tooltip.
+                ActionTooltip(
+                    text = stringResource(R.string.action_more_options),
                     modifier = Modifier
                         .height(64.dp)
                         .animateWidth(interactionSources[1]),
                 ) {
-                    Icon(
-                        Icons.Outlined.MoreVert,
-                        contentDescription = stringResource(R.string.action_more)
-                    )
+                    FilledTonalIconButton(
+                        onClick = { showBottomSheet = true },
+                        modifier = Modifier.fillMaxHeight(),
+                    ) {
+                        Icon(
+                            Icons.Outlined.MoreVert,
+                            contentDescription = stringResource(R.string.action_more)
+                        )
+                    }
                 }
             },
             menuContent = {}
@@ -133,27 +141,32 @@ fun SongListActionButtons(
                             )
 
                             if (index >= rowButtons.size - availableButtons) {
-                                FilledTonalIconButton(
-                                    onClick = button.onClick,
-                                    interactionSource = interactionSource,
+                                ActionTooltip(
+                                    text = stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites),
                                     modifier = Modifier
                                         .size(64.dp)
                                         .animateWidth(interactionSource),
-                                    shape = RoundedCornerShape(cornerRadius),
+                                ) {
+                                    FilledTonalIconButton(
+                                        onClick = button.onClick,
+                                        interactionSource = interactionSource,
+                                        modifier = Modifier.fillMaxSize(),
+                                        shape = RoundedCornerShape(cornerRadius),
 
-                                    ) {
-                                    Crossfade(
-                                        targetState = isStarred
-                                    ) {
-                                        if (it) Icon(
-                                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                                            contentDescription = stringResource(R.string.action_remove_from_favorites)
-                                        )
-                                        else
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                                                contentDescription = stringResource(R.string.action_add_to_favorites)
+                                        ) {
+                                        Crossfade(
+                                            targetState = isStarred
+                                        ) {
+                                            if (it) Icon(
+                                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                                                contentDescription = stringResource(R.string.action_remove_from_favorites)
                                             )
+                                            else
+                                                Icon(
+                                                    imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                                    contentDescription = stringResource(R.string.action_add_to_favorites)
+                                                )
+                                        }
                                     }
                                 }
                             }
@@ -168,18 +181,23 @@ fun SongListActionButtons(
                             val (icon, text) = getActionButtonIconText(button.type)
 
                             if (index >= rowButtons.size - availableButtons) {
-                                FilledTonalIconButton(
-                                    onClick = button.onClick,
-                                    interactionSource = interactionSource,
+                                ActionTooltip(
+                                    text = text,
                                     modifier = Modifier
                                         .size(64.dp)
                                         .animateWidth(interactionSource),
-                                    shape = CircleShape
                                 ) {
-                                    Icon(
-                                        icon,
-                                        contentDescription = text
-                                    )
+                                    FilledTonalIconButton(
+                                        onClick = button.onClick,
+                                        interactionSource = interactionSource,
+                                        modifier = Modifier.fillMaxSize(),
+                                        shape = CircleShape
+                                    ) {
+                                        Icon(
+                                            icon,
+                                            contentDescription = text
+                                        )
+                                    }
                                 }
                             }
                         },

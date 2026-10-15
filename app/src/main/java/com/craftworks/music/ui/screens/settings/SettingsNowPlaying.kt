@@ -41,6 +41,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.dialogs.appearance.BackgroundDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingButtonsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingCoverGesturesDialog
@@ -98,19 +99,21 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
             TopAppBar(
                 title = { Text(text = stringResource(R.string.appearance_now_playing)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = "Back To Appearance",
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = "Back To Appearance",
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

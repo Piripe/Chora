@@ -202,22 +202,24 @@ fun HorizontalSongCard(
                 textAlign = TextAlign.End
             )
 
-            IconButton(
-                modifier = Modifier,
-                onClick = { viewModel.toggleSongStar(song.mediaMetadata) },
-            ) {
-                Crossfade(
-                    targetState = isStarred
+            ActionTooltip(stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)) {
+                IconButton(
+                    modifier = Modifier,
+                    onClick = { viewModel.toggleSongStar(song.mediaMetadata) },
                 ) {
-                    if (it) Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                        contentDescription = stringResource(R.string.action_remove_from_favorites)
-                    )
-                    else
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
-                            contentDescription = stringResource(R.string.action_add_to_favorites)
+                    Crossfade(
+                        targetState = isStarred
+                    ) {
+                        if (it) Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
+                            contentDescription = stringResource(R.string.action_remove_from_favorites)
                         )
+                        else
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.round_favorite_border_24),
+                                contentDescription = stringResource(R.string.action_add_to_favorites)
+                            )
+                    }
                 }
             }
 
@@ -225,21 +227,23 @@ fun HorizontalSongCard(
             Box(
                 modifier = Modifier.width(48.dp)
             ) {
-                IconButton(
-                    modifier = Modifier,
-                    onClick = { expanded = true },
-//                    colors = IconButtonDefaults.iconButtonColors(
-//                        containerColor = MaterialTheme.colorScheme.background,
-//                        contentColor = MaterialTheme.colorScheme.primary,
-//                        disabledContainerColor = MaterialTheme.colorScheme.background,
-//                        disabledContentColor = MaterialTheme.colorScheme.onBackground
-//                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.MoreVert,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = "More menu"
-                    )
+                ActionTooltip(stringResource(R.string.action_more_options)) {
+                    IconButton(
+                        modifier = Modifier,
+                        onClick = { expanded = true },
+//                        colors = IconButtonDefaults.iconButtonColors(
+//                            containerColor = MaterialTheme.colorScheme.background,
+//                            contentColor = MaterialTheme.colorScheme.primary,
+//                            disabledContainerColor = MaterialTheme.colorScheme.background,
+//                            disabledContentColor = MaterialTheme.colorScheme.onBackground
+//                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.MoreVert,
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            contentDescription = "More menu"
+                        )
+                    }
                 }
 
                 val coroutineScope = rememberCoroutineScope()

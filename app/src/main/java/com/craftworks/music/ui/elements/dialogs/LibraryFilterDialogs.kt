@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.craftworks.music.data.model.FilterEntity
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.viewmodels.FilterSearchViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -104,23 +105,27 @@ fun <T> AdvancedFilterButtons(
     var showFilterDialog by remember { mutableStateOf(false) }
 
     if (sorts.size > 1 || supportSortOrder) {
-        IconButton(onClick = { showSortDialog = true }) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                contentDescription = stringResource(R.string.button_sort_by),
-            )
+        ActionTooltip(stringResource(R.string.button_sort_by)) {
+            IconButton(onClick = { showSortDialog = true }) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                    contentDescription = stringResource(R.string.button_sort_by),
+                )
+            }
         }
     }
 
-    IconButton(onClick = { showFilterDialog = true }) {
-        val ruleCount = filter.activeRules.size
-        BadgedBox(
-            badge = { if (ruleCount > 0) Badge { Text(ruleCount.toString()) } }
-        ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.filter_list_24px),
-                contentDescription = stringResource(R.string.button_filter),
-            )
+    ActionTooltip(stringResource(R.string.button_filter)) {
+        IconButton(onClick = { showFilterDialog = true }) {
+            val ruleCount = filter.activeRules.size
+            BadgedBox(
+                badge = { if (ruleCount > 0) Badge { Text(ruleCount.toString()) } }
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.filter_list_24px),
+                    contentDescription = stringResource(R.string.button_filter),
+                )
+            }
         }
     }
 
@@ -662,8 +667,10 @@ private fun FilterRuleEditor(
                     },
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.filter_remove_rule))
+                ActionTooltip(stringResource(R.string.filter_remove_rule)) {
+                    IconButton(onClick = onRemove) {
+                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.filter_remove_rule))
+                    }
                 }
             }
 

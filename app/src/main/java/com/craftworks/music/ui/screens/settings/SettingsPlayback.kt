@@ -46,6 +46,7 @@ import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
 import com.craftworks.music.managers.statusText
+import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.dialogs.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
@@ -84,19 +85,21 @@ fun S_PlaybackScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.settings_playback)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            navHostController.popBackStack()
-                        },
-                        modifier = Modifier.size(56.dp, 70.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onBackground,
-                            contentDescription = stringResource(R.string.settings_playback),
-                            modifier = Modifier
-                                .size(24.dp)
-                        )
+                    ActionTooltip(stringResource(R.string.action_back)) {
+                        IconButton(
+                            onClick = {
+                                navHostController.popBackStack()
+                            },
+                            modifier = Modifier.size(56.dp, 70.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                contentDescription = stringResource(R.string.settings_playback),
+                                modifier = Modifier
+                                    .size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)

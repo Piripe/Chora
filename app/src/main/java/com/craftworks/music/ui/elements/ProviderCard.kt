@@ -113,25 +113,27 @@ fun ProviderCard(
         )
 
         // Delete Button
-        IconButton(
-            onClick = {
-                MediaProviderManager.removeProvider(provider.id)
-                runBlocking {
-                    if (currentProvider is SubsonicMediaProvider)
-                        appearanceSettingsManager.setUsername((currentProvider as SubsonicMediaProvider).providerData.username)
-                }
-            },
-            shape = CircleShape,
-            colors = IconButtonDefaults.iconButtonColors(
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onBackground
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Delete,
-                contentDescription = "Delete Provider",
-                modifier = Modifier
-            )
+        ActionTooltip(stringResource(R.string.action_delete_provider)) {
+            IconButton(
+                onClick = {
+                    MediaProviderManager.removeProvider(provider.id)
+                    runBlocking {
+                        if (currentProvider is SubsonicMediaProvider)
+                            appearanceSettingsManager.setUsername((currentProvider as SubsonicMediaProvider).providerData.username)
+                    }
+                },
+                shape = CircleShape,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Delete,
+                    contentDescription = "Delete Provider",
+                    modifier = Modifier
+                )
+            }
         }
 
         Spacer(Modifier.width(12.dp))
@@ -174,11 +176,13 @@ fun ReorderableCollectionItemScope.LyricsProviderCard(
         }
 
         if (provider.source == LyricSource.LRCLIB) {
-            IconButton(onClick = onEditClick) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit ${type.displayName} URL"
-                )
+            ActionTooltip(stringResource(R.string.action_edit_url)) {
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit ${type.displayName} URL"
+                    )
+                }
             }
         }
 
