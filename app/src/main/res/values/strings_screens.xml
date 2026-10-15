@@ -7,6 +7,25 @@
     <string name="home_recently_played">Recently Played</string>
     <string name="home_explore_library">Explore From Your Library</string>
     <string name="home_settings">Settings</string>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_night">Late night listening</string>
+    <string name="home_shuffle_library">Shuffle</string>
+    <string name="home_random_album">Surprise Me</string>
+    <string name="home_your_listening">Your Listening</string>
+    <string name="home_top_artist">Top Artist</string>
+    <string name="home_on_repeat">On Repeat</string>
+    <string name="home_this_week">This Week</string>
+    <string name="home_see_all">See All</string>
+    <plurals name="home_plays">
+        <item quantity="one">%d play</item>
+        <item quantity="other">%d plays</item>
+    </plurals>
+    <plurals name="home_songs_played">
+        <item quantity="one">%d song played</item>
+        <item quantity="other">%d songs played</item>
+    </plurals>
 
     // Artist Details
     <string name="artist_details_discography">Discography</string>

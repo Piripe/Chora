@@ -352,6 +352,12 @@ class SmartCacheDatabase @Inject constructor(
             }
         }
 
+    /** How many different songs were last played in the app on [providerId] at or after [since]. */
+    fun countSongsPlayedSince(providerId: String, since: Long): Int =
+        readableDatabase.rawQuery(
+            "SELECT COUNT(*) FROM app_plays WHERE provider_id = ? AND last_played_at >= ?", arrayOf(providerId, since.toString())
+        ).use { cursor -> if (cursor.moveToFirst()) cursor.getInt(0) else 0 }
+
     //endregion
 
     //region Pending scrobbles

@@ -3,24 +3,34 @@ package com.craftworks.music.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.craftworks.music.data.cache.SmartCacheDatabase
 import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.MediaQuery
+import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.AlbumRepository
+import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.managers.DataRefreshManager
+import com.craftworks.music.managers.MediaProviderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val albumRepository: AlbumRepository
+    private val albumRepository: AlbumRepository,
+    private val songRepository: SongRepository,
+    private val smartCacheDatabase: SmartCacheDatabase
 ) : ViewModel() {
     private val _recentlyPlayedAlbums = MutableStateFlow<List<MediaItem>>(emptyList())
     val recentlyPlayedAlbums: StateFlow<List<MediaItem>> = _recentlyPlayedAlbums.asStateFlow()
@@ -33,6 +43,10 @@ class HomeScreenViewModel @Inject constructor(
 
     private val _shuffledAlbums = MutableStateFlow<List<MediaItem>>(emptyList())
     val shuffledAlbums: StateFlow<List<MediaItem>> = _shuffledAlbums.asStateFlow()
+
+    private val _songsPlayedThisWeek = MutableStateFlow<Int?>(null)
+    /** How many different songs were played in the app on the current provider in the last 7 days. */
+    val songsPlayedThisWeek: StateFlow<Int?> = _songsPlayedThisWeek.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -55,6 +69,7 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
+                launch { loadListeningStats() }
                 HOME_SECTIONS.map { key -> async { loadSection(key) } }.forEach { it.await() }
             }
             _isLoading.value = false
@@ -93,11 +108,45 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    private suspend fun loadListeningStats() {
+        val providerId = MediaProviderManager.currentProvider.value?.id
+        _songsPlayedThisWeek.value = providerId?.let {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    smartCacheDatabase.countSongsPlayedSince(it, System.currentTimeMillis() - WEEK_MS)
+                }.getOrNull()
+            }
+        }
+    }
+
     suspend fun getAlbumSongs(albumId: String): List<MediaItem> {
         return albumRepository.getAlbum(albumId) ?: emptyList()
     }
 
+    /**
+     * Random songs of the library to shuffle. Providers that can't sort songs randomly get the
+     * songs of a few random albums instead.
+     */
+    suspend fun getShuffledSongs(): List<MediaItem> {
+        val provider = MediaProviderManager.currentProvider.value ?: return emptyList()
+        if (SongListSort.RANDOM in provider.supportedSongSort) {
+            return songRepository.getSongs(
+                MediaQuery.SongListQuery(SongListSort.RANDOM, SortOrder.ASC, limit = SHUFFLE_SIZE, startIndex = 0)
+            )
+        }
+        val albums = _shuffledAlbums.value.ifEmpty {
+            albumRepository.getAlbums(MediaQuery.AlbumListQuery(AlbumListSort.RANDOM, SortOrder.ASC, limit = 20, startIndex = 0))
+        }
+        return coroutineScope {
+            albums.shuffled().take(5).map { album ->
+                async { getAlbumSongs(album.mediaMetadata.id ?: "").drop(1) }
+            }.awaitAll().flatten().shuffled().take(SHUFFLE_SIZE)
+        }
+    }
+
     companion object {
         val HOME_SECTIONS = listOf("recently_played", "recently_added", "most_played", "random_songs")
+        private const val SHUFFLE_SIZE = 100
+        private const val WEEK_MS = 7L * 24 * 60 * 60 * 1000
     }
 }

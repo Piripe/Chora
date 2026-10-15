@@ -18,6 +18,8 @@
         <string name="appearance_navbar_items_description">Choose and reorder the main navigation tabs</string>
         <string name="appearance_home_items">Home Screen Items</string>
         <string name="appearance_home_items_description">Choose and reorder the sections on the Home screen</string>
+        <string name="appearance_expressive_home">Expressive Home Screen</string>
+        <string name="appearance_expressive_home_description">A livelier Home screen with a carousel, quick actions and your listening stats</string>
         <string name="appearance_advanced_queue">Use Advanced Queue</string>
         <string name="appearance_advanced_queue_description">Multi-select, sorting and bulk actions in the play queue</string>
         <string name="appearance_advanced_filter">Use Advanced Filter</string>

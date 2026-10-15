@@ -57,6 +57,7 @@ class AppearanceSettingsManager @Inject constructor(
         private val NOW_PLAYING_LYRIC_BLUR_KEY = booleanPreferencesKey("now_playing_lyrics_blur")
         private val BOTTOM_NAV_ITEMS_KEY = stringPreferencesKey("bottom_nav_order")
         private val HOME_ITEMS_KEY = stringPreferencesKey("home_items_order")
+        private val EXPRESSIVE_HOME_KEY = booleanPreferencesKey("expressive_home")
         private val APP_THEME = stringPreferencesKey("theme")
 
         private val LYRICS_ANIMATION_SPEED = intPreferencesKey("lyrics_animation_speed")
@@ -174,6 +175,18 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[HOME_ITEMS_KEY] = Json.encodeToString(items)
+            }
+        }
+    }
+
+    val expressiveHomeFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[EXPRESSIVE_HOME_KEY] ?: true
+    }
+
+    suspend fun setExpressiveHome(enabled: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[EXPRESSIVE_HOME_KEY] = enabled
             }
         }
     }

@@ -277,6 +277,20 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
 
+                    //Expressive Home
+                    val expressiveHome by appearanceSettingsManager.expressiveHomeFlow.collectAsStateWithLifecycle(true)
+                    SettingsSwitch(
+                        expressiveHome,
+                        stringResource(R.string.appearance_expressive_home),
+                        ImageVector.vectorResource(R.drawable.rounded_home_24),
+                        settingsDescription = stringResource(R.string.appearance_expressive_home_description),
+                        toggleEvent = {
+                            coroutineScope.launch {
+                                appearanceSettingsManager.setExpressiveHome(!expressiveHome)
+                            }
+                        }
+                    )
+
 
                     //Advanced Queue
                     val useAdvancedQueue =

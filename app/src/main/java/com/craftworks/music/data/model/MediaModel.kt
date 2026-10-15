@@ -90,6 +90,8 @@ abstract class MediaModel
                             putBoolean("userFavorite", this@Album.userFavorite == true)
                             putParcelableArrayList("artists", ArrayList(this@Album.artists))
                             putString("imageId", this@Album.imageId)
+                            this@Album.playCount?.let { putDouble("playCount", it) }
+                            putString("lastPlayedAt", this@Album.lastPlayedAt)
                         }
                     )
                     .build()

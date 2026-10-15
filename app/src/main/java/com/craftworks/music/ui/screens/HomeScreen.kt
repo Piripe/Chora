@@ -107,6 +107,17 @@ fun HomeScreen(
 
     val settingsManager = remember(context) { AppearanceSettingsManager(context) }
 
+    // Nothing is drawn until the setting is read, so the other layout doesn't flash.
+    val expressiveHome by settingsManager.expressiveHomeFlow.collectAsStateWithLifecycle(null)
+    when (expressiveHome) {
+        null -> return
+        true -> {
+            ExpressiveHomeScreen(navHostController, mediaController, viewModel)
+            return
+        }
+        false -> {}
+    }
+
     val recentlyPlayedAlbums by viewModel.recentlyPlayedAlbums.collectAsStateWithLifecycle()
     val recentAlbums by viewModel.recentAlbums.collectAsStateWithLifecycle()
     val mostPlayedAlbums by viewModel.mostPlayedAlbums.collectAsStateWithLifecycle()
@@ -126,7 +137,6 @@ fun HomeScreen(
     }
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
-    val libraries = currentProvider?.data?.libraries
 
     PullToRefreshBox(
         modifier = Modifier,
@@ -185,49 +195,10 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .horizontalScroll(rememberScrollState())
-            ) {
-                if ((libraries?.size ?: 0) > 1) {
-                    libraries?.forEach { (library, isSelected) ->
-                        FilterChip(
-                            onClick = {
-                                MediaProviderManager.setProviderLibraries(
-                                    currentProvider!!.id,
-                                    libraries = libraries.map { (currentLibrary, currentEnabled) ->
-                                        if (currentLibrary.id == library.id) {
-                                            Pair(library, !isSelected)
-                                        } else {
-                                            Pair(currentLibrary, currentEnabled)
-                                        }
-                                    }
-                                )
-                                showRipple++
-                            },
-                            label = {
-                                Text(library.name)
-                            },
-                            selected = isSelected,
-                            leadingIcon = if (isSelected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Done,
-                                        contentDescription = "Done icon",
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-                }
-            }
-
+            LibraryChips(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                onChanged = { showRipple++ }
+            )
 
             val orderedHomeItems by settingsManager.homeItemsItemsFlow.collectAsState(
                 initial = listOf(
@@ -287,6 +258,53 @@ fun HomeScreen(
         color = MaterialTheme.colorScheme.surfaceVariant,
         key = showRipple
     )
+}
+
+/** Chips to choose the libraries of the current provider, shown only when it has more than one. */
+@Composable
+fun LibraryChips(modifier: Modifier = Modifier, onChanged: () -> Unit) {
+    val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
+    val libraries = currentProvider?.data?.libraries
+    if ((libraries?.size ?: 0) <= 1) return
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.horizontalScroll(rememberScrollState())
+    ) {
+        libraries?.forEach { (library, isSelected) ->
+            FilterChip(
+                onClick = {
+                    MediaProviderManager.setProviderLibraries(
+                        currentProvider!!.id,
+                        libraries = libraries.map { (currentLibrary, currentEnabled) ->
+                            if (currentLibrary.id == library.id) {
+                                Pair(library, !isSelected)
+                            } else {
+                                Pair(currentLibrary, currentEnabled)
+                            }
+                        }
+                    )
+                    onChanged()
+                },
+                label = {
+                    Text(library.name)
+                },
+                selected = isSelected,
+                leadingIcon = if (isSelected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Done,
+                            contentDescription = "Done icon",
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
+    }
 }
 
 @Composable
