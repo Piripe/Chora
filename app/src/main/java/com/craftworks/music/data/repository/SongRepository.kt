@@ -15,6 +15,7 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
+import com.craftworks.music.data.model.providerId
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.OfflineManager.Companion.requiresNetwork
@@ -110,6 +111,18 @@ class SongRepository @Inject constructor(
         else offlineScrobbleManager.onScrobbleFailed(provider.id, songId, playedAt = System.currentTimeMillis() - position)
     }
 
+    /**
+     * Downloads [songs] in the app, so they play offline. [playlistId] is the playlist they are
+     * downloaded from, saved along with them.
+     */
+    fun downloadInApp(songs: List<MediaMetadata>, playlistId: String? = null) {
+        songs.groupBy { it.providerId }.forEach { (providerId, providerSongs) ->
+            if (providerId == null) return@forEach
+            smartCacheManager.download(providerId, providerSongs.mapNotNull { it.id }, playlistId)
+        }
+    }
+
+    /** Saves [song] in the device's music folder, named after [template]. */
     fun downloadSong(song: MediaMetadata, template: String, playlistName: String = "{playlist}", playlistIndex: String = "{playlist_index}") {
         val values = mapOf(
             "title" to StringUtils.makeValidFilename(song.title.toString()),

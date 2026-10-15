@@ -3,6 +3,7 @@ package com.craftworks.music.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.repository.AlbumRepository
@@ -108,7 +109,8 @@ class ArtistDetailsViewModel @Inject constructor(
             starredRepository.unStarItem(listOf(id), LibraryType.ARTIST)
         }
     }
-    fun downloadArtist(songs: List<MediaItem>) {
+    fun downloadArtist(songs: List<MediaItem>, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(songs.map { it.mediaMetadata })
         viewModelScope.launch {
             val template = miscSettingsManager.downloadTemplateFlow.first()
             songs.forEach { song ->

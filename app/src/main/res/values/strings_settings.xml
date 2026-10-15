@@ -102,7 +102,7 @@
     <string name="settings_lyrics_providers_description">Where lyrics are fetched from, and in which order</string>
         <string name="media_providers_lrclib_url">LRCLIB Url</string>
     <string name="settings_playback">Playback</string>
-    <string name="settings_playback_description">Streaming quality, scrobbling and offline cache</string>
+    <string name="settings_playback_description">Streaming quality, scrobbling and pre-fetching</string>
         // Transcoding
         <string name="playback_max_bitrate">Max Bitrate</string>
         <string name="playback_max_bitrate_wifi">Max Bitrate (Wi-Fi)</string>
@@ -149,6 +149,27 @@
         <string name="smart_cache_notification_channel">Smart Cache</string>
         <string name="smart_cache_notification_title">Refreshing Smart Cache</string>
         <string name="smart_cache_notification_cancel">Cancel</string>
+    <string name="settings_downloads">Downloads</string>
+    <string name="settings_downloads_description">Downloaded songs, smart cache and file names</string>
+        <string name="downloads_storage">Downloaded Songs</string>
+        <string name="downloads_storage_value">%1$s · %2$d songs</string>
+        <string name="downloads_storage_description">Songs downloaded in the app play without the network. They don\'t count in the smart cache size</string>
+        <string name="downloads_status_downloading">Downloading songs… %1$d/%2$d</string>
+        <string name="downloads_status_failed">%1$d songs couldn\'t be downloaded</string>
+        <string name="downloads_notification_title">Downloading Songs</string>
+        <string name="downloads_browse">Downloaded Content</string>
+        <string name="downloads_browse_description">See and remove the songs, albums, artists and playlists downloaded in the app or kept by the smart cache</string>
+        <string name="downloads_delete_all">Delete All Downloads</string>
+        <string name="downloads_delete_all_description">Remove every song downloaded in the app. The smart cache is kept</string>
+        <string name="downloads_delete_all_confirm">Delete the %1$d songs downloaded in the app (%2$s)? They won\'t play offline anymore.</string>
+        <string name="downloads_tab_downloads">Downloads</string>
+        <string name="downloads_tab_smart_cache">Smart Cache</string>
+        <string name="downloads_item_summary">%1$d songs · %2$s</string>
+        <string name="downloads_item_summary_partial">%1$d of %2$d songs · %3$s</string>
+        <string name="downloads_empty">Nothing here yet</string>
+        <string name="downloads_remove_title">Remove From Device</string>
+        <string name="downloads_remove_confirm">Remove &lt;i&gt;%1$s&lt;/i&gt;? Its %2$d songs (%3$s) won\'t play offline anymore.</string>
+        <string name="downloads_remove_smart_cache_note">The next smart cache refresh may download them again.</string>
     <string name="settings_misc">Miscellaneous</string>
     <string name="settings_misc_description">Download file names</string>
         // Download

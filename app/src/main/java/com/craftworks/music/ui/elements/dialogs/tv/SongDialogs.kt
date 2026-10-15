@@ -64,9 +64,10 @@ import androidx.tv.material3.WideCardContainer
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 
-private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING }
+private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING, DOWNLOAD }
 
 @Preview(
     showBackground = false, showSystemUi = true, device = "id:tv_1080p",
@@ -77,7 +78,7 @@ private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING 
 fun SongDialog(
     song: MediaItem = MediaItem.EMPTY,
     onSetRating: (Int) -> Unit = { },
-    onDownload: (MediaItem) -> Unit = { },
+    onDownload: (MediaItem, DownloadTarget) -> Unit = { _, _ -> },
     setShowDialog: (Boolean) -> Unit = { }
 ) {
     val context = LocalContext.current
@@ -165,8 +166,7 @@ fun SongDialog(
                             selected = false,
                             headlineContent = { Text(stringResource(R.string.action_download)) },
                             onClick = {
-                                onDownload(song)
-                                setShowDialog(false)
+                                dialogMenu = DialogMenu.DOWNLOAD
                             }
                         )
 
@@ -199,6 +199,23 @@ fun SongDialog(
                             song = song,
                             setDialogMenu = { dialogMenu = it }
                         )
+                    }
+
+                    DialogMenu.DOWNLOAD -> {
+                        for ((target, title, description) in listOf(
+                            Triple(DownloadTarget.APP, R.string.download_target_app, R.string.download_target_app_description),
+                            Triple(DownloadTarget.DEVICE, R.string.download_target_device, R.string.download_target_device_description),
+                        )) {
+                            ListItem(
+                                selected = false,
+                                headlineContent = { Text(stringResource(title)) },
+                                supportingContent = { Text(stringResource(description)) },
+                                onClick = {
+                                    onDownload(song, target)
+                                    setShowDialog(false)
+                                }
+                            )
+                        }
                     }
 
                     DialogMenu.SET_RATING -> {

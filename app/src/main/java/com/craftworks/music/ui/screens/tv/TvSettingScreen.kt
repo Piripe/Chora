@@ -80,6 +80,16 @@ fun TvSettingScreen(
                 focusRequester.saveFocusedChild()
             }
         )
+
+        SettingsButton(
+            Screen.S_Downloads,
+            R.drawable.rounded_download_24,
+            R.string.settings_downloads,
+            navHostController,
+            Modifier.onFocusChanged {
+                focusRequester.saveFocusedChild()
+            }
+        )
     }
 }
 

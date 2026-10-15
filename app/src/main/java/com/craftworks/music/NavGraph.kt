@@ -62,8 +62,9 @@ import com.craftworks.music.ui.screens.RadioScreen
 import com.craftworks.music.ui.screens.SettingScreen
 import com.craftworks.music.ui.screens.SongsScreen
 import com.craftworks.music.ui.screens.settings.S_AppearanceScreen
+import com.craftworks.music.ui.screens.settings.S_DownloadedContentScreen
+import com.craftworks.music.ui.screens.settings.S_DownloadsScreen
 import com.craftworks.music.ui.screens.settings.S_LyricsProviderScreen
-import com.craftworks.music.ui.screens.settings.S_MiscScreen
 import com.craftworks.music.ui.screens.settings.S_NowPlayingScreen
 import com.craftworks.music.ui.screens.settings.S_PlaybackScreen
 import com.craftworks.music.ui.screens.settings.S_ProviderScreen
@@ -80,6 +81,8 @@ import com.craftworks.music.ui.screens.tv.TvSettingScreen
 import com.craftworks.music.ui.screens.tv.TvSongsScreen
 import com.craftworks.music.ui.theme.ArtworkTheme
 import com.craftworks.music.ui.screens.tv.settings.TvS_AppearanceScreen
+import com.craftworks.music.ui.screens.tv.settings.TvS_DownloadedContentScreen
+import com.craftworks.music.ui.screens.tv.settings.TvS_DownloadsScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_PlaybackScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_ProviderScreen
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
@@ -127,7 +130,8 @@ fun SetupNavGraph(
                 hasRoute<Screen.S_Media_Providers>() ||
                 hasRoute<Screen.S_Lyrics_Providers>() ||
                 hasRoute<Screen.S_Playback>() ||
-                hasRoute<Screen.S_Misc>()
+                hasRoute<Screen.S_Downloads>() ||
+                hasRoute<Screen.S_Downloaded_Content>()
     }
 
     NavHost(
@@ -379,8 +383,17 @@ fun SetupNavGraph(
                     else
                         S_PlaybackScreen(navController)
                 }
-                composable<Screen.S_Misc> {
-                    S_MiscScreen(navController)
+                composable<Screen.S_Downloads> {
+                    if (isTv)
+                        TvS_DownloadsScreen(navController)
+                    else
+                        S_DownloadsScreen(navController)
+                }
+                composable<Screen.S_Downloaded_Content> {
+                    if (isTv)
+                        TvS_DownloadedContentScreen()
+                    else
+                        S_DownloadedContentScreen(navController)
                 }
             }
 

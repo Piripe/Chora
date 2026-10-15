@@ -218,8 +218,8 @@ fun TvSongsScreen(
                     rating = rating
                 )
             },
-            onDownload = {
-                viewModel.downloadSong(it)
+            onDownload = { song, target ->
+                viewModel.downloadSong(song, target)
             },
             setShowDialog = { showSongDialog = it }
         )

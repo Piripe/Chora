@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.StarRating
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryFilter
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
@@ -255,7 +256,8 @@ class SongsScreenViewModel @Inject constructor(
             localDataSettingsManager.saveFilterSong(newFilter)
         }
     }
-    fun downloadSong(song: MediaItem) {
+    fun downloadSong(song: MediaItem, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(listOf(song.mediaMetadata))
         viewModelScope.launch {
             songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }

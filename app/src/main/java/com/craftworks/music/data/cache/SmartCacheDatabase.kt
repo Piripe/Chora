@@ -15,7 +15,10 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** A song stored on disk by the smart cache. */
+/**
+ * A song stored on disk by the smart cache, or downloaded by the user ([manual]).
+ * Downloaded songs are never dropped by the smart cache, only removed by the user.
+ */
 data class CachedSong(
     val providerId: String,
     val song: MediaModel.Song,
@@ -28,6 +31,7 @@ data class CachedSong(
     /** Position in the last refresh's ranking, lower is more listened. */
     val rank: Int,
     val cachedAt: Long,
+    val manual: Boolean = false,
 ) {
     val songId: String get() = song.id
 }
@@ -56,7 +60,7 @@ data class CachedPlaylist(
 data class PendingScrobble(val id: Long, val providerId: String, val songId: String, val playedAt: Long)
 
 /**
- * Stores the smart cache metadata (cached songs, their artists and playlists, and covers), how many times each song was played
+ * Stores the smart cache and downloads metadata (cached songs, their artists and playlists, and covers), how many times each song was played
  * in the app, and the scrobbles waiting to be sent to the provider.
  */
 @Singleton
@@ -85,6 +89,7 @@ class SmartCacheDatabase @Inject constructor(
                 rank INTEGER NOT NULL,
                 cached_at INTEGER NOT NULL,
                 metadata TEXT NOT NULL,
+                manual INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (provider_id, song_id)
             )
             """.trimIndent()
@@ -136,6 +141,7 @@ class SmartCacheDatabase @Inject constructor(
             db.execSQL("UPDATE app_plays SET score = play_count")
         }
         if (oldVersion < 3) createLibraryTables(db)
+        if (oldVersion < 4) db.execSQL("ALTER TABLE cached_songs ADD COLUMN manual INTEGER NOT NULL DEFAULT 0")
     }
 
     private fun createLibraryTables(db: SQLiteDatabase) {
@@ -419,6 +425,7 @@ class SmartCacheDatabase @Inject constructor(
         put("rank", rank)
         put("cached_at", cachedAt)
         put("metadata", json.encodeToString(MediaModel.Song.serializer(), song))
+        put("manual", if (manual) 1 else 0)
     }
 
     private fun Cursor.toCachedSong(): CachedSong? {
@@ -439,13 +446,14 @@ class SmartCacheDatabase @Inject constructor(
             artworkKey = if (isNull(artworkIndex)) null else getString(artworkIndex),
             rank = getInt(getColumnIndexOrThrow("rank")),
             cachedAt = getLong(getColumnIndexOrThrow("cached_at")),
+            manual = getInt(getColumnIndexOrThrow("manual")) != 0,
         )
     }
 
     companion object {
         private const val TAG = "SmartCacheDatabase"
         private const val DATABASE_NAME = "smart_cache.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         private val stringList = ListSerializer(String.serializer())
     }

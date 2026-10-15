@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Smart cache and offline scrobbles settings, for the playback settings screens. */
+/** Downloads, smart cache and offline scrobbles settings, for the playback and downloads settings screens. */
 @HiltViewModel
 class SmartCacheViewModel @Inject constructor(
     private val smartCacheManager: SmartCacheManager,
@@ -51,5 +51,14 @@ class SmartCacheViewModel @Inject constructor(
     /** Starts a refresh, or cancels the running one. */
     fun toggleRefresh() {
         if (state.value.isRunning) smartCacheManager.cancelRefresh() else smartCacheManager.refresh()
+    }
+
+    fun cancelDownloads() {
+        smartCacheManager.cancelDownloads()
+    }
+
+    /** Deletes every song downloaded by the user, the smart cache is kept. */
+    fun clearDownloads() {
+        viewModelScope.launch { smartCacheManager.clearDownloads() }
     }
 }

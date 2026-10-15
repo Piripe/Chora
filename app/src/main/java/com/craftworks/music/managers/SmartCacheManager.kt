@@ -78,12 +78,31 @@ data class SmartCacheState(
     val phase: SmartCachePhase = SmartCachePhase.IDLE,
     val progress: Int = 0,
     val total: Int = 0,
+    /** Space and songs of the smart cache, without the songs downloaded by the user. */
     val usedBytes: Long = 0,
     val songCount: Int = 0,
     val lastRefresh: Long? = null,
     val lastError: SmartCacheError? = null,
+    /** Space and songs downloaded by the user. */
+    val downloadedBytes: Long = 0,
+    val downloadedSongCount: Int = 0,
+    /** Songs waiting to be downloaded (or being downloaded), and how many of them are done. */
+    val downloadTotal: Int = 0,
+    val downloadProgress: Int = 0,
+    /** Songs of the current or last downloads that couldn't be downloaded. */
+    val downloadFailed: Int = 0,
 ) {
+    /** Whether a smart cache refresh is running. */
     val isRunning: Boolean get() = phase != SmartCachePhase.IDLE
+    /** Whether songs requested by the user are being downloaded. */
+    val isDownloading: Boolean get() = downloadTotal > 0
+}
+
+/** The progress of the songs downloaded by the user, or how the last downloads went. */
+fun SmartCacheState.downloadStatusText(resources: Resources): String? = when {
+    isDownloading -> resources.getString(R.string.downloads_status_downloading, downloadProgress, downloadTotal)
+    downloadFailed > 0 -> resources.getString(R.string.downloads_status_failed, downloadFailed)
+    else -> null
 }
 
 /** What the smart cache is doing, or how its last refresh went. */
@@ -119,6 +138,9 @@ fun SmartCacheState.statusText(resources: Resources): String = when (phase) {
  * The audio files and covers are stored in the app's files, their metadata in [SmartCacheDatabase].
  * Cached songs, artists and playlists are also added to the [LibraryCache], so they can be browsed
  * offline after a restart.
+ *
+ * Songs the user downloads ([download]) are stored the same way, marked as [CachedSong.manual]:
+ * they don't count in the smart cache size, and are never dropped by it, only by [removeSongs].
  */
 @Singleton
 class SmartCacheManager @Inject constructor(
@@ -152,6 +174,12 @@ class SmartCacheManager @Inject constructor(
 
     @Volatile
     private var refreshJob: Job? = null
+
+    /** The downloads requested by the user, done one request at a time by [downloadJob]. */
+    private class DownloadRequest(val providerId: String, val songIds: List<String>, val playlistId: String?)
+    private val downloadLock = Any()
+    private val downloadRequests = ArrayDeque<DownloadRequest>()
+    private var downloadJob: Job? = null
 
     private class RefreshException(val error: SmartCacheError, cause: Throwable? = null) : Exception(cause)
 
@@ -256,7 +284,7 @@ class SmartCacheManager @Inject constructor(
         removeUnavailableSongs(provider)
 
         // Songs of other providers keep their space, they are only dropped when the cache is over its size.
-        val otherProvidersBytes = songs.values.filter { it.providerId != provider.id }.sumOf { it.sizeBytes }
+        val otherProvidersBytes = smartSongs().filter { it.providerId != provider.id }.sumOf { it.sizeBytes }
         val ranking = rankSongs(provider, (maxBytes - otherProvidersBytes).coerceAtLeast(0), variant)
 
         applyRanking(provider, ranking)
@@ -265,9 +293,12 @@ class SmartCacheManager @Inject constructor(
         trimToSize(maxBytes)
     }
 
-    /** Removes the cached songs the provider no longer has, and refreshes the metadata of the others. */
+    /**
+     * Removes the cached songs the provider no longer has, and refreshes the metadata of the others.
+     * Songs downloaded by the user are left as they are.
+     */
     private suspend fun removeUnavailableSongs(provider: MediaProvider) {
-        val cached = songs.values.filter { it.providerId == provider.id }
+        val cached = smartSongs().filter { it.providerId == provider.id }
         if (cached.isEmpty()) return
         setPhase(SmartCachePhase.CHECKING, total = cached.size)
 
@@ -290,9 +321,12 @@ class SmartCacheManager @Inject constructor(
 
         Log.d(TAG, "${removed.size} cached songs are no longer available")
         mutex.withLock {
-            database.updateCachedSongs(updated.toList())
-            updated.forEach { songs[key(it)] = it }
-            deleteSongsLocked(removed)
+            // Downloaded by the user meanwhile: keep them.
+            val stillSmart = { cached: CachedSong -> songs[key(cached)]?.manual == false }
+            val updatedSongs = updated.filter(stillSmart)
+            database.updateCachedSongs(updatedSongs)
+            updatedSongs.forEach { songs[key(it)] = it }
+            deleteSongsLocked(removed.filter(stillSmart))
         }
         libraryCache.putSongs(provider.id, updated.map { it.song })
         updateUsage()
@@ -320,6 +354,8 @@ class SmartCacheManager @Inject constructor(
 
         fun add(song: MediaModel.Song) {
             if (isFull() || song.id in ranking) return
+            // Downloaded by the user: already offline, without using the smart cache space.
+            if (songs[key(provider.id, song.id)]?.manual == true) return
             val size = songs[key(provider.id, song.id)]?.sizeBytes ?: estimateSize(song, variant)
             // A song too big for the remaining space is skipped, smaller ones may still fit.
             if (rankedBytes + size > budgetBytes) {
@@ -515,7 +551,7 @@ class SmartCacheManager @Inject constructor(
         val ranks = ranking.keys.withIndex().associate { (index, id) -> id to index }
 
         mutex.withLock {
-            val (kept, dropped) = songs.values
+            val (kept, dropped) = smartSongs()
                 .filter { it.providerId == provider.id }
                 .partition { it.songId in ranks }
             val updated = kept.map { it.copy(rank = ranks.getValue(it.songId), song = ranking.getValue(it.songId)) }
@@ -537,7 +573,7 @@ class SmartCacheManager @Inject constructor(
         val missing = ranking.values.withIndex().filter { (_, song) -> !songs.containsKey(key(provider.id, song.id)) }
         setPhase(SmartCachePhase.DOWNLOADING, total = missing.size)
 
-        // Space taken by the downloads in progress, not counted by usedBytes() yet.
+        // Space taken by the downloads in progress, not counted by smartUsedBytes() yet.
         val budgetLock = Any()
         var reservedBytes = 0L
 
@@ -545,7 +581,7 @@ class SmartCacheManager @Inject constructor(
         forEachParallel(missing, SONG_DOWNLOAD_PARALLELISM) { (rank, song) ->
             val estimate = estimateSize(song, variant)
             val inProgressBytes = synchronized(budgetLock) {
-                if (usedBytes() + reservedBytes + estimate > maxBytes) null
+                if (smartUsedBytes() + reservedBytes + estimate > maxBytes) null
                 else reservedBytes.also { reservedBytes += estimate }
             }
             if (inProgressBytes != null) {
@@ -562,25 +598,36 @@ class SmartCacheManager @Inject constructor(
         }
     }
 
-    private suspend fun downloadSong(provider: MediaProvider, song: MediaModel.Song, rank: Int, variant: StreamVariant) {
+    /**
+     * Downloads [song] into the cache, for the smart cache or for the user ([manual]).
+     * Returns false if it couldn't be downloaded.
+     */
+    private suspend fun downloadSong(
+        provider: MediaProvider,
+        song: MediaModel.Song,
+        rank: Int,
+        variant: StreamVariant,
+        manual: Boolean = false
+    ): Boolean {
         val url = try {
             if (variant.bitrate == NO_TRANSCODING) provider.getStreamUrl(song.id, false)
             else provider.getStreamUrl(song.id, true, variant.bitrate.toIntOrNull(), variant.format)
         } catch (e: Exception) {
             Log.w(TAG, "Can't get the stream url of ${song.id}", e)
-            return
+            return false
         }
 
         val fileName = UUID.randomUUID().toString()
         val partFile = File(songsDir, "$fileName.part")
+        val file = File(songsDir, fileName)
         val size = download(url, partFile, image = false)
         if (size == null) {
             if (!provider.isReachable()) throw RefreshException(SmartCacheError.Offline)
-            return
+            return false
         }
-        if (!partFile.renameTo(File(songsDir, fileName))) {
+        if (!partFile.renameTo(file)) {
             partFile.delete()
-            return
+            return false
         }
 
         val artworkKey = song.imageId?.let { cacheArtwork(provider, it) }
@@ -594,13 +641,22 @@ class SmartCacheManager @Inject constructor(
             artworkKey = artworkKey,
             rank = rank,
             cachedAt = System.currentTimeMillis(),
+            manual = manual,
         )
-        mutex.withLock {
+        val added = mutex.withLock {
+            // The smart cache and the user may download the same song at once: keep the first one.
+            val existing = songs[key(cached)]
+            if (existing != null) {
+                if (manual) markManualLocked(existing)
+                return@withLock false
+            }
             database.putCachedSong(cached)
             songs[key(cached)] = cached
+            true
         }
-        publishToLibraryCache(listOf(cached))
+        if (added) publishToLibraryCache(listOf(cached)) else file.delete()
         updateUsage()
+        return true
     }
 
     /** Downloads the cover of a song if not cached yet, and returns its key. */
@@ -926,11 +982,11 @@ class SmartCacheManager @Inject constructor(
         appScores: Map<String, Double>,
         now: Long
     ): List<CachedSong>? {
-        var freeBytes = maxBytes - usedBytes()
+        var freeBytes = maxBytes - smartUsedBytes()
         if (freeBytes >= sizeBytes) return emptyList()
 
         val evicted = mutableListOf<CachedSong>()
-        val lowerScored = songs.values
+        val lowerScored = smartSongs()
             .filter { it.providerId == providerId }
             .map { it to listeningScore(it.song, appScores, now) }
             .filter { (_, cachedScore) -> cachedScore < score }
@@ -945,7 +1001,7 @@ class SmartCacheManager @Inject constructor(
 
     /** Places a song with a [ListeningScore] of [score] just before the cached songs scoring less. */
     private fun rankFor(providerId: String, score: Double, appScores: Map<String, Double>, now: Long): Int {
-        val providerSongs = songs.values.filter { it.providerId == providerId }
+        val providerSongs = smartSongs().filter { it.providerId == providerId }
         return providerSongs.filter { listeningScore(it.song, appScores, now) < score }.minOfOrNull { it.rank }
             ?: providerSongs.maxOfOrNull { it.rank + 1 }
             ?: 0
@@ -958,18 +1014,207 @@ class SmartCacheManager @Inject constructor(
 
     //endregion
 
+    //region Downloads
+
+    /**
+     * Downloads the songs [songIds] of the provider [providerId] for the user, so they play offline.
+     * Their artists are saved too, and the playlist [playlistId] if they are downloaded from it,
+     * so they can be browsed offline. Songs already in the smart cache are kept as downloaded.
+     */
+    fun download(providerId: String, songIds: List<String>, playlistId: String? = null) {
+        val ids = songIds.filter { it.isNotEmpty() }.distinct()
+        if (ids.isEmpty()) return
+        synchronized(downloadLock) {
+            downloadRequests.addLast(DownloadRequest(providerId, ids, playlistId))
+            _state.update {
+                // A new batch: forget the failures of the previous one.
+                if (it.isDownloading) it.copy(downloadTotal = it.downloadTotal + ids.size)
+                else it.copy(downloadTotal = ids.size, downloadProgress = 0, downloadFailed = 0)
+            }
+            if (downloadJob == null) downloadJob = scope.launch { runDownloads() }
+        }
+        SmartCacheService.start(context)
+    }
+
+    /** Stops the downloads requested by the user. The songs already downloaded are kept. */
+    fun cancelDownloads() {
+        synchronized(downloadLock) {
+            downloadRequests.clear()
+            downloadJob?.cancel()
+        }
+    }
+
+    private suspend fun runDownloads() {
+        val job = currentCoroutineContext()[Job]
+        try {
+            loaded.await()
+            while (true) {
+                // Ends the job under the lock, so a new request starts a new one.
+                val request = synchronized(downloadLock) {
+                    downloadRequests.removeFirstOrNull() ?: run {
+                        downloadJob = null
+                        null
+                    }
+                } ?: break
+                downloadRequest(request)
+            }
+        } finally {
+            synchronized(downloadLock) {
+                if (downloadJob === job) downloadJob = null
+                // Cancelled: requests made after the cancellation start a new job.
+                if (downloadRequests.isNotEmpty() && downloadJob == null) {
+                    downloadJob = scope.launch { runDownloads() }
+                } else if (downloadJob == null) {
+                    _state.update { it.copy(downloadTotal = 0, downloadProgress = 0) }
+                }
+            }
+        }
+    }
+
+    private suspend fun downloadRequest(request: DownloadRequest) {
+        val provider = MediaProviderManager.getProvider(request.providerId)?.takeIf { it.requiresNetwork() }
+        if (provider == null) {
+            _state.update {
+                it.copy(
+                    downloadProgress = it.downloadProgress + request.songIds.size,
+                    downloadFailed = it.downloadFailed + request.songIds.size
+                )
+            }
+            return
+        }
+        // Like the smart cache, downloaded songs are played as is, at the best quality the user streams at.
+        val variant = cacheVariant()
+
+        val downloaded = ConcurrentLinkedQueue<MediaModel.Song>()
+        forEachParallel(request.songIds, SONG_DOWNLOAD_PARALLELISM) { songId ->
+            val song = try {
+                downloadForUser(provider, songId, variant)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Can't download $songId", e)
+                null
+            } catch (e: NotImplementedError) {
+                Log.w(TAG, "Can't download $songId", e)
+                null
+            }
+            if (song != null) downloaded += song
+            _state.update {
+                it.copy(
+                    downloadProgress = it.downloadProgress + 1,
+                    downloadFailed = it.downloadFailed + if (song == null) 1 else 0
+                )
+            }
+        }
+        if (downloaded.isEmpty()) return
+
+        // Browsable offline: the artists of the songs, and the playlist they were downloaded from.
+        try {
+            val songArtists = downloaded
+                .flatMap { it.artistsToCache() }
+                .filter { it.id.isNotBlank() && !artists.containsKey(key(provider.id, it.id)) }
+                .distinctBy { it.id }
+            forEachParallel(songArtists, METADATA_PARALLELISM) { cacheArtist(provider, it) }
+
+            request.playlistId?.let { playlistId ->
+                // From the list, like a refresh: not every provider implements getPlaylistDetail.
+                val playlist = fetchPlaylists(provider).firstOrNull { it.id == playlistId }
+                    ?: playlists[key(provider.id, playlistId)]?.playlist
+                val cachedSongIds = songs.values.filter { it.providerId == provider.id }.mapTo(HashSet()) { it.songId }
+                if (playlist != null) cachePlaylist(provider, playlist, cachedSongIds)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Can't save the artists and playlist of the downloaded songs", e)
+        } catch (e: NotImplementedError) {
+            // Some providers don't implement every call.
+            Log.w(TAG, "Can't save the artists and playlist of the downloaded songs", e)
+        }
+        updateUsage()
+    }
+
+    /** Downloads the song [songId] for the user, returning it, or null if it can't be downloaded. */
+    private suspend fun downloadForUser(provider: MediaProvider, songId: String, variant: StreamVariant): MediaModel.Song? {
+        val songKey = key(provider.id, songId)
+        songs[songKey]?.let { cached ->
+            mutex.withLock { songs[songKey]?.let(::markManualLocked) }
+            updateUsage()
+            return cached.song
+        }
+
+        val song = resolveSong(provider, songId) ?: return null
+        if (songsDir.usableSpace < estimateSize(song, variant) + MIN_FREE_SPACE_BYTES) {
+            Log.w(TAG, "Not enough space to download $songId")
+            return null
+        }
+        return song.takeIf { downloadSong(provider, it, rank = Int.MAX_VALUE, variant = variant, manual = true) }
+    }
+
+    /** Keeps a song of the smart cache as downloaded by the user. */
+    private fun markManualLocked(cached: CachedSong) {
+        if (cached.manual) return
+        val manual = cached.copy(manual = true)
+        database.updateCachedSongs(listOf(manual))
+        songs[key(manual)] = manual
+    }
+
+    /** What is stored on the device: the songs (downloaded or in the smart cache), their artists and playlists. */
+    class OfflineContent(
+        val songs: List<CachedSong>,
+        val artists: List<CachedArtist>,
+        val playlists: List<CachedPlaylist>,
+    )
+
+    suspend fun getOfflineContent(): OfflineContent {
+        loaded.await()
+        return mutex.withLock {
+            OfflineContent(songs.values.toList(), artists.values.toList(), playlists.values.toList())
+        }
+    }
+
+    /** Deletes the [removed] songs, downloaded or in the smart cache. A refresh may cache the latter again. */
+    suspend fun removeSongs(removed: Collection<CachedSong>) {
+        if (removed.isEmpty()) return
+        loaded.await()
+        mutex.withLock {
+            deleteSongsLocked(removed.mapNotNull { songs[key(it)] })
+        }
+        updateUsage()
+    }
+
+    /** Deletes every song downloaded by the user. The smart cache is kept. */
+    suspend fun clearDownloads() {
+        // Waits for the download in progress to stop, so it isn't added back right after.
+        val job = synchronized(downloadLock) {
+            downloadRequests.clear()
+            downloadJob?.also { it.cancel() }
+        }
+        job?.join()
+        loaded.await()
+        mutex.withLock {
+            deleteSongsLocked(songs.values.filter { it.manual })
+        }
+        updateUsage()
+    }
+
+    //endregion
+
     //region Size management
 
-    /** Drops songs until the cache fits in [maxBytes]: other providers' songs first, then the least listened. */
+    /**
+     * Drops songs until the smart cache fits in [maxBytes]: other providers' songs first, then the least listened.
+     * Songs downloaded by the user don't count.
+     */
     private suspend fun trimToSize(maxBytes: Long) {
         loaded.await()
         mutex.withLock {
-            var used = usedBytes()
+            var used = smartUsedBytes()
             if (used <= maxBytes) return@withLock
 
             val currentProviderId = MediaProviderManager.currentProvider.value?.id
             val dropped = mutableListOf<CachedSong>()
-            for (cached in songs.values.sortedWith(
+            for (cached in smartSongs().sortedWith(
                 compareBy<CachedSong> { it.providerId == currentProviderId }.thenByDescending { it.rank }
             )) {
                 if (used <= maxBytes) break
@@ -982,12 +1227,12 @@ class SmartCacheManager @Inject constructor(
         updateUsage()
     }
 
-    /** Deletes every cached song and cover. */
+    /** Deletes every song of the smart cache, and the covers, artists and playlists only they used. */
     suspend fun clear() {
         loaded.await()
         mutex.withLock {
             if (songs.isEmpty() && artworks.isEmpty() && artists.isEmpty() && playlists.isEmpty()) return@withLock
-            deleteSongsLocked(songs.values.toList())
+            deleteSongsLocked(smartSongs())
             deleteUnusedLibraryLocked()
             deleteUnusedArtworksLocked()
         }
@@ -1018,11 +1263,22 @@ class SmartCacheManager @Inject constructor(
         }
     }
 
-    private fun usedBytes(): Long =
-        songs.values.sumOf { it.sizeBytes } + artworks.values.sumOf { it.sizeBytes }
+    private fun smartSongs(): List<CachedSong> = songs.values.filter { !it.manual }
+
+    /** Space used by the smart cache: its songs, and the covers (shared with the downloaded songs). */
+    private fun smartUsedBytes(): Long =
+        smartSongs().sumOf { it.sizeBytes } + artworks.values.sumOf { it.sizeBytes }
 
     private fun updateUsage() {
-        _state.update { it.copy(usedBytes = usedBytes(), songCount = songs.size) }
+        val (manual, smart) = songs.values.partition { it.manual }
+        _state.update {
+            it.copy(
+                usedBytes = smart.sumOf { song -> song.sizeBytes } + artworks.values.sumOf { artwork -> artwork.sizeBytes },
+                songCount = smart.size,
+                downloadedBytes = manual.sumOf { song -> song.sizeBytes },
+                downloadedSongCount = manual.size,
+            )
+        }
     }
 
     //endregion
@@ -1057,7 +1313,7 @@ class SmartCacheManager @Inject constructor(
             it.copy(lastRefresh = prefs.getLong(LAST_REFRESH_KEY, 0).takeIf { time -> time > 0 })
         }
         updateUsage()
-        Log.d(TAG, "Loaded ${songs.size} cached songs (${usedBytes()} bytes)")
+        Log.d(TAG, "Loaded ${songs.size} cached songs (${smartUsedBytes()} bytes in the smart cache)")
     }
 
     /** Makes the cached songs, and the albums and artists they belong to, browsable offline. */

@@ -77,6 +77,7 @@ import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.AlbumCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.utils.bleedHorizontal
@@ -105,6 +106,7 @@ fun ArtistDetails(
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var showDownloadDialog by remember { mutableStateOf(false) }
     var showArtistBiographyDialog by remember { mutableStateOf(false) }
     var addToPlaylistSongs by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
 
@@ -309,9 +311,7 @@ fun ArtistDetails(
                                         }
                                     },
                                     ActionButtonType.DOWNLOAD to {
-                                        coroutineScope.launch {
-                                            viewModel.downloadArtist(getArtistSongs())
-                                        }
+                                        showDownloadDialog = true
                                     },
                                 )
 
@@ -394,6 +394,15 @@ fun ArtistDetails(
         AddToPlaylist(
             onDismissRequest = { showAddToPlaylistDialog = false },
             mediaToAddToPlaylist = addToPlaylistSongs
+        )
+    }
+
+    if (showDownloadDialog) {
+        DownloadTargetDialog(
+            onDismissRequest = { showDownloadDialog = false },
+            onSelect = { target ->
+                coroutineScope.launch { viewModel.downloadArtist(getArtistSongs(), target) }
+            }
         )
     }
 

@@ -68,6 +68,7 @@ import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.utils.StringUtils
@@ -111,6 +112,7 @@ fun PlaylistDetails(
     println("artwork uri: ${playlistMetadata?.artworkUri}; artwork data: ${playlistMetadata?.artworkData}")
 
     var showLoading by remember { mutableStateOf(false) }
+    var showDownloadDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(isLoading) {
         if (isLoading) {
@@ -254,12 +256,7 @@ fun PlaylistDetails(
                                         }
                                     },
                                     ActionButtonType.DOWNLOAD to {
-                                        coroutineScope.launch {
-                                            viewModel.downloadPlaylist(
-                                                playlistSongs,
-                                                playlistMetadata?.title.toString()
-                                            )
-                                        }
+                                        showDownloadDialog = true
                                     },
                                 )
 
@@ -317,5 +314,19 @@ fun PlaylistDetails(
                 )
             }
         }
+    }
+
+    if (showDownloadDialog) {
+        DownloadTargetDialog(
+            onDismissRequest = { showDownloadDialog = false },
+            onSelect = { target ->
+                viewModel.downloadPlaylist(
+                    playlistSongs,
+                    playlistMetadata?.id,
+                    playlistMetadata?.title.toString(),
+                    target
+                )
+            }
+        )
     }
 }

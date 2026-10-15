@@ -12,6 +12,13 @@
         <string name="label_radio_url">Radio URL</string>
         <string name="label_radio_homepage">Radio Homepage URL</string>
 
+    // Download
+    <string name="download_target_title">Download</string>
+    <string name="download_target_app">Download In The App</string>
+        <string name="download_target_app_description">Play offline in the app. Manage it in Settings › Downloads</string>
+    <string name="download_target_device">Save To The Device</string>
+        <string name="download_target_device_description">Save the files in the Music folder, named after the download templates</string>
+
     // Playlists
     <string name="button_new_playlist">New Playlist</string>
     <string name="playlist_delete_playlist">Delete Playlist</string>

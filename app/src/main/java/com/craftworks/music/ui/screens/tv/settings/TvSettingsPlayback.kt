@@ -1,6 +1,5 @@
 package com.craftworks.music.ui.screens.tv.settings
 
-import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,9 +34,6 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
-import com.craftworks.music.managers.statusText
-import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
-import com.craftworks.music.ui.elements.dialogs.tv.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingFormatDialog
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
@@ -48,7 +44,6 @@ import kotlin.math.roundToInt
 @Preview(device = "id:tv_1080p", showSystemUi = true, showBackground = true)
 fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel()) {
     var showWifiTranscodingDialog by remember { mutableStateOf(false) }
-    var showSmartCacheSizeDialog by remember { mutableStateOf(false) }
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
 
@@ -66,10 +61,6 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
 
     val trackOfflineScrobbles by smartCacheViewModel.trackOfflineScrobbles.collectAsStateWithLifecycle()
     val pendingScrobbles by smartCacheViewModel.pendingScrobbles.collectAsStateWithLifecycle()
-    val smartCacheState by smartCacheViewModel.state.collectAsStateWithLifecycle()
-    val smartCacheMaxSizeGb by smartCacheViewModel.maxSizeGb.collectAsStateWithLifecycle()
-    val smartCacheSupported by smartCacheViewModel.isSupported.collectAsStateWithLifecycle()
-    val isOffline by smartCacheViewModel.isOffline.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -234,49 +225,8 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                 }
             }
         }
-
-        item {
-            SettingsButtonItem(
-                title = stringResource(R.string.smart_cache_size),
-                description = stringResource(R.string.smart_cache_size_description),
-                subtitle = if (smartCacheMaxSizeGb > 0)
-                    stringResource(
-                        R.string.smart_cache_usage,
-                        Formatter.formatShortFileSize(context, smartCacheState.usedBytes),
-                        smartCacheSizeLabel(smartCacheMaxSizeGb),
-                        smartCacheState.songCount
-                    )
-                else
-                    smartCacheSizeLabel(0),
-                icon = ImageVector.vectorResource(R.drawable.rounded_storage_24),
-                onClick = { showSmartCacheSizeDialog = true }
-            )
-        }
-
-        item {
-            SettingsButtonItem(
-                title = stringResource(R.string.smart_cache_refresh),
-                subtitle = when {
-                    smartCacheState.isRunning -> stringResource(
-                        R.string.smart_cache_tap_to_cancel,
-                        smartCacheState.statusText(context.resources)
-                    )
-                    !smartCacheSupported -> stringResource(R.string.smart_cache_error_unsupported)
-                    else -> smartCacheState.statusText(context.resources)
-                },
-                icon = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
-                enabled = smartCacheState.isRunning ||
-                        (smartCacheMaxSizeGb > 0 && smartCacheSupported && !isOffline),
-                onClick = { smartCacheViewModel.toggleRefresh() }
-            )
-        }
     }
 
-    if (showSmartCacheSizeDialog) SmartCacheSizeDialog(
-        setShowDialog = { showSmartCacheSizeDialog = it },
-        selectedSizeGb = smartCacheMaxSizeGb,
-        onSizeSelected = smartCacheViewModel::setMaxSizeGb
-    )
     if (showWifiTranscodingDialog) TranscodingBitrateDialog(setShowDialog = {
         showWifiTranscodingDialog = it
     }, true)

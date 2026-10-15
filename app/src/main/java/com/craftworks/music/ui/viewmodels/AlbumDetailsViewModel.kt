@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.StarRating
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.AlbumRepository
@@ -85,13 +86,15 @@ class AlbumDetailsViewModel @Inject constructor(
         }
     }
 
-    fun downloadSong(song: MediaItem) {
+    fun downloadSong(song: MediaItem, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(listOf(song.mediaMetadata))
         viewModelScope.launch {
             songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 
-    fun downloadAlbum(songs: List<MediaItem>) {
+    fun downloadAlbum(songs: List<MediaItem>, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(songs.map { it.mediaMetadata })
         viewModelScope.launch {
             val template = miscSettingsManager.downloadTemplateFlow.first()
             songs.forEach { song ->

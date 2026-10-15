@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.StarRating
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.PlaylistListSort
@@ -179,13 +180,15 @@ class PlaylistScreenViewModel @Inject constructor(
         }
     }
 
-    fun downloadSong(song: MediaItem) {
+    fun downloadSong(song: MediaItem, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(listOf(song.mediaMetadata))
         viewModelScope.launch {
             songRepository.downloadSong(song.mediaMetadata, miscSettingsManager.downloadTemplateFlow.first())
         }
     }
 
-    fun downloadPlaylist(songs: List<MediaItem>, playlistName: String) {
+    fun downloadPlaylist(songs: List<MediaItem>, playlistId: String?, playlistName: String, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(songs.map { it.mediaMetadata }, playlistId)
         viewModelScope.launch {
             songs.forEachIndexed { index, song ->
                 songRepository.downloadSong(

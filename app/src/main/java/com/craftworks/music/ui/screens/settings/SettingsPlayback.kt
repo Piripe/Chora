@@ -1,6 +1,5 @@
 package com.craftworks.music.ui.screens.settings
 
-import android.text.format.Formatter
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,13 +44,10 @@ import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
-import com.craftworks.music.managers.statusText
 import com.craftworks.music.ui.elements.ActionTooltip
-import com.craftworks.music.ui.elements.dialogs.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
-import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
@@ -71,9 +67,6 @@ fun S_PlaybackScreen(
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
 
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
-    var showSmartCacheSizeDialog by remember { mutableStateOf(false) }
-
-    val smartCacheMaxSizeGb by smartCacheViewModel.maxSizeGb.collectAsStateWithLifecycle()
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
@@ -246,48 +239,6 @@ fun S_PlaybackScreen(
                         }
                     )
                 }
-
-                // Smart cache
-                Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    val smartCacheState by smartCacheViewModel.state.collectAsStateWithLifecycle()
-                    val smartCacheSupported by smartCacheViewModel.isSupported.collectAsStateWithLifecycle()
-                    val isOffline by smartCacheViewModel.isOffline.collectAsStateWithLifecycle()
-
-                    SettingsDialogButton(
-                        settingsName = stringResource(R.string.smart_cache_size),
-                        settingsSubtitle = if (smartCacheMaxSizeGb > 0)
-                            stringResource(
-                                R.string.smart_cache_usage,
-                                Formatter.formatShortFileSize(context, smartCacheState.usedBytes),
-                                smartCacheSizeLabel(smartCacheMaxSizeGb),
-                                smartCacheState.songCount
-                            )
-                        else
-                            smartCacheSizeLabel(0),
-                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_storage_24),
-                        settingsDescription = stringResource(R.string.smart_cache_size_description),
-                        toggleEvent = { showSmartCacheSizeDialog = true }
-                    )
-
-                    SettingsDialogButton(
-                        settingsName = stringResource(R.string.smart_cache_refresh),
-                        settingsSubtitle = when {
-                            smartCacheState.isRunning -> stringResource(
-                                R.string.smart_cache_tap_to_cancel,
-                                smartCacheState.statusText(context.resources)
-                            )
-                            !smartCacheSupported -> stringResource(R.string.smart_cache_error_unsupported)
-                            else -> smartCacheState.statusText(context.resources)
-                        },
-                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
-                        enabled = smartCacheState.isRunning ||
-                                (smartCacheMaxSizeGb > 0 && smartCacheSupported && !isOffline),
-                        toggleEvent = { smartCacheViewModel.toggleRefresh() }
-                    )
-                }
             }
         }
 
@@ -300,10 +251,5 @@ fun S_PlaybackScreen(
         if (showTranscodingFormatDialog) TranscodingFormatDialog(setShowDialog = {
             showTranscodingFormatDialog = it
         })
-        if (showSmartCacheSizeDialog) SmartCacheSizeDialog(
-            setShowDialog = { showSmartCacheSizeDialog = it },
-            selectedSizeGb = smartCacheMaxSizeGb,
-            onSizeSelected = smartCacheViewModel::setMaxSizeGb
-        )
     }
 }

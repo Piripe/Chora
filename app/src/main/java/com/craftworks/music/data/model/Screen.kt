@@ -51,5 +51,7 @@ sealed interface Screen {
     @Serializable
     object S_Playback : Screen
     @Serializable
-    object S_Misc : Screen
+    object S_Downloads : Screen
+    @Serializable
+    object S_Downloaded_Content : Screen
 }

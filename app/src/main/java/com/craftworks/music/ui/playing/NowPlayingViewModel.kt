@@ -19,6 +19,7 @@ import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.id
@@ -181,7 +182,8 @@ class NowPlayingViewModel @Inject constructor (
         } ?: listOf()
     }
 
-    fun downloadSong(metadata: MediaMetadata) {
+    fun downloadSong(metadata: MediaMetadata, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(listOf(metadata))
         viewModelScope.launch {
             songRepository.downloadSong(metadata, miscSettingsManager.downloadTemplateFlow.first())
         }

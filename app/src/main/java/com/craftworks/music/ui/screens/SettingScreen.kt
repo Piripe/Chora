@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -120,10 +119,10 @@ fun SettingScreen(
                 )
 
                 SettingsButton(
-                    Screen.S_Misc,
-                    Icons.Rounded.Menu,
-                    R.string.settings_misc,
-                    R.string.settings_misc_description,
+                    Screen.S_Downloads,
+                    R.drawable.rounded_download_24,
+                    R.string.settings_downloads,
+                    R.string.settings_downloads_description,
                     navHostController
                 )
             }

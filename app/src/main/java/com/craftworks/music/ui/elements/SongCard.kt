@@ -30,7 +30,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,10 +61,10 @@ import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import com.craftworks.music.utils.StringUtils
-import kotlinx.coroutines.launch
 
 @Composable
 fun HorizontalSongCard(
@@ -81,6 +80,7 @@ fun HorizontalSongCard(
 
     var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
     var showSongRatingDialog by remember { mutableStateOf(false) }
+    var showDownloadDialog by remember { mutableStateOf(false) }
 
     val isStarred by remember(song.mediaMetadata) { viewModel.songStarredFlow(song.mediaMetadata) }
         .collectAsStateWithLifecycle(viewModel.isSongStarred(song.mediaMetadata))
@@ -246,7 +246,6 @@ fun HorizontalSongCard(
                     }
                 }
 
-                val coroutineScope = rememberCoroutineScope()
                 DropdownMenu(
                     modifier = Modifier,
                     expanded = expanded,
@@ -348,9 +347,7 @@ fun HorizontalSongCard(
                                 Text(stringResource(R.string.action_download))
                             },
                             onClick = {
-                                coroutineScope.launch {
-                                    viewModel.downloadSong(song)
-                                }
+                                showDownloadDialog = true
                                 expanded = false
                             },
                             leadingIcon = {
@@ -372,6 +369,12 @@ fun HorizontalSongCard(
         AddToPlaylist(
             onDismissRequest = {showAddSongToPlaylistDialog = false},
             mediaToAddToPlaylist = listOf(song)
+        )
+    }
+    if (showDownloadDialog) {
+        DownloadTargetDialog(
+            onDismissRequest = { showDownloadDialog = false },
+            onSelect = { viewModel.downloadSong(song, it) }
         )
     }
     if (showSongRatingDialog) {

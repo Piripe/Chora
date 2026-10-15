@@ -257,8 +257,8 @@ fun TvSearchScreen(
                     rating = rating
                 )
             },
-            onDownload = {
-                songsViewModel.downloadSong(it)
+            onDownload = { song, target ->
+                songsViewModel.downloadSong(song, target)
             },
             setShowDialog = { showSongDialog = it }
         )

@@ -74,6 +74,7 @@ import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
 import com.craftworks.music.utils.StringUtils
@@ -100,6 +101,7 @@ fun AlbumDetails(
     val showTrackNumbers by AppearanceSettingsManager(LocalContext.current).showTrackNumbersFlow.collectAsStateWithLifecycle(false)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var showDownloadDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -316,9 +318,7 @@ fun AlbumDetails(
                                         showAddToPlaylistDialog = true
                                     },
                                     ActionButtonType.DOWNLOAD to {
-                                        coroutineScope.launch {
-                                            viewModel.downloadAlbum(currentAlbum.subList(1, currentAlbum.size))
-                                        }
+                                        showDownloadDialog = true
                                     },
                                 )
 
@@ -422,6 +422,13 @@ fun AlbumDetails(
             AddToPlaylist(
                 onDismissRequest = { showAddToPlaylistDialog = false },
                 mediaToAddToPlaylist = currentAlbum
+            )
+        }
+        if (showDownloadDialog) {
+            DownloadTargetDialog(
+                onDismissRequest = { showDownloadDialog = false },
+                // The first item is the album itself.
+                onSelect = { viewModel.downloadAlbum(currentAlbum.drop(1), it) }
             )
         }
     }
