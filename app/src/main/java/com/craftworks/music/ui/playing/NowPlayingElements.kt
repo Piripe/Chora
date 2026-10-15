@@ -3,33 +3,33 @@
 package com.craftworks.music.ui.playing
 
 import android.util.Log
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
+import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,28 +49,19 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.media3.ui.compose.state.rememberNextButtonState
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
-import androidx.media3.ui.compose.state.rememberPreviousButtonState
-import androidx.media3.ui.compose.state.rememberRepeatButtonState
-import androidx.media3.ui.compose.state.rememberShuffleButtonState
 import com.craftworks.music.R
-import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.ui.elements.bounceClick
-import com.craftworks.music.ui.elements.moveClick
 import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -82,7 +72,8 @@ import kotlinx.coroutines.isActive
 fun PlaybackProgressSlider(
     color: Color = MaterialTheme.colorScheme.onBackground,
     mediaController: MediaController? = null,
-    metadata: MediaMetadata? = null
+    metadata: MediaMetadata? = null,
+    style: NowPlayingSeekBarStyle = NowPlayingSeekBarStyle.STANDARD,
 ) {
     var currentValue by remember { mutableLongStateOf(0L) }
     val currentDuration by remember(mediaController?.duration) {
@@ -155,8 +146,22 @@ fun PlaybackProgressSlider(
     Column(
         Modifier.focusable(false)
     ) {
-        Slider(
+        SeekBar(
+            value = animatedValue,
+            valueRange = 0f..(currentDuration?.toFloat() ?: 0f),
+            style = style,
+            color = color,
+            isPlaying = isPlaying,
             enabled = metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION,
+            interactionSource = interactionSource,
+            onValueChange = {
+                isInteracting = true
+                currentValue = it.toLong()
+            },
+            onValueChangeFinished = {
+                isInteracting = false
+                mediaController?.seekTo(currentValue)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged {
@@ -179,22 +184,6 @@ fun PlaybackProgressSlider(
                         else -> false
                     }
                 },
-            value = animatedValue,
-            onValueChange = {
-                isInteracting = true
-                currentValue = it.toLong()
-            },
-            onValueChangeFinished = {
-                isInteracting = false
-                mediaController?.seekTo(currentValue)
-            },
-            valueRange = 0f..(currentDuration?.toFloat() ?: 0f),
-            colors = SliderDefaults.colors(
-                activeTrackColor = color,
-                inactiveTrackColor = color.copy(alpha = 0.25f),
-                thumbColor = color
-            ),
-            interactionSource = interactionSource,
         )
 
         // Time thingies
@@ -226,20 +215,130 @@ fun PlaybackProgressSlider(
     }
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
+/**
+ * The progress slider, drawn with one of the Material 3 Expressive [NowPlayingSeekBarStyle]s.
+ * The wavy track only waves while playing.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-internal fun PreviousSongButton(player: Player, color: Color, modifier: Modifier = Modifier) {
-    val state = rememberPreviousButtonState(player)
-    IconButton(onClick = state::onClick, modifier = modifier
-        .bounceClick(state.isEnabled)
-        .moveClick(false, state.isEnabled), enabled = state.isEnabled) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.media3_notification_seek_to_previous),
-            contentDescription = "Previous song",
-            modifier = modifier,
-            tint = if (state.isEnabled) color else color.copy(0.5f)
-        )
-    }
+fun SeekBar(
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    style: NowPlayingSeekBarStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = true,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    onValueChange: (Float) -> Unit = {},
+    onValueChangeFinished: () -> Unit = {},
+) {
+    val colors = SliderDefaults.colors(
+        activeTrackColor = color,
+        inactiveTrackColor = color.copy(alpha = 0.25f),
+        thumbColor = color
+    )
+    val state = remember(valueRange) { SliderState(value = value, trackRange = valueRange) }
+    state.value = value
+
+    val isDragged by interactionSource.collectIsDraggedAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isInteracting = isDragged || isPressed
+
+    Slider(
+        state = state,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+        modifier = modifier,
+        enabled = enabled,
+        colors = colors,
+        interactionSource = interactionSource,
+        thumb = {
+            when (style) {
+                NowPlayingSeekBarStyle.STANDARD -> SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    colors = colors,
+                    enabled = enabled,
+                )
+                NowPlayingSeekBarStyle.WAVY -> SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    colors = colors,
+                    enabled = enabled,
+                    thumbSize = DpSize(4.dp, 24.dp),
+                )
+                NowPlayingSeekBarStyle.THICK -> SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    colors = colors,
+                    enabled = enabled,
+                    thumbSize = DpSize(4.dp, 48.dp),
+                )
+                NowPlayingSeekBarStyle.MINIMAL -> {
+                    val thumbSize by animateDpAsState(
+                        targetValue = if (isInteracting) 18.dp else 12.dp,
+                        label = "Seek bar thumb size"
+                    )
+                    // The slider measures the thumb with the track height as minimum height, which would
+                    // stretch the small thumb and push it off-center: it is centered in a fixed box instead.
+                    Box(
+                        modifier = Modifier.size(18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SliderDefaults.Thumb(
+                            interactionSource = interactionSource,
+                            colors = colors,
+                            enabled = enabled,
+                            thumbSize = DpSize(thumbSize, thumbSize),
+                        )
+                    }
+                }
+            }
+        },
+        track = { sliderState ->
+            when (style) {
+                NowPlayingSeekBarStyle.STANDARD -> SliderDefaults.Track(
+                    sliderState = sliderState,
+                    colors = colors,
+                    enabled = enabled,
+                )
+                NowPlayingSeekBarStyle.WAVY -> {
+                    // The wave flattens when paused or while seeking. The indicator animates the amplitude
+                    // changes itself, and ignores new targets while doing so: it must only get the final
+                    // value, not an animated one.
+                    val waving = isPlaying && !isInteracting
+                    val amplitude = remember(waving) { { _: Float -> if (waving) 1f else 0f } }
+                    val range = sliderState.trackRange
+                    val length = range.endInclusive - range.start
+                    LinearWavyProgressIndicator(
+                        progress = {
+                            if (length <= 0f) 0f
+                            else ((sliderState.value - range.start) / length).coerceIn(0f, 1f)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = color,
+                        trackColor = color.copy(alpha = 0.25f),
+                        amplitude = amplitude,
+                        waveSpeed = if (waving) WavyProgressIndicatorDefaults.LinearDeterminateWavelength else 0.dp,
+                    )
+                }
+                NowPlayingSeekBarStyle.THICK -> SliderDefaults.Track(
+                    sliderState = sliderState,
+                    trackCornerSize = 12.dp,
+                    modifier = Modifier.height(32.dp),
+                    colors = colors,
+                    enabled = enabled,
+                )
+                NowPlayingSeekBarStyle.MINIMAL -> SliderDefaults.Track(
+                    sliderState = sliderState,
+                    modifier = Modifier.height(4.dp),
+                    colors = colors,
+                    enabled = enabled,
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                    trackInsideCornerSize = 2.dp,
+                )
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -265,223 +364,4 @@ internal fun PlayPauseButton(player: Player, color: Color, modifier: Modifier = 
 //            modifier = modifier
 //        )
 //    }
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-internal fun NextSongButton(player: Player, color: Color, modifier: Modifier = Modifier) {
-    val state = rememberNextButtonState(player)
-    IconButton(onClick = state::onClick, modifier = modifier
-        .bounceClick(state.isEnabled)
-        .moveClick(true, state.isEnabled), enabled = state.isEnabled) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.media3_notification_seek_to_next),
-            contentDescription = "Next song",
-            modifier = modifier,
-            tint = if (state.isEnabled) color else color.copy(0.5f)
-        )
-    }
-}
-
-@Composable
-@Preview
-fun LyricsButton(
-    color: Color = Color.Black,
-    size: Dp = 64.dp,
-    isActive: Boolean = false,
-    onClick: () -> Unit = {}
-){
-    val lyrics by LyricsState.lyrics.collectAsStateWithLifecycle()
-    val loading by LyricsState.loading.collectAsStateWithLifecycle()
-
-    Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        modifier = // Disable bounce click if no lyrics are present
-        if (lyrics != null || loading)
-            Modifier
-                .bounceClick()
-                .size(size + 12.dp)
-        else
-            Modifier
-                .size(size + 12.dp),
-        contentPadding = PaddingValues(6.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            contentColor = color.copy(0.5f),
-            disabledContentColor = color.copy(0.25f)
-        ),
-        enabled = lyrics != null || loading
-    ) {
-        Crossfade(targetState = isActive && lyrics != null, label = "Lyrics Icon Crossfade") { open ->
-            when (open) {
-                true -> Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.lyrics_active),
-                    contentDescription = "Close Lyrics",
-                    modifier = Modifier
-                        .size(size)
-                )
-
-                false -> Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.lyrics_inactive),
-                    contentDescription = "View Lyrics",
-                    modifier = Modifier
-                        .size(size)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun PlayQueueButton(
-    color: Color = Color.Black,
-    size: Dp = 64.dp,
-    onClick: () -> Unit = {}
-){
-    Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        contentPadding = PaddingValues(6.dp),
-        modifier = Modifier.bounceClick().size(size + 12.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            contentColor = color.copy(0.5f),
-            disabledContentColor = color.copy(0.25f)
-        )
-    ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.rounded_queue_music_24),
-            contentDescription = null,
-            modifier = Modifier
-                .size(size)
-        )
-    }
-}
-
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-fun DownloadButton(color: Color, size: Dp, metadata: MediaMetadata?, enabled: Boolean, onDownload: () -> Unit) {
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    Button(
-        onClick = onDownload,
-        enabled = enabled,
-        shape = RoundedCornerShape(12.dp),
-        modifier = if (enabled)
-            Modifier
-                .bounceClick()
-                .size(size + 12.dp)
-        else
-            Modifier
-                .size(size + 12.dp),
-        contentPadding = PaddingValues(6.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            contentColor = color.copy(alpha = 0.5f),
-            disabledContentColor = color.copy(alpha = 0.25f)
-        )
-    ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-            contentDescription = stringResource(R.string.action_download),
-            modifier = Modifier
-                .size(size)
-        )
-    }
-}
-
-@Composable
-fun SleepTimerButton(
-    color: Color,
-    size: Dp,
-    sleepTimerMinutes: Int,
-    onClick: () -> Unit = {}
-) {
-    BadgedBox(
-        badge = {
-            if (sleepTimerMinutes > 0) {
-                val formattedMinutes: String = if (sleepTimerMinutes > 60)
-                    "${sleepTimerMinutes / 60}h"
-                else
-                    "${sleepTimerMinutes}m"
-
-                Badge {
-                    Text(formattedMinutes)
-                }
-            }
-        }
-    ) {
-        Button(
-            onClick = onClick,
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .bounceClick()
-                .width(size + 12.dp),
-            contentPadding = PaddingValues(6.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                contentColor = color.copy(alpha = 0.5f),
-                disabledContentColor = color.copy(alpha = 0.25f)
-            )
-        ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.rounded_timer_24),
-                contentDescription = "Sleep timer",
-                modifier = Modifier
-                    .size(size)
-            )
-        }
-    }
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-internal fun ShuffleButton(player: Player, color: Color, modifier: Modifier = Modifier) {
-    val state = rememberShuffleButtonState(player)
-    IconButton(
-        onClick = state::onClick,
-        modifier = modifier.bounceClick(),
-        enabled = state.isEnabled
-    ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.round_shuffle_28),
-            contentDescription = "Shuffle",
-            modifier = modifier,
-            tint = color.copy(if (state.shuffleOn) 1f else 0.5f)
-        )
-    }
-}
-
-@androidx.annotation.OptIn(UnstableApi::class)
-@Composable
-internal fun RepeatButton(player: Player, color: Color, modifier: Modifier = Modifier) {
-    val state = rememberRepeatButtonState(player)
-    val icon = repeatModeIcon(state.repeatModeState)
-    IconButton(
-        onClick = state::onClick,
-        modifier = modifier.bounceClick(),
-        enabled = state.isEnabled
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = "Repeat",
-            modifier = modifier,
-            tint = color.copy(if (state.repeatModeState == Player.REPEAT_MODE_OFF) 0.5f else 1f)
-        )
-    }
-}
-@Composable
-private fun repeatModeIcon(repeatMode: @Player.RepeatMode Int): ImageVector {
-    return when (repeatMode) {
-        Player.REPEAT_MODE_OFF -> ImageVector.vectorResource(R.drawable.rounded_repeat_24)
-        Player.REPEAT_MODE_ONE -> ImageVector.vectorResource(R.drawable.rounded_repeat1_24)
-        else -> ImageVector.vectorResource(R.drawable.rounded_repeat_24)
-    }
 }

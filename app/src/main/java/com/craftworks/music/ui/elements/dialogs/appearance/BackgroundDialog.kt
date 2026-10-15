@@ -52,7 +52,7 @@ fun BackgroundDialog(setShowDialog: (Boolean) -> Unit) {
 
     AlertDialog(
         onDismissRequest = { setShowDialog(false) },
-        title = { Text(stringResource(R.string.appearance_background_style)) },
+        title = { Text(stringResource(R.string.now_playing_background_style)) },
         text = {
             Column{
                 NowPlayingBackground.entries.forEach { option ->

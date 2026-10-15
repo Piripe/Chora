@@ -55,10 +55,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
-import com.craftworks.music.ui.elements.dialogs.appearance.BackgroundDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NameDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NavbarItemsDialog
@@ -67,7 +67,6 @@ import com.craftworks.music.ui.elements.dialogs.appearance.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.appearance.ThemeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
-import com.craftworks.music.ui.playing.NowPlayingBackground
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
@@ -78,11 +77,9 @@ import kotlin.math.roundToInt
 @Preview(showBackground = true)
 fun S_AppearanceScreen(navHostController: NavHostController = rememberNavController()) {
     var showNameDialog by remember { mutableStateOf(false) }
-    var showBackgroundDialog by remember { mutableStateOf(false) }
     var showThemesDialog by remember { mutableStateOf(false) }
     var showNavbarItemsDialog by remember { mutableStateOf(false) }
     var showHomeItemsDialog by remember { mutableStateOf(false) }
-    var showNowPlayingTitleAlignmentDialog by remember { mutableStateOf(false) }
     var showNowPlayingLyricsAlignmentDialog by remember { mutableStateOf(false) }
     var showAlbumDetailsActionButtonsDialog by remember { mutableStateOf(false) }
     var showArtistDetailsActionButtonsDialog by remember { mutableStateOf(false) }
@@ -93,10 +90,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
 
     val appearanceSettingsManager = AppearanceSettingsManager(context)
 
-    // Now Playing Title Alignment
-    val nowPlayingTitleAlignment by appearanceSettingsManager.nowPlayingTitleAlignment.collectAsState(
-        NowPlayingAlignment.LEFT
-    )
     // Now Playing Lyrics Alignment
     val nowPlayingLyricsAlignment by appearanceSettingsManager.nowPlayingLyricsAlignment.collectAsState(
         NowPlayingAlignment.CENTER
@@ -229,37 +222,14 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
 
-                    //Background Style
-                    val backgroundType by appearanceSettingsManager.npBackgroundFlow.collectAsState(
-                        NowPlayingBackground.STATIC_BLUR
-                    )
-
-                    val backgroundTypeLabels = mapOf(
-                        NowPlayingBackground.PLAIN to R.string.background_style_plain,
-                        NowPlayingBackground.STATIC_BLUR to R.string.background_style_blur,
-                        NowPlayingBackground.ANIMATED_BLUR to R.string.background_style_anim,
-                    )
+                    //Now Playing
                     SettingsDialogButton(
-                        stringResource(R.string.appearance_background_style),
-                        stringResource(
-                            backgroundTypeLabels[backgroundType]
-                                ?: androidx.media3.session.R.string.error_message_invalid_state
-                        ),
-                        ImageVector.vectorResource(R.drawable.s_a_background),
+                        stringResource(R.string.appearance_now_playing),
+                        stringResource(R.string.appearance_now_playing_description),
+                        ImageVector.vectorResource(R.drawable.round_music_note_24),
                         toggleEvent = {
-                            showBackgroundDialog = true
-                        }
-                    )
-
-                    //Disable Screen Standby
-                    val disableScreenStandby = appearanceSettingsManager.disableScreenStandby.collectAsState(true)
-                    SettingsSwitch(
-                        disableScreenStandby.value,
-                        stringResource(R.string.appearance_screen_standby),
-                        ImageVector.vectorResource(R.drawable.rounded_tv_24),
-                        toggleEvent = {
-                            coroutineScope.launch {
-                                appearanceSettingsManager.setDisableScreenStandby(!disableScreenStandby.value)
+                            navHostController.navigate(Screen.S_Appearance_Now_Playing) {
+                                launchSingleTop = true
                             }
                         }
                     )
@@ -333,18 +303,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                             coroutineScope.launch {
                                 AppearanceSettingsManager(context).setUseAdvancedFilter(!useAdvancedFilter.value)
                             }
-                        }
-                    )
-
-                    SettingsDialogButton(
-                        stringResource(R.string.appearance_now_playing_title_alignment),
-                        stringResource(
-                            alignmentLabels[nowPlayingTitleAlignment]
-                                ?: R.string.alignment_setting_left
-                        ),
-                        ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                        toggleEvent = {
-                            showNowPlayingTitleAlignmentDialog = true
                         }
                     )
                 }
@@ -461,20 +419,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     modifier = Modifier.clip(RoundedCornerShape(16.dp)),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    //More Song Info
-                    val showMoreInfo =
-                        appearanceSettingsManager.showMoreInfoFlow.collectAsState(true)
-                    SettingsSwitch(
-                        showMoreInfo.value,
-                        stringResource(R.string.appearance_more_info),
-                        ImageVector.vectorResource(R.drawable.s_a_moreinfo),
-                        toggleEvent = {
-                            coroutineScope.launch {
-                                appearanceSettingsManager.setShowMoreInfo(!showMoreInfo.value)
-                            }
-                        }
-                    )
-
                     //Show Navidrome Logo
                     val showNavidromeLogo =
                         appearanceSettingsManager.showNavidromeLogoFlow.collectAsState(true)
@@ -586,9 +530,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         if(showNameDialog)
             NameDialog(setShowDialog = { showNameDialog = it })
 
-        if(showBackgroundDialog)
-            BackgroundDialog(setShowDialog = { showBackgroundDialog = it })
-
         if(showThemesDialog)
             ThemeDialog(setShowDialog = { showThemesDialog = it })
 
@@ -598,17 +539,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         if(showHomeItemsDialog)
             HomeItemsDialog(setShowDialog = { showHomeItemsDialog = it })
 
-        if(showNowPlayingTitleAlignmentDialog)
-            NowPlayingTitleAlignmentDialog(
-                setShowDialog = { showNowPlayingTitleAlignmentDialog = it },
-                title = stringResource(R.string.appearance_now_playing_title_alignment),
-                selection = nowPlayingTitleAlignment,
-                onSet = {
-                    runBlocking {
-                        appearanceSettingsManager.setNowPlayingTitleAlignment(it)
-                    }
-                }
-            )
         if(showNowPlayingLyricsAlignmentDialog)
             NowPlayingTitleAlignmentDialog(
                 setShowDialog = { showNowPlayingLyricsAlignmentDialog = it },

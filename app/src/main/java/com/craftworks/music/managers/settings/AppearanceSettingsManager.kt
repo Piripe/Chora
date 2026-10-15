@@ -15,6 +15,15 @@ import com.craftworks.music.ui.elements.ActionButton
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
+import com.craftworks.music.ui.playing.NowPlayingAction
+import com.craftworks.music.ui.playing.NowPlayingButton
+import com.craftworks.music.ui.playing.NowPlayingGesture
+import com.craftworks.music.ui.playing.NowPlayingMenuItem
+import com.craftworks.music.ui.playing.NowPlayingSeekBarStyle
+import com.craftworks.music.ui.playing.defaultNowPlayingButtons
+import com.craftworks.music.ui.playing.defaultNowPlayingCoverGestures
+import com.craftworks.music.ui.playing.defaultNowPlayingMenuItems
+import com.craftworks.music.ui.playing.withAllMenuActions
 import com.craftworks.music.ui.screens.HomeItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.NonCancellable
@@ -63,6 +72,14 @@ class AppearanceSettingsManager @Inject constructor(
         private val ALBUM_DETAILS_BUTTONS = stringPreferencesKey("album_details_buttons")
         private val ARTIST_DETAILS_BUTTONS = stringPreferencesKey("artist_details_buttons")
         private val PLAYLIST_DETAILS_BUTTONS = stringPreferencesKey("playlist_details_buttons")
+
+        private val NP_BUTTONS = stringPreferencesKey("np_buttons")
+        private val NP_MENU_ACTIONS = stringPreferencesKey("np_menu_actions")
+        private val NP_SEEK_BAR_STYLE = stringPreferencesKey("np_seek_bar_style")
+        private val NP_COVER_GESTURES = stringPreferencesKey("np_cover_gestures")
+
+        // Settings that can't be read (e.g. written by a newer version) fall back to the defaults.
+        private val lenientJson = Json { ignoreUnknownKeys = true }
     }
 
     val usernameFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -441,6 +458,80 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[PLAYLIST_DETAILS_BUTTONS] = Json.encodeToString(buttons)
+            }
+        }
+    }
+
+    val nowPlayingButtons: Flow<List<NowPlayingButton>> = context.dataStore.data.map { preferences ->
+        preferences[NP_BUTTONS]?.let {
+            try {
+                lenientJson.decodeFromString<List<NowPlayingButton>>(it)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+        } ?: defaultNowPlayingButtons
+    }
+
+    suspend fun setNowPlayingButtons(buttons: List<NowPlayingButton>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[NP_BUTTONS] = Json.encodeToString(buttons)
+            }
+        }
+    }
+
+    val nowPlayingMenuItems: Flow<List<NowPlayingMenuItem>> = context.dataStore.data.map { preferences ->
+        (preferences[NP_MENU_ACTIONS]?.let {
+            try {
+                lenientJson.decodeFromString<List<NowPlayingMenuItem>>(it)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+        } ?: defaultNowPlayingMenuItems).withAllMenuActions()
+    }
+
+    suspend fun setNowPlayingMenuItems(items: List<NowPlayingMenuItem>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[NP_MENU_ACTIONS] = Json.encodeToString(items)
+            }
+        }
+    }
+
+    val nowPlayingSeekBarStyle: Flow<NowPlayingSeekBarStyle> = context.dataStore.data.map { preferences ->
+        try {
+            NowPlayingSeekBarStyle.valueOf(preferences[NP_SEEK_BAR_STYLE] ?: NowPlayingSeekBarStyle.STANDARD.name)
+        } catch (e: Exception) {
+            NowPlayingSeekBarStyle.STANDARD
+        }
+    }
+
+    suspend fun setNowPlayingSeekBarStyle(style: NowPlayingSeekBarStyle) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[NP_SEEK_BAR_STYLE] = style.name
+            }
+        }
+    }
+
+    /** The action of each cover gesture. A gesture without action isn't in the map. */
+    val nowPlayingCoverGestures: Flow<Map<NowPlayingGesture, NowPlayingAction>> = context.dataStore.data.map { preferences ->
+        preferences[NP_COVER_GESTURES]?.let {
+            try {
+                lenientJson.decodeFromString<Map<NowPlayingGesture, NowPlayingAction>>(it)
+            } catch (e: Exception) {
+                println(e.message)
+                null
+            }
+        } ?: defaultNowPlayingCoverGestures
+    }
+
+    suspend fun setNowPlayingCoverGestures(gestures: Map<NowPlayingGesture, NowPlayingAction>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[NP_COVER_GESTURES] = Json.encodeToString(gestures)
             }
         }
     }

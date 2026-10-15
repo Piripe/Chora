@@ -70,6 +70,12 @@ class NowPlayingViewModel @Inject constructor (
     val backgroundStyle = appearanceSettingsManager.npBackgroundFlow
     val useAdvancedQueue = appearanceSettingsManager.useAdvancedQueue
     val oledProtectionMode = appearanceSettingsManager.oledProtectionMode
+    val buttons = appearanceSettingsManager.nowPlayingButtons
+    val menuItems = appearanceSettingsManager.nowPlayingMenuItems
+    val seekBarStyle = appearanceSettingsManager.nowPlayingSeekBarStyle
+    val coverGestures = appearanceSettingsManager.nowPlayingCoverGestures
+    val titleAlignment = appearanceSettingsManager.nowPlayingTitleAlignment
+    val showMoreInfo = appearanceSettingsManager.showMoreInfoFlow
 
     private val _paletteColors = MutableStateFlow<List<Color>>(emptyList())
     val paletteColors = _paletteColors.asStateFlow()

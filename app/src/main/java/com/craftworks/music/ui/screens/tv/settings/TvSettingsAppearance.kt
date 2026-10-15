@@ -117,7 +117,7 @@ fun TvS_AppearanceScreen() {
                 )
 
                 SettingsButtonItem(
-                    title = stringResource(R.string.appearance_background_style),
+                    title = stringResource(R.string.now_playing_background_style),
                     subtitle = stringResource(
                         backgroundLabels[backgroundType] ?: R.string.background_style_plain
                     ),
@@ -149,7 +149,7 @@ fun TvS_AppearanceScreen() {
                     true
                 )
                 SettingsSwitchItem(
-                    title = stringResource(R.string.appearance_screen_standby),
+                    title = stringResource(R.string.now_playing_screen_standby),
                     icon = ImageVector.vectorResource(R.drawable.rounded_tv_24),
                     checked = screenStandby,
                     onCheckedChange = {
@@ -257,7 +257,7 @@ fun TvS_AppearanceScreen() {
                     true
                 )
                 SettingsSwitchItem(
-                    title = stringResource(R.string.appearance_more_info),
+                    title = stringResource(R.string.now_playing_more_info),
                     icon = ImageVector.vectorResource(R.drawable.s_a_moreinfo),
                     checked = showMoreInfo,
                     onCheckedChange = {

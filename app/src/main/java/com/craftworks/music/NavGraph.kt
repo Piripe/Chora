@@ -64,6 +64,7 @@ import com.craftworks.music.ui.screens.SongsScreen
 import com.craftworks.music.ui.screens.settings.S_AppearanceScreen
 import com.craftworks.music.ui.screens.settings.S_LyricsProviderScreen
 import com.craftworks.music.ui.screens.settings.S_MiscScreen
+import com.craftworks.music.ui.screens.settings.S_NowPlayingScreen
 import com.craftworks.music.ui.screens.settings.S_PlaybackScreen
 import com.craftworks.music.ui.screens.settings.S_ProviderScreen
 import com.craftworks.music.ui.screens.tv.TvAlbumDetails
@@ -122,6 +123,7 @@ fun SetupNavGraph(
                 hasRoute<Screen.PlaylistDetails>() ||
                 (hasRoute<Screen.SettingsList>() && !isTv) ||
                 hasRoute<Screen.S_Appearance>() ||
+                hasRoute<Screen.S_Appearance_Now_Playing>() ||
                 hasRoute<Screen.S_Media_Providers>() ||
                 hasRoute<Screen.S_Lyrics_Providers>() ||
                 hasRoute<Screen.S_Playback>() ||
@@ -355,6 +357,9 @@ fun SetupNavGraph(
                         TvS_AppearanceScreen()
                     else
                         S_AppearanceScreen(navController)
+                }
+                composable<Screen.S_Appearance_Now_Playing> {
+                    S_NowPlayingScreen(navController)
                 }
                 composable<Screen.S_Media_Providers> {
                     if (isTv)

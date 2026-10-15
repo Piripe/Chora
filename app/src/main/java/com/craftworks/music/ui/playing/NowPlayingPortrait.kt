@@ -32,19 +32,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +46,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -71,17 +64,15 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.craftworks.music.data.model.MediaModel
-import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.id
-import com.craftworks.music.data.model.providerId
 import com.craftworks.music.data.repository.LyricsState
+import com.craftworks.music.data.model.providerId
 import com.craftworks.music.managers.MediaProviderManager
-import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.player.ChoraMediaLibraryService
 import com.gigamole.composefadingedges.marqueeHorizontalFadingEdges
 
 @kotlin.OptIn(ExperimentalAnimationApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -100,14 +91,17 @@ fun NowPlayingPortrait(
     metadata: MediaMetadata? = null,
     iconColor: Color = Color.White,
     lyricsOpen: Boolean = false,
-    sleepTimerMinutes: Int = 10,
-    onToggleLyrics: () -> Unit = {},
-    onToggleQueue: () -> Unit = {},
-    onToggleDetails: () -> Unit = {},
-    onOpenSleepTimer: () -> Unit = {},
+    player: Player? = null,
+    actionContext: NowPlayingActionContext = NowPlayingActionContext(),
+    buttons: List<NowPlayingButton> = defaultNowPlayingButtons,
+    seekBarStyle: NowPlayingSeekBarStyle = NowPlayingSeekBarStyle.STANDARD,
+    coverGestures: Map<NowPlayingGesture, NowPlayingAction> = emptyMap(),
+    titleAlignment: NowPlayingAlignment = NowPlayingAlignment.LEFT,
+    showMoreInfo: Boolean = true,
+    onAction: (NowPlayingAction) -> Unit = {},
+    isActiveAfter: (NowPlayingAction) -> Boolean = { false },
     onRefreshLyrics: () -> Unit = {},
     onArtistNav: (MediaModel.Artist) -> Unit = {},
-    onDownload: () -> Unit = {},
 ) {
     val iconTextColor by animateColorAsState(
         targetValue = iconColor,
@@ -118,12 +112,6 @@ fun NowPlayingPortrait(
         label = "Animated text color"
     )
 
-    val context = LocalContext.current
-    val settingsManager = remember { AppearanceSettingsManager(context) }
-    val showMoreInfo by settingsManager.showMoreInfoFlow.collectAsStateWithLifecycle(true)
-    val titleAlignment by settingsManager.nowPlayingTitleAlignment.collectAsStateWithLifecycle(
-        NowPlayingAlignment.LEFT
-    )
     val lyrics by LyricsState.lyrics.collectAsStateWithLifecycle()
     val loadingLyrics by LyricsState.loading.collectAsStateWithLifecycle()
 
@@ -237,32 +225,40 @@ fun NowPlayingPortrait(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Crossfade(
-                                targetState = metadata?.artworkUri.toString(),
-                                animationSpec = tween(
-                                    durationMillis = 400,
-                                    easing = FastOutSlowInEasing
-                                ),
-                                label = "Crossfade between albums"
-                            ) { artworkUri ->
-                                NowPlayingArtwork(
-                                    artworkUri = artworkUri,
-                                    songId = metadata?.id,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 24.dp)
-                                        .aspectRatio(1f)
-                                        .graphicsLayer {
-                                            translationY = laggedOffset
-                                        }
-                                        .shadow(
-                                            elevation = 12.dp,
-                                            shape = RoundedCornerShape(24.dp)
-                                        )
-                                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        .clip(RoundedCornerShape(24.dp))
-                                )
+                            NowPlayingCoverGestures(
+                                gestures = coverGestures,
+                                onAction = onAction,
+                                isActiveAfter = isActiveAfter,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp)
+                                    .aspectRatio(1f)
+                                    .graphicsLayer {
+                                        translationY = laggedOffset
+                                    }
+                            ) {
+                                Crossfade(
+                                    targetState = metadata?.artworkUri.toString(),
+                                    animationSpec = tween(
+                                        durationMillis = 400,
+                                        easing = FastOutSlowInEasing
+                                    ),
+                                    label = "Crossfade between albums"
+                                ) { artworkUri ->
+                                    NowPlayingArtwork(
+                                        artworkUri = artworkUri,
+                                        songId = metadata?.id,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .shadow(
+                                                elevation = 12.dp,
+                                                shape = RoundedCornerShape(24.dp)
+                                            )
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .clip(RoundedCornerShape(24.dp))
+                                    )
+                                }
                             }
 
                             Column(
@@ -310,14 +306,13 @@ fun NowPlayingPortrait(
                                                 )
                                             }
 
-                                            if (!isRadio)
-                                                IconButton(onClick = onToggleDetails) {
-                                                    Icon(
-                                                        Icons.Rounded.MoreVert,
-                                                        tint = iconTextColor.copy(alpha = 0.8f),
-                                                        contentDescription = null
-                                                    )
-                                                }
+                                            NowPlayingTitleButtons(
+                                                buttons = buttons,
+                                                player = player,
+                                                context = actionContext,
+                                                color = iconTextColor,
+                                                onAction = onAction,
+                                            )
                                         }
                                     }
                                 }
@@ -400,50 +395,37 @@ fun NowPlayingPortrait(
                                 Box(
                                     Modifier.padding(horizontal = 24.dp)
                                 ) {
-                                    PlaybackProgressSlider(iconTextColor, mediaController)
+                                    PlaybackProgressSlider(iconTextColor, mediaController, style = seekBarStyle)
                                 }
                             }
                         }
                     }
                 }
 
-                Row(
+                NowPlayingControlsRow(
+                    buttons = buttons,
+                    player = player,
+                    context = actionContext,
+                    color = iconTextColor,
+                    playPauseSize = 88.dp,
+                    onAction = onAction,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
-                        .requiredHeightIn(min = 88.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ChoraMediaLibraryService.getInstance()?.player?.let { player ->
-                        ShuffleButton(player, iconTextColor, Modifier.size(24.dp))
-                        PreviousSongButton(player, iconTextColor, Modifier.size(40.dp))
-                        PlayPauseButton(player, iconTextColor, Modifier.size(88.dp))
-                        NextSongButton(player, iconTextColor, Modifier.size(40.dp))
-                        RepeatButton(player, iconTextColor, Modifier.size(24.dp))
-                    }
-                }
+                        .requiredHeightIn(min = 88.dp)
+                )
             }
         }
 
-        Row(
+        NowPlayingBottomRow(
+            buttons = buttons,
+            player = player,
+            context = actionContext,
+            color = iconTextColor,
+            onAction = onAction,
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .requiredHeightIn(min = 48.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DownloadButton(
-                iconTextColor,
-                32.dp,
-                metadata,
-                MediaProviderManager.getProvider(metadata?.providerId?:"")
-                ?.featureFlags?.contains(ProviderFeature.DOWNLOADS)?:false,
-                onDownload)
-            SleepTimerButton(iconTextColor, 32.dp, sleepTimerMinutes,onOpenSleepTimer)
-            LyricsButton(iconTextColor, 32.dp, lyricsOpen, onToggleLyrics)
-            PlayQueueButton(iconTextColor, 32.dp, onToggleQueue)
-        }
+                .requiredHeightIn(min = 48.dp)
+        )
     }
 }

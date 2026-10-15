@@ -208,7 +208,7 @@ fun BackgroundDialog(
 
     GenericListDialog(
         setShowDialog = setShowDialog,
-        titleRes = R.string.appearance_background_style,
+        titleRes = R.string.now_playing_background_style,
         options = NowPlayingBackground.entries,
         selectedOption = backgroundType,
         onOptionSelected = { option ->
@@ -244,7 +244,7 @@ fun NowPlayingAlignmentDialog(
 
     GenericListDialog(
         setShowDialog = setShowDialog,
-        titleRes = R.string.appearance_now_playing_title_alignment,
+        titleRes = R.string.now_playing_title_alignment,
         options = NowPlayingAlignment.entries,
         selectedOption = nowPlayingTitleAlignment,
         onOptionSelected = { option ->

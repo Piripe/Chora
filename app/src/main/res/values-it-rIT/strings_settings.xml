@@ -6,11 +6,11 @@
     <string name="theme_dark">Scuro</string>
     <string name="theme_light">Chiaro</string>
     <string name="theme_system">Sistema</string>
-    <string name="appearance_background_style">Stile Sfondo</string>
+    <string name="now_playing_background_style">Stile Sfondo</string>
     <string name="background_style_plain">Semplice</string>
     <string name="background_style_blur">Sfocato</string>
     <string name="background_style_anim">Animato</string>
-    <string name="appearance_screen_standby">Disabilita standby schermo</string>
+    <string name="now_playing_screen_standby">Disabilita standby schermo</string>
     <string name="appearance_oled_mode">Protezione OLED</string>
     <string name="appearance_oled_protection_mode">Modalità protezione OLED</string>
     <string name="oled_protection_mode_off">Nessuna</string>
@@ -18,7 +18,7 @@
     <string name="oled_protection_mode_minimal">Minima</string>
     <string name="appearance_navbar_items">Schede della barra di navigazione</string>
     <string name="appearance_home_items">Elementi schermata home</string>
-    <string name="appearance_now_playing_title_alignment">Allineamento titolo</string>
+    <string name="now_playing_title_alignment">Allineamento titolo</string>
     <string name="appearance_now_playing_lyrics_alignment">Allineamento testi</string>
     <string name="alignment_setting_left">Sinistra</string>
     <string name="alignment_setting_center">Centro</string>
@@ -28,7 +28,7 @@
     <string name="appearance_lyrics_recenter">Ricentra dopo lo scorrimento</string>
     <string name="appearance_lyrics_word_bounce">Rimbalzo parole del testo</string>
     <string name="appearance_lyrics_animation_speed">Animazione velocità testo</string>
-    <string name="appearance_more_info">Mostra più info</string>
+    <string name="now_playing_more_info">Mostra più info</string>
     <string name="appearance_provider_logo">Mostra logo provider</string>
     <string name="appearance_refresh_animation">Mostra animazione di ricarica</string>
     <string name="appearance_track_numbers_in_album_view">Mostra numero di traccia negli album</string>
