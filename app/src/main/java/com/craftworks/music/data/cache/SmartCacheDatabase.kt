@@ -56,6 +56,9 @@ data class CachedPlaylist(
     val playlistId: String get() = playlist.id
 }
 
+/** How many times a song was played in the app, and when last ([lastPlayedAt] in epoch milliseconds). */
+data class AppPlay(val providerId: String, val songId: String, val playCount: Int, val lastPlayedAt: Long)
+
 /** A scrobble that couldn't be sent to the provider, to be sent once back online. */
 data class PendingScrobble(val id: Long, val providerId: String, val songId: String, val playedAt: Long)
 
@@ -348,6 +351,19 @@ class SmartCacheDatabase @Inject constructor(
             buildMap {
                 while (cursor.moveToNext()) {
                     put(cursor.getString(0), ListeningScore.decay(cursor.getDouble(1), now - cursor.getLong(2)))
+                }
+            }
+        }
+
+    /** Every song played in the app, on every provider. */
+    fun getAppPlays(): List<AppPlay> =
+        readableDatabase.query(
+            "app_plays", arrayOf("provider_id", "song_id", "play_count", "last_played_at"), null, null,
+            null, null, null
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(AppPlay(cursor.getString(0), cursor.getString(1), cursor.getInt(2), cursor.getLong(3)))
                 }
             }
         }

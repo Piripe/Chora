@@ -226,7 +226,9 @@ class SmartCacheManager @Inject constructor(
     /** Counts a song played in the app, so the songs listened to the most lately are cached first. */
     fun recordPlay(providerId: String, songId: String) {
         if (songId.isEmpty()) return
-        scope.launch { database.recordAppPlay(providerId, songId, System.currentTimeMillis()) }
+        val playedAt = System.currentTimeMillis()
+        libraryCache.recordAppPlay(providerId, songId, playedAt)
+        scope.launch { database.recordAppPlay(providerId, songId, playedAt) }
     }
 
     //region Refresh
@@ -1308,6 +1310,7 @@ class SmartCacheManager @Inject constructor(
 
         publishToLibraryCache(cachedSongs)
         publishLibrary(artists.values, playlists.values)
+        libraryCache.putAppPlays(database.getAppPlays())
 
         _state.update {
             it.copy(lastRefresh = prefs.getLong(LAST_REFRESH_KEY, 0).takeIf { time -> time > 0 })
