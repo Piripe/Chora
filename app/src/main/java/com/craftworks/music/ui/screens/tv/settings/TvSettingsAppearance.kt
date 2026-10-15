@@ -40,11 +40,12 @@ import com.craftworks.music.ui.elements.dialogs.tv.BackgroundDialog
 import com.craftworks.music.ui.elements.dialogs.tv.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.tv.NameDialog
 import com.craftworks.music.ui.elements.dialogs.tv.NavbarItemsDialog
-import com.craftworks.music.ui.elements.dialogs.tv.NowPlayingAlignmentDialog
 import com.craftworks.music.ui.elements.dialogs.tv.OledProtectionModeDialog
 import com.craftworks.music.ui.elements.dialogs.tv.ThemeDialog
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
+import com.craftworks.music.ui.playing.nowPlayingAlignmentIcon
+import com.craftworks.music.ui.playing.nowPlayingAlignmentLabel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -57,13 +58,12 @@ fun TvS_AppearanceScreen() {
     var showThemesDialog by remember { mutableStateOf(false) }
     var showNavbarItemsDialog by remember { mutableStateOf(false) }
     var showHomeItemsDialog by remember { mutableStateOf(false) }
-    var showNowPlayingLyricsAlignmentDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    val nowPlayingTitleAlignment by AppearanceSettingsManager(context).nowPlayingLyricsAlignment.collectAsState(
-        NowPlayingAlignment.LEFT
+    val nowPlayingLyricsAlignment by AppearanceSettingsManager(context).nowPlayingLyricsAlignment.collectAsState(
+        NowPlayingAlignment.CENTER
     )
 
     LazyColumn(
@@ -81,6 +81,7 @@ fun TvS_AppearanceScreen() {
                     title = stringResource(R.string.appearance_username),
                     subtitle = username,
                     icon = ImageVector.vectorResource(R.drawable.s_a_username),
+                    description = stringResource(R.string.appearance_username_description),
                     onClick = { showNameDialog = true }
                 )
 
@@ -122,6 +123,7 @@ fun TvS_AppearanceScreen() {
                         backgroundLabels[backgroundType] ?: R.string.background_style_plain
                     ),
                     icon = ImageVector.vectorResource(R.drawable.s_a_background),
+                    description = stringResource(R.string.now_playing_background_style_description),
                     onClick = { showBackgroundDialog = true }
                 )
 
@@ -137,6 +139,7 @@ fun TvS_AppearanceScreen() {
 
                 SettingsButtonItem(
                     title = stringResource(R.string.appearance_oled_mode),
+                    description = stringResource(R.string.appearance_oled_mode_description),
                     subtitle = stringResource(
                         oledLabels[oledProtection] ?: R.string.oled_protection_mode_off
                     ),
@@ -150,6 +153,7 @@ fun TvS_AppearanceScreen() {
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.now_playing_screen_standby),
+                    description = stringResource(R.string.now_playing_screen_standby_description),
                     icon = ImageVector.vectorResource(R.drawable.rounded_tv_24),
                     checked = screenStandby,
                     onCheckedChange = {
@@ -169,6 +173,7 @@ fun TvS_AppearanceScreen() {
                     subtitle = enabledNavbarItems.filter { it.enabled }
                         .joinToString(", ") { it.title },
                     icon = ImageVector.vectorResource(R.drawable.s_a_navbar_items),
+                    description = stringResource(R.string.appearance_navbar_items_description),
                     onClick = { showNavbarItemsDialog = true }
                 )
 
@@ -188,24 +193,23 @@ fun TvS_AppearanceScreen() {
                         .map { stringResource(titleMap[it.key] ?: R.string.home_recently_played) }
                         .joinToString(","),
                     icon = ImageVector.vectorResource(R.drawable.s_a_home_items),
+                    description = stringResource(R.string.appearance_home_items_description),
                     onClick = { showHomeItemsDialog = true }
                 )
 
                 // Now Playing Lyrics Alignment
-                val alignmentLabels = mapOf(
-                    NowPlayingAlignment.LEFT to R.string.alignment_setting_left,
-                    NowPlayingAlignment.CENTER to R.string.alignment_setting_center,
-                    NowPlayingAlignment.RIGHT to R.string.alignment_setting_right
-                )
-
-                SettingsButtonItem(
+                SettingsIconChoiceItem(
                     title = stringResource(R.string.appearance_now_playing_lyrics_alignment),
-                    subtitle = stringResource(
-                        alignmentLabels[nowPlayingTitleAlignment]
-                            ?: R.string.alignment_setting_left
-                    ),
                     icon = ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                    onClick = { showNowPlayingLyricsAlignmentDialog = true }
+                    options = NowPlayingAlignment.entries,
+                    selected = nowPlayingLyricsAlignment,
+                    optionIcon = { nowPlayingAlignmentIcon(it) },
+                    optionLabel = { nowPlayingAlignmentLabel(it) },
+                    onSelect = {
+                        coroutineScope.launch {
+                            AppearanceSettingsManager(context).setNowPlayingLyricsAlignment(it)
+                        }
+                    }
                 )
             }
         }
@@ -219,6 +223,7 @@ fun TvS_AppearanceScreen() {
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.appearance_now_playing_lyrics_blur),
+                    description = stringResource(R.string.appearance_now_playing_lyrics_blur_description),
                     icon = ImageVector.vectorResource(R.drawable.outline_line_weight_24),
                     checked = nowPlayingLyricsBlur,
                     onCheckedChange = {
@@ -231,6 +236,7 @@ fun TvS_AppearanceScreen() {
                 val lyricsAutoScroll by AppearanceSettingsManager(context).lyricsAutoScroll.collectAsStateWithLifecycle(true)
                 SettingsSwitchItem(
                     title = stringResource(R.string.appearance_lyrics_auto_scroll),
+                    description = stringResource(R.string.appearance_lyrics_auto_scroll_description),
                     icon = ImageVector.vectorResource(R.drawable.rounded_text_select_move_down_24),
                     checked = lyricsAutoScroll,
                     onCheckedChange = {
@@ -243,6 +249,7 @@ fun TvS_AppearanceScreen() {
                 val lyricsRecenterAfterScroll by AppearanceSettingsManager(context).lyricsRecenterAfterScroll.collectAsStateWithLifecycle(true)
                 SettingsSwitchItem(
                     title = stringResource(R.string.appearance_lyrics_recenter),
+                    description = stringResource(R.string.appearance_lyrics_recenter_description),
                     icon = ImageVector.vectorResource(R.drawable.rounded_vertical_align_center_24),
                     checked = lyricsRecenterAfterScroll,
                     onCheckedChange = {
@@ -258,6 +265,7 @@ fun TvS_AppearanceScreen() {
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.now_playing_more_info),
+                    description = stringResource(R.string.now_playing_more_info_description),
                     icon = ImageVector.vectorResource(R.drawable.s_a_moreinfo),
                     checked = showMoreInfo,
                     onCheckedChange = {
@@ -273,6 +281,7 @@ fun TvS_AppearanceScreen() {
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.appearance_provider_logo),
+                    description = stringResource(R.string.appearance_provider_logo_description),
                     icon = ImageVector.vectorResource(R.drawable.s_m_navidrome_bw),
                     checked = showNavidromeLogo,
                     onCheckedChange = {
@@ -321,6 +330,7 @@ fun TvS_AppearanceScreen() {
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.appearance_details_dynamic_colors),
+                    description = stringResource(R.string.appearance_details_dynamic_colors_description),
                     icon = ImageVector.vectorResource(R.drawable.s_a_palette),
                     checked = detailsDynamicColors,
                     onCheckedChange = {
@@ -350,8 +360,11 @@ fun TvS_AppearanceScreen() {
                         text = stringResource(R.string.appearance_lyrics_animation_speed),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    SettingsDescription(
+                        stringResource(R.string.appearance_lyrics_animation_speed_description),
+                        Modifier.padding(bottom = 8.dp)
                     )
                     Slider(
                         value = sliderValue,
@@ -407,13 +420,4 @@ fun TvS_AppearanceScreen() {
     if (showThemesDialog) ThemeDialog(setShowDialog = { showThemesDialog = it })
     if (showNavbarItemsDialog) NavbarItemsDialog(setShowDialog = { showNavbarItemsDialog = it })
     if (showHomeItemsDialog) HomeItemsDialog(setShowDialog = { showHomeItemsDialog = it })
-    if (showNowPlayingLyricsAlignmentDialog) NowPlayingAlignmentDialog(
-        setShowDialog = { showNowPlayingLyricsAlignmentDialog = it },
-        selection = nowPlayingTitleAlignment,
-        onSet = {
-            coroutineScope.launch {
-                AppearanceSettingsManager(context).setNowPlayingLyricsAlignment(it)
-            }
-        }
-    )
 }

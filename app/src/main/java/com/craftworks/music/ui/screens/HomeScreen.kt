@@ -145,7 +145,8 @@ fun HomeScreen(
             ) {
                 Row (Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     val username = settingsManager.usernameFlow.collectAsState("Username")
-                    val showProviderLogo = currentProvider != null
+                    val providerLogoEnabled by settingsManager.showNavidromeLogoFlow.collectAsStateWithLifecycle(true)
+                    val showProviderLogo = currentProvider != null && providerLogoEnabled
 
                     if (showProviderLogo) ProviderLogo(currentProvider!!)
 

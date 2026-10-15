@@ -223,3 +223,17 @@ fun nowPlayingSeekBarStyleLabel(style: NowPlayingSeekBarStyle): String = when (s
     NowPlayingSeekBarStyle.THICK -> stringResource(R.string.seek_bar_style_thick)
     NowPlayingSeekBarStyle.MINIMAL -> stringResource(R.string.seek_bar_style_minimal)
 }
+
+@Composable
+fun nowPlayingAlignmentLabel(alignment: NowPlayingAlignment): String = when (alignment) {
+    NowPlayingAlignment.LEFT -> stringResource(R.string.alignment_setting_left)
+    NowPlayingAlignment.CENTER -> stringResource(R.string.alignment_setting_center)
+    NowPlayingAlignment.RIGHT -> stringResource(R.string.alignment_setting_right)
+}
+
+@Composable
+fun nowPlayingAlignmentIcon(alignment: NowPlayingAlignment): ImageVector = when (alignment) {
+    NowPlayingAlignment.LEFT -> ImageVector.vectorResource(R.drawable.format_align_left_24px)
+    NowPlayingAlignment.CENTER -> ImageVector.vectorResource(R.drawable.format_align_center_24px)
+    NowPlayingAlignment.RIGHT -> ImageVector.vectorResource(R.drawable.format_align_right_24px)
+}

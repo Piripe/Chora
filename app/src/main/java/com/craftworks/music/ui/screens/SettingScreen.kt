@@ -88,6 +88,7 @@ fun SettingScreen(
                     Screen.S_Appearance,
                     R.drawable.s_a_palette,
                     R.string.settings_appearance,
+                    R.string.settings_appearance_description,
                     navHostController
                 )
 
@@ -95,6 +96,7 @@ fun SettingScreen(
                     Screen.S_Media_Providers,
                     R.drawable.s_m_media_providers,
                     R.string.settings_media_providers,
+                    R.string.settings_media_providers_description,
                     navHostController
                 )
 
@@ -102,6 +104,7 @@ fun SettingScreen(
                     Screen.S_Lyrics_Providers,
                     R.drawable.s_m_media_providers,
                     R.string.settings_lyrics_providers,
+                    R.string.settings_lyrics_providers_description,
                     navHostController
                 )
 
@@ -109,6 +112,7 @@ fun SettingScreen(
                     Screen.S_Playback,
                     R.drawable.s_m_playback,
                     R.string.settings_playback,
+                    R.string.settings_playback_description,
                     navHostController
                 )
 
@@ -116,6 +120,7 @@ fun SettingScreen(
                     Screen.S_Misc,
                     Icons.Rounded.Menu,
                     R.string.settings_misc,
+                    R.string.settings_misc_description,
                     navHostController
                 )
             }
@@ -124,11 +129,11 @@ fun SettingScreen(
 }
 
 @Composable
-private fun SettingsButton(route: Screen, icon: Int, text: Int, navHostController: NavHostController){
-    SettingsButton(route, ImageVector.vectorResource(icon), text, navHostController)
+private fun SettingsButton(route: Screen, icon: Int, text: Int, description: Int, navHostController: NavHostController){
+    SettingsButton(route, ImageVector.vectorResource(icon), text, description, navHostController)
 }
 @Composable
-private fun SettingsButton(route: Screen, icon: ImageVector, text: Int, navHostController: NavHostController) {
+private fun SettingsButton(route: Screen, icon: ImageVector, text: Int, description: Int, navHostController: NavHostController) {
     Button(
         onClick = { navHostController.navigate(route) {
             launchSingleTop = true
@@ -151,12 +156,23 @@ private fun SettingsButton(route: Screen, icon: ImageVector, text: Int, navHostC
                     .padding(start = 20.dp, end = 16.dp)
                     .size(32.dp)
             )
-            Text(
-                text = stringResource(text),
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(vertical = 20.dp).weight(1f)
-            )
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 14.dp)
+                    .padding(end = 20.dp)
+                    .weight(1f)
+            ) {
+                Text(
+                    text = stringResource(text),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = stringResource(description),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

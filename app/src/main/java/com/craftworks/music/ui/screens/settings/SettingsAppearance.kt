@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.os.Build
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -47,8 +45,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,11 +58,12 @@ import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.dialogs.appearance.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NameDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NavbarItemsDialog
-import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingTitleAlignmentDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.SongListActionButtonsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.ThemeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
+import com.craftworks.music.ui.playing.nowPlayingAlignmentIcon
+import com.craftworks.music.ui.playing.nowPlayingAlignmentLabel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
@@ -80,7 +77,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
     var showThemesDialog by remember { mutableStateOf(false) }
     var showNavbarItemsDialog by remember { mutableStateOf(false) }
     var showHomeItemsDialog by remember { mutableStateOf(false) }
-    var showNowPlayingLyricsAlignmentDialog by remember { mutableStateOf(false) }
     var showAlbumDetailsActionButtonsDialog by remember { mutableStateOf(false) }
     var showArtistDetailsActionButtonsDialog by remember { mutableStateOf(false) }
     var showPlaylistDetailsActionButtonsDialog by remember { mutableStateOf(false) }
@@ -93,11 +89,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
     // Now Playing Lyrics Alignment
     val nowPlayingLyricsAlignment by appearanceSettingsManager.nowPlayingLyricsAlignment.collectAsState(
         NowPlayingAlignment.CENTER
-    )
-    val alignmentLabels = mapOf(
-        NowPlayingAlignment.LEFT to R.string.alignment_setting_left,
-        NowPlayingAlignment.CENTER to R.string.alignment_setting_center,
-        NowPlayingAlignment.RIGHT to R.string.alignment_setting_right
     )
 
     val albumDetailsActionButtons by appearanceSettingsManager.albumDetailsButtons.collectAsState(emptyList())
@@ -189,6 +180,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_username),
                         username,
                         ImageVector.vectorResource(R.drawable.s_a_username),
+                        settingsDescription = stringResource(R.string.appearance_username_description),
                         toggleEvent = {
                             showNameDialog = true
                         }
@@ -225,8 +217,9 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     //Now Playing
                     SettingsDialogButton(
                         stringResource(R.string.appearance_now_playing),
-                        stringResource(R.string.appearance_now_playing_description),
+                        "",
                         ImageVector.vectorResource(R.drawable.round_music_note_24),
+                        settingsDescription = stringResource(R.string.appearance_now_playing_description),
                         toggleEvent = {
                             navHostController.navigate(Screen.S_Appearance_Now_Playing) {
                                 launchSingleTop = true
@@ -244,6 +237,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_navbar_items),
                         enabledNavbarItems,
                         ImageVector.vectorResource(R.drawable.s_a_navbar_items),
+                        settingsDescription = stringResource(R.string.appearance_navbar_items_description),
                         toggleEvent = {
                             if (navBarItemsEnabled)
                                 showNavbarItemsDialog = true
@@ -272,6 +266,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_home_items),
                         enabledHomeItems,
                         ImageVector.vectorResource(R.drawable.s_a_home_items),
+                        settingsDescription = stringResource(R.string.appearance_home_items_description),
                         toggleEvent = {
                             showHomeItemsDialog = true
                         }
@@ -285,6 +280,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         useAdvancedQueue.value,
                         stringResource(R.string.appearance_advanced_queue),
                         ImageVector.vectorResource(R.drawable.rounded_format_list_numbered_24),
+                        settingsDescription = stringResource(R.string.appearance_advanced_queue_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 AppearanceSettingsManager(context).setUseAdvancedQueue(!useAdvancedQueue.value)
@@ -299,6 +295,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         useAdvancedFilter.value,
                         stringResource(R.string.appearance_advanced_filter),
                         ImageVector.vectorResource(R.drawable.filter_list_24px),
+                        settingsDescription = stringResource(R.string.appearance_advanced_filter_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 AppearanceSettingsManager(context).setUseAdvancedFilter(!useAdvancedFilter.value)
@@ -311,15 +308,17 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     modifier = Modifier.clip(RoundedCornerShape(16.dp)),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    SettingsDialogButton(
-                        stringResource(R.string.appearance_now_playing_lyrics_alignment),
-                        stringResource(
-                            alignmentLabels[nowPlayingLyricsAlignment]
-                                ?: R.string.alignment_setting_center
-                        ),
-                        ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                        toggleEvent = {
-                            showNowPlayingLyricsAlignmentDialog = true
+                    SettingsIconChoice(
+                        settingsName = stringResource(R.string.appearance_now_playing_lyrics_alignment),
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                        options = NowPlayingAlignment.entries,
+                        selected = nowPlayingLyricsAlignment,
+                        optionIcon = { nowPlayingAlignmentIcon(it) },
+                        optionLabel = { nowPlayingAlignmentLabel(it) },
+                        onSelect = {
+                            coroutineScope.launch {
+                                appearanceSettingsManager.setNowPlayingLyricsAlignment(it)
+                            }
                         }
                     )
                     //Lyrics blur Info
@@ -328,6 +327,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         nowPlayingLyricsBlur,
                         stringResource(R.string.appearance_now_playing_lyrics_blur),
                         ImageVector.vectorResource(R.drawable.outline_line_weight_24),
+                        settingsDescription = stringResource(R.string.appearance_now_playing_lyrics_blur_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setNowPlayingLyricsBlur(!nowPlayingLyricsBlur)
@@ -341,6 +341,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         lyricsAutoScroll,
                         stringResource(R.string.appearance_lyrics_auto_scroll),
                         ImageVector.vectorResource(R.drawable.rounded_text_select_move_down_24),
+                        settingsDescription = stringResource(R.string.appearance_lyrics_auto_scroll_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setLyricsAutoScroll(!lyricsAutoScroll)
@@ -353,6 +354,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         lyricsRecenterAfterScroll,
                         stringResource(R.string.appearance_lyrics_recenter),
                         ImageVector.vectorResource(R.drawable.rounded_vertical_align_center_24),
+                        settingsDescription = stringResource(R.string.appearance_lyrics_recenter_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setLyricsRecenterAfterScroll(!lyricsRecenterAfterScroll)
@@ -365,6 +367,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         lyricsWordBounce,
                         stringResource(R.string.appearance_lyrics_word_bounce),
                         ImageVector.vectorResource(R.drawable.rounded_format_line_spacing_24),
+                        settingsDescription = stringResource(R.string.appearance_lyrics_word_bounce_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setLyricsBounce(!lyricsWordBounce)
@@ -380,39 +383,19 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     val maxValue = 1200f
                     val sliderValue = maxValue - lyricsAnimationSpeed.value.toFloat() + minValue
 
-                    Column(
-                        Modifier
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(MaterialTheme.colorScheme.surfaceBright)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.appearance_lyrics_animation_speed),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp, vertical = 6.dp)
-                                .padding(top = 10.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Start
-                        )
-                        Slider(
-                            modifier = Modifier
-                                .padding(horizontal = 20.dp)
-                                .padding(bottom = 10.dp),
-                            value = sliderValue,
-                            steps = 4,
-                            onValueChange = { uiValue ->
-                                val real = (maxValue - (uiValue - minValue)).coerceIn(minValue, maxValue)
-                                runBlocking {
-                                    appearanceSettingsManager.setLyricsAnimationSpeed(real.roundToInt())
-                                }
-                            },
-                            valueRange = minValue..maxValue
-                        )
-                    }
+                    SettingsSlider(
+                        settingsName = stringResource(R.string.appearance_lyrics_animation_speed),
+                        settingsDescription = stringResource(R.string.appearance_lyrics_animation_speed_description),
+                        value = sliderValue,
+                        steps = 4,
+                        minValue = minValue, maxValue = maxValue,
+                        onValueChange = { uiValue ->
+                            val real = (maxValue - (uiValue - minValue)).coerceIn(minValue, maxValue)
+                            runBlocking {
+                                appearanceSettingsManager.setLyricsAnimationSpeed(real.roundToInt())
+                            }
+                        }
+                    )
                 }
 
                 Column(
@@ -426,6 +409,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         showNavidromeLogo.value,
                         stringResource(R.string.appearance_provider_logo),
                         ImageVector.vectorResource(R.drawable.s_m_navidrome_bw),
+                        settingsDescription = stringResource(R.string.appearance_provider_logo_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setShowNavidromeLogo(!showNavidromeLogo.value)
@@ -440,12 +424,13 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         refreshRipple.value,
                         stringResource(R.string.appearance_refresh_animation),
                         Icons.Rounded.Refresh,
+                        settingsDescription = stringResource(R.string.appearance_refresh_animation_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setUseRefreshAnimation(!refreshRipple.value)
                             }
                         },
-                        enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                        enabled = Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU
                     )
 
                     // Track numbers in album view
@@ -469,6 +454,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         detailsDynamicColors.value,
                         stringResource(R.string.appearance_details_dynamic_colors),
                         ImageVector.vectorResource(R.drawable.s_a_palette),
+                        settingsDescription = stringResource(R.string.appearance_details_dynamic_colors_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setDetailsDynamicColors(!detailsDynamicColors.value)
@@ -499,6 +485,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         albumDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.action_key_24px),
+                        settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showAlbumDetailsActionButtonsDialog = true
                         }
@@ -509,6 +496,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         artistDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.action_key_24px),
+                        settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showArtistDetailsActionButtonsDialog = true
                         }
@@ -519,6 +507,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         playlistDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.action_key_24px),
+                        settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showPlaylistDetailsActionButtonsDialog = true
                         }
@@ -539,17 +528,6 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
         if(showHomeItemsDialog)
             HomeItemsDialog(setShowDialog = { showHomeItemsDialog = it })
 
-        if(showNowPlayingLyricsAlignmentDialog)
-            NowPlayingTitleAlignmentDialog(
-                setShowDialog = { showNowPlayingLyricsAlignmentDialog = it },
-                title = stringResource(R.string.appearance_now_playing_lyrics_alignment),
-                selection = nowPlayingLyricsAlignment,
-                onSet = {
-                    runBlocking {
-                        appearanceSettingsManager.setNowPlayingLyricsAlignment(it)
-                    }
-                }
-            )
         if (showAlbumDetailsActionButtonsDialog)
             SongListActionButtonsDialog(
                 title = stringResource(R.string.appearance_action_buttons_editor_title),

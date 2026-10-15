@@ -109,6 +109,7 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
 
                     SettingsDialogButton(
                         settingsName = stringResource(R.string.misc_download_template),
+                        settingsDescription = stringResource(R.string.misc_download_template_summary),
                         settingsSubtitle = downloadTemplate,
                         settingsIcon = ImageVector.vectorResource(R.drawable.rounded_download_24),
                         toggleEvent = { showDownloadTemplateDialog = true },
@@ -119,6 +120,7 @@ fun S_MiscScreen(navHostController: NavHostController = rememberNavController())
 
                     SettingsDialogButton(
                         settingsName = stringResource(R.string.misc_playlist_download_template),
+                        settingsDescription = stringResource(R.string.misc_playlist_download_template_summary),
                         settingsSubtitle = playlistDownloadTemplate,
                         settingsIcon = ImageVector.vectorResource(R.drawable.rounded_download_24),
                         toggleEvent = { showPlaylistDownloadTemplateDialog = true },

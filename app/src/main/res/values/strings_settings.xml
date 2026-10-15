@@ -1,47 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_description">Theme, home screen, lyrics and layout</string>
         <string name="appearance_username">Name</string>
+        <string name="appearance_username_description">Shown in the greeting on the Home screen</string>
         <string name="appearance_theme">Theme</string>
             <string name="theme_dark">Dark</string>
             <string name="theme_light">Light</string>
             <string name="theme_system">System</string>
         <string name="appearance_oled_mode">OLED Protection</string>
+        <string name="appearance_oled_mode_description">Hide parts of Now Playing to prevent screen burn-in</string>
             <string name="appearance_oled_protection_mode">OLED Protection Mode</string>
                 <string name="oled_protection_mode_off">Off</string>
                 <string name="oled_protection_mode_lyrics_only">Lyrics Only</string>
                 <string name="oled_protection_mode_minimal">Minimal</string>
         <string name="appearance_navbar_items">Navigation Bar Items</string>
+        <string name="appearance_navbar_items_description">Choose and reorder the main navigation tabs</string>
         <string name="appearance_home_items">Home Screen Items</string>
+        <string name="appearance_home_items_description">Choose and reorder the sections on the Home screen</string>
         <string name="appearance_advanced_queue">Use Advanced Queue</string>
+        <string name="appearance_advanced_queue_description">Multi-select, sorting and bulk actions in the play queue</string>
         <string name="appearance_advanced_filter">Use Advanced Filter</string>
+        <string name="appearance_advanced_filter_description">More sort and filter options for songs, albums and artists</string>
         <string name="appearance_now_playing_lyrics_alignment">Now Playing Lyrics Alignment</string>
             <string name="alignment_setting_left">Left</string>
             <string name="alignment_setting_center">Center</string>
             <string name="alignment_setting_right">Right</string>
         <string name="appearance_now_playing_lyrics_blur">Lyrics Blur Effect</string>
+        <string name="appearance_now_playing_lyrics_blur_description">Blur the lines that aren\'t being sung</string>
         <string name="appearance_lyrics_auto_scroll">Autoscroll Plain Lyrics</string>
+        <string name="appearance_lyrics_auto_scroll_description">Slowly scroll lyrics that have no timing</string>
         <string name="appearance_lyrics_recenter">Recenter After Scroll</string>
+        <string name="appearance_lyrics_recenter_description">Keep following the current line after you scroll the lyrics</string>
         <string name="appearance_lyrics_word_bounce">Lyrics Word Bounce</string>
+        <string name="appearance_lyrics_word_bounce_description">Animate each word as it\'s sung in word-synced lyrics</string>
         <string name="appearance_lyrics_animation_speed">Lyrics Animation Speed</string>
+        <string name="appearance_lyrics_animation_speed_description">How quickly lyrics move to the next line</string>
         <string name="appearance_provider_logo">Show Provider Logo</string>
+        <string name="appearance_provider_logo_description">Show the server logo next to the greeting on Home</string>
         <string name="appearance_refresh_animation">Show Refresh Animation</string>
+        <string name="appearance_refresh_animation_description">Play a ripple effect when refreshing a screen</string>
         <string name="appearance_track_numbers_in_album_view">Show Track Numbers in Album View</string>
         <string name="appearance_details_dynamic_colors">Dynamic color on details page</string>
+        <string name="appearance_details_dynamic_colors_description">Tint album, artist and playlist pages with the artwork colors</string>
         <string name="appearance_album_details_action_buttons">Album Details Buttons</string>
         <string name="appearance_artist_details_action_buttons">Artist Details Buttons</string>
         <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
+        <string name="appearance_details_action_buttons_description">Buttons shown on the page, the others go in the ⋮ menu</string>
         <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
     <string name="appearance_now_playing">Now Playing</string>
         <string name="appearance_now_playing_description">Buttons, menu, cover gestures, seek bar and background</string>
         <string name="now_playing_background_style">Background Style</string>
+        <string name="now_playing_background_style_description">What is shown behind the cover and controls</string>
             <string name="background_style_plain">Plain</string>
             <string name="background_style_blur">Blurred</string>
             <string name="background_style_anim">Animated</string>
         <string name="now_playing_title_alignment">Title Alignment</string>
         <string name="now_playing_more_info">Show More Info</string>
+        <string name="now_playing_more_info_description">Show the format, bitrate and source under the title</string>
         <string name="now_playing_screen_standby">Disable Screen Standby</string>
+        <string name="now_playing_screen_standby_description">Keep the screen on while Now Playing is open</string>
         <string name="now_playing_buttons">Buttons</string>
+        <string name="now_playing_buttons_description">Choose and arrange the playback controls</string>
             <string name="now_playing_buttons_hint">Drag the buttons between the rows. The play/pause button always stays in the middle.</string>
             <string name="now_playing_buttons_title">Next To The Title</string>
             <string name="now_playing_buttons_controls_start">Left Of Play/Pause</string>
@@ -50,6 +70,7 @@
             <string name="now_playing_buttons_empty">No buttons</string>
             <string name="now_playing_buttons_count" translatable="false">%1$d/%2$d</string>
         <string name="now_playing_menu_actions">Menu Actions</string>
+        <string name="now_playing_menu_actions_description">Actions in the ⋮ menu of Now Playing</string>
             <string name="now_playing_menu_actions_hint">Choose and reorder the actions of the ⋮ menu.</string>
         <string name="now_playing_seek_bar_style">Seek Bar Style</string>
             <string name="seek_bar_style_standard">Standard</string>
@@ -57,6 +78,7 @@
             <string name="seek_bar_style_thick">Thick</string>
             <string name="seek_bar_style_minimal">Minimal</string>
         <string name="now_playing_cover_gestures">Cover Gestures</string>
+        <string name="now_playing_cover_gestures_description">Actions done by tapping or swiping the cover art</string>
             <string name="cover_gesture_tap">Tap</string>
             <string name="cover_gesture_double_tap">Double Tap</string>
             <string name="cover_gesture_long_press">Long Press</string>
@@ -66,6 +88,7 @@
             <string name="cover_gesture_swipe_down">Swipe Down</string>
             <string name="cover_gesture_none">None</string>
     <string name="settings_media_providers">Media Providers</string>
+    <string name="settings_media_providers_description">Servers and local folders to play music from</string>
         <string name="media_providers_media_source">Media Source</string>
             // Local
             <string name="add_media_provider_local_directory">Directory</string>
@@ -76,26 +99,36 @@
             <string name="add_media_provider_server_allow_self_signed_certs">Allow self-signed certs</string>
             <string name="add_media_provider_login">Login</string>
     <string name="settings_lyrics_providers">Lyrics Providers</string>
+    <string name="settings_lyrics_providers_description">Where lyrics are fetched from, and in which order</string>
         <string name="media_providers_lrclib_url">LRCLIB Url</string>
     <string name="settings_playback">Playback</string>
+    <string name="settings_playback_description">Streaming quality, scrobbling and offline cache</string>
         // Transcoding
         <string name="playback_max_bitrate">Max Bitrate</string>
         <string name="playback_max_bitrate_wifi">Max Bitrate (Wi-Fi)</string>
         <string name="playback_max_bitrate_mobile_data">Max Bitrate (Mobile data)</string>
+        <string name="playback_max_bitrate_wifi_description">Songs above this bitrate are transcoded on Wi-Fi</string>
+        <string name="playback_max_bitrate_mobile_data_description">Songs above this bitrate are transcoded on mobile data</string>
         <string name="playback_transcoding_format">Transcoding Format</string>
+        <string name="playback_transcoding_format_description">Format used when a song is transcoded to a lower bitrate</string>
         <string name="playback_no_transcoding">No Transcoding</string>
 
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
+        <string name="playback_min_scrobble_percentage_value">Min. Scrobble Percentage: %1$d%%</string>
+        <string name="playback_min_scrobble_percentage_description">How much of a song must play before it counts as listened</string>
         <string name="playback_track_offline_scrobbles">Track Offline Scrobbles</string>
         <string name="playback_track_offline_scrobbles_pending">Track Offline Scrobbles (%1$d pending)</string>
+        <string name="playback_track_offline_scrobbles_description">Save plays made offline and send them once back online</string>
 
         // Pre-fetching
         <string name="playback_prefetch_minutes">Pre-fetch upcoming tracks: %1$d min</string>
         <string name="playback_prefetch_off">Pre-fetch upcoming tracks: Off</string>
+        <string name="playback_prefetch_description">Load upcoming tracks early to avoid stutters on weak connections</string>
 
         // Smart cache
         <string name="smart_cache_size">Smart Cache Size</string>
+        <string name="smart_cache_size_description">Keep your most played songs on the device for offline listening</string>
         <string name="smart_cache_off">Off</string>
         <string name="smart_cache_size_gb">%1$d GB</string>
         <string name="smart_cache_size_tb">%1$d TB</string>
@@ -116,8 +149,10 @@
         <string name="smart_cache_notification_title">Refreshing Smart Cache</string>
         <string name="smart_cache_notification_cancel">Cancel</string>
     <string name="settings_misc">Miscellaneous</string>
+    <string name="settings_misc_description">Download file names</string>
         // Download
     <string name="misc_download_template">Download Template</string>
+        <string name="misc_download_template_summary">Folders and file name used for downloaded songs</string>
         <string name="misc_download_template_description">
             {title} - Song title\n
             {album} - Album title\n
@@ -128,6 +163,7 @@
             {disc} - Disc number
         </string>
     <string name="misc_playlist_download_template">Playlist Download Template</string>
+        <string name="misc_playlist_download_template_summary">Folders and file name used for songs downloaded from a playlist</string>
         <string name="misc_playlist_download_template_description">
             {title} - Song title\n
             {album} - Album title\n

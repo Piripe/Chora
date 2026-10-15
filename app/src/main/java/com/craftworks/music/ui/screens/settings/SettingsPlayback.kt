@@ -128,6 +128,7 @@ fun S_PlaybackScreen(
                         settingsName = stringResource(R.string.playback_max_bitrate_wifi),
                         settingsSubtitle = if (transcodingBitrateWifi != "No Transcoding") "$transcodingBitrateWifi Kbps" else stringResource(R.string.playback_no_transcoding),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
+                        settingsDescription = stringResource(R.string.playback_max_bitrate_wifi_description),
                         toggleEvent = { showWifiTranscodingDialog = true },
                         enabled = currentProvider != null
                     )
@@ -142,6 +143,7 @@ fun S_PlaybackScreen(
                         settingsName = stringResource(R.string.playback_max_bitrate_mobile_data),
                         settingsSubtitle = if (transcodingBitrateData != "No Transcoding") "$transcodingBitrateData Kbps" else stringResource(R.string.playback_no_transcoding),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
+                        settingsDescription = stringResource(R.string.playback_max_bitrate_mobile_data_description),
                         toggleEvent = { showDataTranscodingDialog = true },
                         enabled = currentProvider != null
                     )
@@ -155,6 +157,7 @@ fun S_PlaybackScreen(
                     SettingsDialogButton(
                         settingsName = stringResource(R.string.playback_transcoding_format),
                         settingsSubtitle = transcodingFormat,
+                        settingsDescription = stringResource(R.string.playback_transcoding_format_description),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
                         enabled = transcodingFormatEnabled,
                         toggleEvent = { showTranscodingFormatDialog = true }
@@ -189,7 +192,8 @@ fun S_PlaybackScreen(
                         PlaybackSettingsManager(context).scrobblePercentFlow.collectAsState(7)
 
                     SettingsSlider(
-                        settingsName = stringResource(R.string.playback_min_scrobble_percentage),
+                        settingsName = stringResource(R.string.playback_min_scrobble_percentage_value, sliderValue.value * 10),
+                        settingsDescription = stringResource(R.string.playback_min_scrobble_percentage_description),
                         value = sliderValue.value.toFloat(),
                         steps = 8,
                         minValue = 1f, maxValue = 10f,
@@ -210,6 +214,7 @@ fun S_PlaybackScreen(
                         else
                             stringResource(R.string.playback_track_offline_scrobbles),
                         settingsIcon = ImageVector.vectorResource(R.drawable.s_p_scrobble),
+                        settingsDescription = stringResource(R.string.playback_track_offline_scrobbles_description),
                         toggleEvent = { smartCacheViewModel.setTrackOfflineScrobbles(!trackOfflineScrobbles) }
                     )
                 }
@@ -227,6 +232,7 @@ fun S_PlaybackScreen(
                             stringResource(R.string.playback_prefetch_minutes, prefetchMinutes)
                         else
                             stringResource(R.string.playback_prefetch_off),
+                        settingsDescription = stringResource(R.string.playback_prefetch_description),
                         value = prefetchMinutes.toFloat(),
                         steps = PlaybackSettingsManager.MAX_PREFETCH_MINUTES / 5 - 1,
                         minValue = 0f, maxValue = PlaybackSettingsManager.MAX_PREFETCH_MINUTES.toFloat(),
@@ -259,6 +265,7 @@ fun S_PlaybackScreen(
                         else
                             smartCacheSizeLabel(0),
                         settingsIcon = ImageVector.vectorResource(R.drawable.rounded_storage_24),
+                        settingsDescription = stringResource(R.string.smart_cache_size_description),
                         toggleEvent = { showSmartCacheSizeDialog = true }
                     )
 

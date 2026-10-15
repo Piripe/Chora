@@ -46,7 +46,6 @@ import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingButtonsDial
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingCoverGesturesDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingMenuActionsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingSeekBarStyleDialog
-import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingTitleAlignmentDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
@@ -57,6 +56,8 @@ import com.craftworks.music.ui.playing.defaultNowPlayingButtons
 import com.craftworks.music.ui.playing.defaultNowPlayingMenuItems
 import com.craftworks.music.ui.playing.nowPlayingActionLabel
 import com.craftworks.music.ui.playing.nowPlayingButtonSlotLabel
+import com.craftworks.music.ui.playing.nowPlayingAlignmentIcon
+import com.craftworks.music.ui.playing.nowPlayingAlignmentLabel
 import com.craftworks.music.ui.playing.nowPlayingGestureLabel
 import com.craftworks.music.ui.playing.nowPlayingSeekBarStyleLabel
 import kotlinx.coroutines.launch
@@ -67,7 +68,6 @@ import kotlinx.coroutines.launch
 @Preview(showBackground = true)
 fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavController()) {
     var showBackgroundDialog by remember { mutableStateOf(false) }
-    var showTitleAlignmentDialog by remember { mutableStateOf(false) }
     var showSeekBarStyleDialog by remember { mutableStateOf(false) }
     var showButtonsDialog by remember { mutableStateOf(false) }
     var showMenuActionsDialog by remember { mutableStateOf(false) }
@@ -90,11 +90,6 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
         NowPlayingBackground.PLAIN to R.string.background_style_plain,
         NowPlayingBackground.STATIC_BLUR to R.string.background_style_blur,
         NowPlayingBackground.ANIMATED_BLUR to R.string.background_style_anim,
-    )
-    val alignmentLabels = mapOf(
-        NowPlayingAlignment.LEFT to R.string.alignment_setting_left,
-        NowPlayingAlignment.CENTER to R.string.alignment_setting_center,
-        NowPlayingAlignment.RIGHT to R.string.alignment_setting_right
     )
 
     Scaffold(
@@ -147,20 +142,27 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                                 ?: androidx.media3.session.R.string.error_message_invalid_state
                         ),
                         ImageVector.vectorResource(R.drawable.s_a_background),
+                        settingsDescription = stringResource(R.string.now_playing_background_style_description),
                         toggleEvent = { showBackgroundDialog = true }
                     )
 
-                    SettingsDialogButton(
-                        stringResource(R.string.now_playing_title_alignment),
-                        stringResource(alignmentLabels[titleAlignment] ?: R.string.alignment_setting_left),
-                        ImageVector.vectorResource(R.drawable.rounded_sort_24),
-                        toggleEvent = { showTitleAlignmentDialog = true }
+                    SettingsIconChoice(
+                        settingsName = stringResource(R.string.now_playing_title_alignment),
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_sort_24),
+                        options = NowPlayingAlignment.entries,
+                        selected = titleAlignment,
+                        optionIcon = { nowPlayingAlignmentIcon(it) },
+                        optionLabel = { nowPlayingAlignmentLabel(it) },
+                        onSelect = {
+                            coroutineScope.launch { appearanceSettingsManager.setNowPlayingTitleAlignment(it) }
+                        }
                     )
 
                     SettingsSwitch(
                         showMoreInfo,
                         stringResource(R.string.now_playing_more_info),
                         ImageVector.vectorResource(R.drawable.s_a_moreinfo),
+                        settingsDescription = stringResource(R.string.now_playing_more_info_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setShowMoreInfo(!showMoreInfo)
@@ -192,6 +194,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.now_playing_buttons),
                         buttonsSummary,
                         ImageVector.vectorResource(R.drawable.action_key_24px),
+                        settingsDescription = stringResource(R.string.now_playing_buttons_description),
                         toggleEvent = { showButtonsDialog = true }
                     )
 
@@ -202,6 +205,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.now_playing_menu_actions),
                         menuSummary,
                         ImageVector.vectorResource(R.drawable.more_vert_24px),
+                        settingsDescription = stringResource(R.string.now_playing_menu_actions_description),
                         toggleEvent = { showMenuActionsDialog = true }
                     )
 
@@ -212,6 +216,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.now_playing_cover_gestures),
                         gesturesSummary,
                         ImageVector.vectorResource(R.drawable.swap_vert_24px),
+                        settingsDescription = stringResource(R.string.now_playing_cover_gestures_description),
                         toggleEvent = { showCoverGesturesDialog = true }
                     )
                 }
@@ -224,6 +229,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                         disableScreenStandby,
                         stringResource(R.string.now_playing_screen_standby),
                         ImageVector.vectorResource(R.drawable.rounded_tv_24),
+                        settingsDescription = stringResource(R.string.now_playing_screen_standby_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 appearanceSettingsManager.setDisableScreenStandby(!disableScreenStandby)
@@ -236,16 +242,6 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
 
         if (showBackgroundDialog)
             BackgroundDialog(setShowDialog = { showBackgroundDialog = it })
-
-        if (showTitleAlignmentDialog)
-            NowPlayingTitleAlignmentDialog(
-                setShowDialog = { showTitleAlignmentDialog = it },
-                title = stringResource(R.string.now_playing_title_alignment),
-                selection = titleAlignment,
-                onSet = {
-                    coroutineScope.launch { appearanceSettingsManager.setNowPlayingTitleAlignment(it) }
-                }
-            )
 
         if (showSeekBarStyleDialog)
             NowPlayingSeekBarStyleDialog(

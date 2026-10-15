@@ -3,6 +3,7 @@ package com.craftworks.music.ui.screens.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -38,7 +42,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
-import kotlinx.coroutines.runBlocking
 
 @Composable
 fun SettingsSwitch(
@@ -46,7 +49,8 @@ fun SettingsSwitch(
     settingsName: String,
     settingsIcon: ImageVector,
     toggleEvent: () -> Unit = {},
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    settingsDescription: String? = null
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -56,37 +60,70 @@ fun SettingsSwitch(
             .selectable(
                 selected = selected,
                 onClick = toggleEvent,
-                role = Role.RadioButton,
+                role = Role.Switch,
                 enabled = enabled
             )
     ) {
         Icon(
             imageVector = settingsIcon,
             contentDescription = "Settings Icon",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.5f),
             modifier = Modifier
                 .padding(start = 20.dp, end = 16.dp)
                 .size(32.dp)
         )
-        Text(
-            text = settingsName,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onBackground,
+        SettingsLabel(
+            name = settingsName,
+            description = settingsDescription,
+            enabled = enabled,
             modifier = Modifier
-                .padding(vertical = 20.dp)
-                .weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Start
+                .padding(vertical = if (settingsDescription == null) 20.dp else 12.dp)
+                .weight(1f)
         )
 
         Switch(
             checked = selected,
             onCheckedChange = { toggleEvent() },
             enabled = enabled,
-            modifier = Modifier.padding(start = 4.dp, end = 20.dp)
+            modifier = Modifier.padding(start = 12.dp, end = 20.dp)
         )
+    }
+}
+
+/** Title of a setting, with an optional value line and a short description that wraps. */
+@Composable
+private fun SettingsLabel(
+    name: String,
+    modifier: Modifier = Modifier,
+    value: String? = null,
+    description: String? = null,
+    enabled: Boolean = true
+) {
+    val alpha = if (enabled) 1f else 0.5f
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start
+        )
+        if (!value.isNullOrEmpty())
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        if (description != null)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f * alpha),
+            )
     }
 }
 
@@ -96,6 +133,7 @@ fun SettingsDialogButton(
     settingsSubtitle: String,
     settingsIcon: ImageVector,
     enabled: Boolean? = true,
+    settingsDescription: String? = null,
     toggleEvent: () -> Unit = {}
 ) {
     Row(
@@ -125,33 +163,71 @@ fun SettingsDialogButton(
                 .padding(start = 20.dp, end = 16.dp)
                 .size(32.dp)
         )
-        Column(
-            modifier = Modifier.padding(top = 10.dp, bottom = 10.dp, end = 8.dp)
-        ) {
-            Text(
-                text = settingsName,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Normal,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                color = if (enabled == true)
-                    MaterialTheme.colorScheme.onBackground
-                else
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-            )
+        SettingsLabel(
+            name = settingsName,
+            value = settingsSubtitle,
+            description = settingsDescription,
+            enabled = enabled == true,
+            modifier = Modifier
+                .padding(top = 10.dp, bottom = 10.dp, end = 20.dp)
+                .weight(1f)
+        )
+    }
+}
 
-            Text(
-                text = settingsSubtitle,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (enabled == true)
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Normal,
-            )
+/** A setting with a few exclusive values, picked directly from icon buttons instead of a dialog. */
+@Composable
+fun <T> SettingsIconChoice(
+    settingsName: String,
+    settingsIcon: ImageVector,
+    options: List<T>,
+    selected: T,
+    optionIcon: @Composable (T) -> ImageVector,
+    optionLabel: @Composable (T) -> String,
+    settingsDescription: String? = null,
+    onSelect: (T) -> Unit = {}
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surfaceBright)
+            .fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = settingsIcon,
+            contentDescription = "Settings Icon",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(start = 20.dp, end = 16.dp)
+                .size(32.dp)
+        )
+        SettingsLabel(
+            name = settingsName,
+            value = optionLabel(selected),
+            description = settingsDescription,
+            modifier = Modifier
+                .padding(vertical = 10.dp)
+                .weight(1f)
+        )
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier.padding(start = 12.dp, end = 20.dp)
+        ) {
+            options.forEachIndexed { index, option ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    onClick = { onSelect(option) },
+                    selected = selected == option,
+                    icon = {},
+                    label = {
+                        Icon(
+                            imageVector = optionIcon(option),
+                            contentDescription = optionLabel(option),
+                            modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -186,24 +262,24 @@ fun SettingsSlider(
     steps: Int,
     value: Float,
     minValue: Float, maxValue: Float,
+    settingsDescription: String? = null,
     onValueChange: (newValue: Float) -> Unit = {}
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val stepSize = (maxValue - minValue) / (steps + 1)
 
     Column (
         modifier = Modifier
             .clip(RoundedCornerShape(2.dp))
             .background(MaterialTheme.colorScheme.surfaceBright)
     ) {
-        Text(
-            text = settingsName,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Normal,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 6.dp).padding(top = 10.dp),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Start
+        SettingsLabel(
+            name = settingsName,
+            description = settingsDescription,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 6.dp)
+                .padding(top = 10.dp)
         )
         Slider(
             modifier = Modifier
@@ -212,15 +288,11 @@ fun SettingsSlider(
                 .onKeyEvent { keyEvent ->
                     when (keyEvent.key) {
                         Key.DirectionRight if keyEvent.type == KeyEventType.KeyDown -> {
-                            runBlocking {
-                                onValueChange(value + ((maxValue - minValue) / steps).coerceAtMost(maxValue))
-                            }
+                            onValueChange((value + stepSize).coerceAtMost(maxValue))
                             true
                         }
                         Key.DirectionLeft if keyEvent.type == KeyEventType.KeyDown -> {
-                            runBlocking {
-                                onValueChange(value - ((maxValue - minValue) / steps).coerceAtLeast(minValue))
-                            }
+                            onValueChange((value - stepSize).coerceAtLeast(minValue))
                             true
                         }
                         else -> false

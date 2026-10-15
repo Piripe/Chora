@@ -41,7 +41,6 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.OLEDProtectionMode
-import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
 import com.craftworks.music.ui.screens.HomeItem
 import kotlinx.coroutines.launch
@@ -226,38 +225,6 @@ fun BackgroundDialog(
         helperText = { option ->
             if (option == NowPlayingBackground.ANIMATED_BLUR && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                 " (Android 13+)" else ""
-        }
-    )
-}
-
-@Preview
-@Composable
-fun NowPlayingAlignmentDialog(
-    setShowDialog: (Boolean) -> Unit = { },
-    selection: NowPlayingAlignment = NowPlayingAlignment.CENTER,
-    onSet: (NowPlayingAlignment) -> Unit = { },
-) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val nowPlayingTitleAlignment by remember { mutableStateOf(selection) }
-
-    GenericListDialog(
-        setShowDialog = setShowDialog,
-        titleRes = R.string.now_playing_title_alignment,
-        options = NowPlayingAlignment.entries,
-        selectedOption = nowPlayingTitleAlignment,
-        onOptionSelected = { option ->
-            onSet(option)
-        },
-        label = { option ->
-            stringResource(
-            when (option) {
-                    NowPlayingAlignment.LEFT -> R.string.alignment_setting_left
-                    NowPlayingAlignment.CENTER -> R.string.alignment_setting_center
-                    NowPlayingAlignment.RIGHT -> R.string.alignment_setting_right
-                }
-            )
         }
     )
 }

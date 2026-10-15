@@ -79,24 +79,27 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
         item {
             SettingsButtonItem(
                 title = stringResource(R.string.playback_max_bitrate_wifi),
-                subtitle = if (transcodingBitrateWifi != "No Transcoding") "$transcodingBitrateWifi Kbps" else transcodingBitrateWifi,
+                subtitle = if (transcodingBitrateWifi != "No Transcoding") "$transcodingBitrateWifi Kbps" else stringResource(R.string.playback_no_transcoding),
                 icon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
+                description = stringResource(R.string.playback_max_bitrate_wifi_description),
                 onClick = { showWifiTranscodingDialog = true }
             )
         }
 
         item {
             SettingsButtonItem(
-                title = stringResource(R.string.playback_max_bitrate_wifi),
-                subtitle = if (transcodingBitrateData != "No Transcoding") "$transcodingBitrateData Kbps" else transcodingBitrateData,
+                title = stringResource(R.string.playback_max_bitrate_mobile_data),
+                subtitle = if (transcodingBitrateData != "No Transcoding") "$transcodingBitrateData Kbps" else stringResource(R.string.playback_no_transcoding),
                 icon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
-                onClick = { showWifiTranscodingDialog = true }
+                description = stringResource(R.string.playback_max_bitrate_mobile_data_description),
+                onClick = { showDataTranscodingDialog = true }
             )
         }
 
         item {
             SettingsButtonItem(
                 title = stringResource(R.string.playback_transcoding_format),
+                description = stringResource(R.string.playback_transcoding_format_description),
                 subtitle = transcodingFormat,
                 icon = ImageVector.vectorResource(R.drawable.s_p_transcoding),
                 enabled = transcodingFormatEnabled,
@@ -116,11 +119,14 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.playback_min_scrobble_percentage),
+                        text = stringResource(R.string.playback_min_scrobble_percentage_value, sliderValue * 10),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    SettingsDescription(
+                        stringResource(R.string.playback_min_scrobble_percentage_description),
+                        Modifier.padding(bottom = 8.dp)
                     )
                     Slider(
                         value = sliderValue.toFloat(),
@@ -129,22 +135,22 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                                 PlaybackSettingsManager(context).setScrobblePercent(it.roundToInt())
                             }
                         },
-                        valueRange = 0f..10f,
-                        steps = 5,
+                        valueRange = 1f..10f,
+                        steps = 8,
                         modifier = Modifier
                             .fillMaxWidth()
                             .onKeyEvent { keyEvent ->
                                 when (keyEvent.key) {
                                     Key.DirectionRight -> {
                                         coroutineScope.launch {
-                                            PlaybackSettingsManager(context).setScrobblePercent(sliderValue + 1)
+                                            PlaybackSettingsManager(context).setScrobblePercent((sliderValue + 1).coerceAtMost(10))
                                         }
                                         true
                                     }
 
                                     Key.DirectionLeft -> {
                                         coroutineScope.launch {
-                                            PlaybackSettingsManager(context).setScrobblePercent(sliderValue - 1)
+                                            PlaybackSettingsManager(context).setScrobblePercent((sliderValue - 1).coerceAtLeast(1))
                                         }
                                         true
                                     }
@@ -164,6 +170,7 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                 else
                     stringResource(R.string.playback_track_offline_scrobbles),
                 icon = ImageVector.vectorResource(R.drawable.s_p_scrobble),
+                description = stringResource(R.string.playback_track_offline_scrobbles_description),
                 checked = trackOfflineScrobbles,
                 onCheckedChange = { smartCacheViewModel.setTrackOfflineScrobbles(it) }
             )
@@ -187,8 +194,11 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                             stringResource(R.string.playback_prefetch_off),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    SettingsDescription(
+                        stringResource(R.string.playback_prefetch_description),
+                        Modifier.padding(bottom = 8.dp)
                     )
                     Slider(
                         value = prefetchMinutes.toFloat(),
@@ -205,14 +215,14 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
                                 when (keyEvent.key) {
                                     Key.DirectionRight -> {
                                         coroutineScope.launch {
-                                            PlaybackSettingsManager(context).setPrefetchMinutes(prefetchMinutes + 5)
+                                            PlaybackSettingsManager(context).setPrefetchMinutes((prefetchMinutes + 5).coerceAtMost(PlaybackSettingsManager.MAX_PREFETCH_MINUTES))
                                         }
                                         true
                                     }
 
                                     Key.DirectionLeft -> {
                                         coroutineScope.launch {
-                                            PlaybackSettingsManager(context).setPrefetchMinutes(prefetchMinutes - 5)
+                                            PlaybackSettingsManager(context).setPrefetchMinutes((prefetchMinutes - 5).coerceAtLeast(0))
                                         }
                                         true
                                     }
@@ -228,6 +238,7 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
         item {
             SettingsButtonItem(
                 title = stringResource(R.string.smart_cache_size),
+                description = stringResource(R.string.smart_cache_size_description),
                 subtitle = if (smartCacheMaxSizeGb > 0)
                     stringResource(
                         R.string.smart_cache_usage,
