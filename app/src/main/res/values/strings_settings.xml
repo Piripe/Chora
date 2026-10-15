@@ -119,6 +119,21 @@
         <string name="playback_autoplay">Autoplay</string>
         <string name="playback_autoplay_description">When the queue ends, keep playing songs similar to the last one</string>
 
+        // Crossfade
+        <string name="playback_crossfade_seconds">Crossfade: %1$d s</string>
+        <string name="playback_crossfade_off">Crossfade: Off</string>
+        <string name="playback_crossfade_description">Fade out the end of a song while the next one fades in</string>
+
+        // Equalizer
+        <string name="playback_equalizer">Equalizer</string>
+        <string name="playback_equalizer_description">Adjust the sound of the music with the equalizer of the device</string>
+        <string name="playback_equalizer_off">Off</string>
+        <string name="playback_equalizer_unsupported">This device has no equalizer</string>
+        <string name="playback_equalizer_preset">Preset</string>
+        <string name="playback_equalizer_custom">Custom</string>
+        <string name="playback_equalizer_flat">Flat</string>
+        <string name="playback_equalizer_band">%1$s: %2$s dB</string>
+
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
         <string name="playback_min_scrobble_percentage_value">Min. Scrobble Percentage: %1$d%%</string>

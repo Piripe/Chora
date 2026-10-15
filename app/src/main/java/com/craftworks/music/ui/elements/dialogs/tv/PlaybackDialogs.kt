@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
 import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
@@ -71,5 +72,24 @@ fun SmartCacheSizeDialog(
         selectedOption = selectedSizeGb,
         label = { smartCacheSizeLabel(it) },
         onOptionSelected = onSizeSelected
+    )
+}
+
+/** Lists "Flat" (-1) and the presets of the device equalizer. */
+@Composable
+fun EqualizerPresetDialog(
+    setShowDialog: (Boolean) -> Unit,
+    presets: List<String>,
+    selectedPreset: Int?,
+    onPresetSelected: (Int) -> Unit
+) {
+    val flat = stringResource(R.string.playback_equalizer_flat)
+    GenericListDialog(
+        setShowDialog = setShowDialog,
+        titleRes = R.string.playback_equalizer_preset,
+        options = listOf(-1) + presets.indices,
+        selectedOption = selectedPreset ?: -2,
+        label = { if (it >= 0) presets[it] else flat },
+        onOptionSelected = onPresetSelected
     )
 }

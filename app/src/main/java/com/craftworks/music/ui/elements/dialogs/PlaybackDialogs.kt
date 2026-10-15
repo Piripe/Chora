@@ -274,3 +274,11 @@ fun SmartCacheSizeDialog(
         }
     }
 }
+
+/** The preset name, "Flat" or "Custom" for the current equalizer bands. */
+@Composable
+fun equalizerPresetLabel(presets: List<String>, preset: Int, bandLevels: List<Int>): String = when {
+    preset in presets.indices -> presets[preset]
+    bandLevels.all { it == 0 } -> stringResource(R.string.playback_equalizer_flat)
+    else -> stringResource(R.string.playback_equalizer_custom)
+}

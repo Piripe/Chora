@@ -42,12 +42,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.dialogs.equalizerPresetLabel
+import com.craftworks.music.ui.viewmodels.EqualizerViewModel
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -60,7 +63,8 @@ import kotlin.math.roundToInt
 @Composable
 fun S_PlaybackScreen(
     navHostController: NavHostController = rememberNavController(),
-    smartCacheViewModel: SmartCacheViewModel = hiltViewModel()
+    smartCacheViewModel: SmartCacheViewModel = hiltViewModel(),
+    equalizerViewModel: EqualizerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 
@@ -68,6 +72,11 @@ fun S_PlaybackScreen(
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
 
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
+
+    val equalizer = equalizerViewModel.info
+    val equalizerEnabled by equalizerViewModel.enabled.collectAsStateWithLifecycle()
+    val equalizerPreset by equalizerViewModel.preset.collectAsStateWithLifecycle()
+    val equalizerBandLevels by equalizerViewModel.bandLevels.collectAsStateWithLifecycle()
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
@@ -175,6 +184,53 @@ fun S_PlaybackScreen(
                         toggleEvent = {
                             coroutineScope.launch {
                                 PlaybackSettingsManager(context).setAutoPlay(!autoPlay)
+                            }
+                        }
+                    )
+                }
+
+                // Crossfade
+                Column(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    val crossfadeSeconds by
+                        PlaybackSettingsManager(context).crossfadeSecondsFlow.collectAsStateWithLifecycle(0)
+
+                    SettingsSlider(
+                        settingsName = if (crossfadeSeconds > 0)
+                            stringResource(R.string.playback_crossfade_seconds, crossfadeSeconds)
+                        else
+                            stringResource(R.string.playback_crossfade_off),
+                        settingsDescription = stringResource(R.string.playback_crossfade_description),
+                        value = crossfadeSeconds.toFloat(),
+                        steps = PlaybackSettingsManager.MAX_CROSSFADE_SECONDS - 1,
+                        minValue = 0f, maxValue = PlaybackSettingsManager.MAX_CROSSFADE_SECONDS.toFloat(),
+                        onValueChange = {
+                            coroutineScope.launch {
+                                PlaybackSettingsManager(context).setCrossfadeSeconds(it.roundToInt())
+                            }
+                        }
+                    )
+                }
+
+                // Equalizer
+                Column(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    SettingsDialogButton(
+                        settingsName = stringResource(R.string.playback_equalizer),
+                        settingsSubtitle = when {
+                            equalizer == null -> stringResource(R.string.playback_equalizer_unsupported)
+                            equalizerEnabled -> equalizerPresetLabel(equalizer.presets, equalizerPreset, equalizerBandLevels)
+                            else -> stringResource(R.string.playback_equalizer_off)
+                        },
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_equalizer_24),
+                        settingsDescription = stringResource(R.string.playback_equalizer_description),
+                        toggleEvent = {
+                            navHostController.navigate(Screen.S_Equalizer) {
+                                launchSingleTop = true
                             }
                         }
                     )

@@ -63,6 +63,7 @@ import com.craftworks.music.ui.screens.SettingScreen
 import com.craftworks.music.ui.screens.SongsScreen
 import com.craftworks.music.ui.screens.settings.S_AppearanceScreen
 import com.craftworks.music.ui.screens.settings.S_DownloadedContentScreen
+import com.craftworks.music.ui.screens.settings.S_EqualizerScreen
 import com.craftworks.music.ui.screens.settings.S_DownloadsScreen
 import com.craftworks.music.ui.screens.settings.S_LyricsProviderScreen
 import com.craftworks.music.ui.screens.settings.S_NowPlayingScreen
@@ -82,6 +83,7 @@ import com.craftworks.music.ui.screens.tv.TvSongsScreen
 import com.craftworks.music.ui.theme.ArtworkTheme
 import com.craftworks.music.ui.screens.tv.settings.TvS_AppearanceScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_DownloadedContentScreen
+import com.craftworks.music.ui.screens.tv.settings.TvS_EqualizerScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_DownloadsScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_PlaybackScreen
 import com.craftworks.music.ui.screens.tv.settings.TvS_ProviderScreen
@@ -130,6 +132,7 @@ fun SetupNavGraph(
                 hasRoute<Screen.S_Media_Providers>() ||
                 hasRoute<Screen.S_Lyrics_Providers>() ||
                 hasRoute<Screen.S_Playback>() ||
+                hasRoute<Screen.S_Equalizer>() ||
                 hasRoute<Screen.S_Downloads>() ||
                 hasRoute<Screen.S_Downloaded_Content>()
     }
@@ -379,9 +382,15 @@ fun SetupNavGraph(
                 }
                 composable<Screen.S_Playback> {
                     if (isTv)
-                        TvS_PlaybackScreen()
+                        TvS_PlaybackScreen(navController)
                     else
                         S_PlaybackScreen(navController)
+                }
+                composable<Screen.S_Equalizer> {
+                    if (isTv)
+                        TvS_EqualizerScreen()
+                    else
+                        S_EqualizerScreen(navController)
                 }
                 composable<Screen.S_Downloads> {
                     if (isTv)

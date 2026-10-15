@@ -56,6 +56,7 @@ import com.craftworks.music.data.repository.MixRepository
 import com.craftworks.music.data.repository.PlaylistRepository
 import com.craftworks.music.data.repository.RadioRepository
 import com.craftworks.music.data.repository.SongRepository
+import com.craftworks.music.managers.EqualizerManager
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.SmartCacheManager
@@ -76,6 +77,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -83,6 +85,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import okhttp3.OkHttpClient
 import javax.inject.Inject
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.seconds
@@ -106,6 +109,10 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     private var sleepTimerJob: Job? = null
     private var autoPlay = false
     private var autoPlayJob: Job? = null
+    private lateinit var crossfader: Crossfader
+    private var playerScrobbled = false
+    // The ReplayGain volume of the current song.
+    private var replayGain = 1f
     private var _sleepTimerRemainingTime = MutableStateFlow(0)
     val sleepTimerRemainingTime: StateFlow<Int> = _sleepTimerRemainingTime.asStateFlow()
 
@@ -114,6 +121,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     @Inject lateinit var transcodeManager: TranscodeManager
     @Inject lateinit var offlineManager: OfflineManager
     @Inject lateinit var smartCacheManager: SmartCacheManager
+    @Inject lateinit var equalizerManager: EqualizerManager
 
     @Inject lateinit var albumRepository: AlbumRepository
     @Inject lateinit var artistRepository: ArtistRepository
@@ -266,8 +274,6 @@ class ChoraMediaLibraryService : MediaLibraryService() {
 
         val okHttpClient = createStreamingHttpClient()
 
-        val okHttpDataSourceFactory = OkHttpDataSource.Factory(okHttpClient)
-
         prefetcher = TrackPrefetcher(
             okHttpClient,
             currentVariant = ::currentStreamVariant,
@@ -278,45 +284,12 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             }
         ).also { it.start(serviceIOScope) }
 
-        var seekPosMs: Long? = null
-        val resolvingDataSourceFactory = ResolvingDataSource.Factory(
-            DefaultDataSource.Factory(this, okHttpDataSourceFactory),
-            object : ResolvingDataSource.Resolver {
-                override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
-                    val uri = dataSpec.uri
-                    val scheme = dataSpec.uri.scheme
+        // Set when the player seeks, for streams transcoded on the fly.
+        val streamOffset = StreamOffset()
 
-                    if (scheme != "media")
-                        return dataSpec
-
-                    val variant = currentStreamVariant()
-                    val offset = if (variant.bitrate != "No Transcoding") seekPosMs?.div(1000)?.toInt() else null
-                    if (offset != null) seekPosMs = null
-
-                    return dataSpec.withUri(getStreamUrl(uri, variant, offset).toUri())
-                }
-            }
-        )
-
-        // Upcoming tracks pre-fetched in RAM are served before going to the network.
-        val prefetchDataSourceFactory = PrefetchDataSource.Factory(resolvingDataSourceFactory, prefetcher) {
-            // The whole file is available, so the transcoding offset hack must not apply to the next stream.
-            seekPosMs = null
-        }
-
-        // Tracks stored on disk by the smart cache are played before anything else.
-        val smartCacheDataSourceFactory = SmartCacheDataSource.Factory(prefetchDataSourceFactory, smartCacheManager) {
-            seekPosMs = null
-        }
-
-        val audioOffloadPreferences =
-            TrackSelectionParameters.AudioOffloadPreferences.Builder()
-                .setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED)
-                .build()
-
-        player = ExoPlayer.Builder(this)
+        val exoPlayer = ExoPlayer.Builder(this)
             .setSeekParameters(SeekParameters.EXACT)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(smartCacheDataSourceFactory))
+            .setMediaSourceFactory(createMediaSourceFactory(okHttpClient, streamOffset))
             .setWakeMode(
                 if (MediaProviderManager.currentProvider.value?.featureFlags?.contains(
                         ProviderFeature.OFFLINE_PLAYBACK
@@ -329,27 +302,22 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .experimentalSetDynamicSchedulingEnabled(false) // Temporary fix for lyrics. refer to https://github.com/androidx/media/issues/3286
             .build()
-
-        // todo: make it a setting
-        player.trackSelectionParameters =
-            player.trackSelectionParameters
-                .buildUpon()
-                .setAudioOffloadPreferences(audioOffloadPreferences)
-                .build()
+        // The equalizer is attached to this session.
+        exoPlayer.audioSessionId = equalizerManager.audioSessionId
+        player = exoPlayer
 
         player.repeatMode = Player.REPEAT_MODE_OFF
         player.shuffleModeEnabled = false
 
-        var playerScrobbled = false
-
         player.addListener(object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 // Apply ReplayGain
-                player.volume = clamp(
+                replayGain = clamp(
                     (10f.pow(((mediaItem?.mediaMetadata?.extras?.getFloat("replayGain") ?: 0f) / 20f))),
                     0f,
                     1f
                 )
+                player.volume = replayGain
                 Log.d("REPLAY GAIN", "Setting ReplayGain to ${player.volume}")
 
                 playerScrobbled = false
@@ -397,11 +365,35 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 reason: Int
             ) {
                 if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-                    seekPosMs = newPosition.positionMs
+                    streamOffset.positionMs = newPosition.positionMs
                 }
                 super.onPositionDiscontinuity(oldPosition, newPosition, reason)
             }
         })
+
+        crossfader = Crossfader(
+            exoPlayer,
+            serviceMainScope,
+            createFadeOutPlayer = {
+                ExoPlayer.Builder(this)
+                    .setSeekParameters(SeekParameters.EXACT)
+                    .setMediaSourceFactory(createMediaSourceFactory(okHttpClient, crossfadeStreamOffset))
+                    // The main player holds the audio focus.
+                    .setAudioAttributes(AudioAttributes.DEFAULT, false)
+                    .build()
+                    .also { it.audioSessionId = equalizerManager.audioSessionId }
+            },
+            fadeOutStreamOffset = crossfadeStreamOffset,
+            canSeek = ::canSeek,
+            replayGain = { replayGain },
+            onSongLeft = { mediaItem, positionMs ->
+                // The song is cut before its end, it may not have reached the scrobble percentage yet.
+                if (!playerScrobbled) {
+                    playerScrobbled = true
+                    scrobbleSubmission(mediaItem, positionMs)
+                }
+            }
+        )
 
         val mainActivityIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -429,14 +421,9 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                     val progress = (currentPosition * 100 / duration).toInt()
                     val scrobblePercentage = playbackSettingsManager.scrobblePercentFlow.first() * 10
 
-                    if (progress >= scrobblePercentage) {
+                    if (progress >= scrobblePercentage && mediaItem != null) {
                         playerScrobbled = true
-                        if (mediaItem?.mediaMetadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION) {
-                            serviceIOScope.launch {
-                                songRepository.scrobbleSong(mediaItem?.mediaMetadata?.id ?: "", currentPosition.toInt(), 1f,
-                                    ScrobbleEvent.START , true)
-                            }
-                        }
+                        scrobbleSubmission(mediaItem, currentPosition)
                     }
                 }
                 delay(1000)
@@ -478,7 +465,87 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 }
         }
 
+        serviceMainScope.launch {
+            combine(
+                playbackSettingsManager.crossfadeSecondsFlow,
+                playbackSettingsManager.equalizerEnabledFlow
+            ) { crossfadeSeconds, equalizerEnabled -> crossfadeSeconds to equalizerEnabled }
+                .distinctUntilChanged()
+                .collect { (crossfadeSeconds, equalizerEnabled) ->
+                    crossfader.crossfadeMs = crossfadeSeconds * 1000L
+
+                    // Offloaded playback skips audio effects and can't be faded smoothly.
+                    val offloadMode = if (crossfadeSeconds > 0 || equalizerEnabled)
+                        TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
+                    else
+                        TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
+                    player.trackSelectionParameters = player.trackSelectionParameters
+                        .buildUpon()
+                        .setAudioOffloadPreferences(
+                            TrackSelectionParameters.AudioOffloadPreferences.Builder()
+                                .setAudioOffloadMode(offloadMode)
+                                .build()
+                        )
+                        .build()
+                }
+        }
+
         Log.d("AA", "Initialized MediaLibraryService.")
+    }
+
+    // Set when the crossfade starts the end of a song transcoded on the fly.
+    private val crossfadeStreamOffset = StreamOffset()
+
+    /**
+     * Plays `media://` tracks from the smart cache first, then from the pre-fetched tracks, then
+     * from the provider. [streamOffset] is where a transcoded stream must start.
+     */
+    private fun createMediaSourceFactory(okHttpClient: OkHttpClient, streamOffset: StreamOffset): DefaultMediaSourceFactory {
+        val resolvingDataSourceFactory = ResolvingDataSource.Factory(
+            DefaultDataSource.Factory(this, OkHttpDataSource.Factory(okHttpClient)),
+            object : ResolvingDataSource.Resolver {
+                override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
+                    val uri = dataSpec.uri
+                    val scheme = dataSpec.uri.scheme
+
+                    if (scheme != "media")
+                        return dataSpec
+
+                    val variant = currentStreamVariant()
+                    val offset = if (variant.bitrate != "No Transcoding") streamOffset.positionMs?.div(1000)?.toInt() else null
+                    if (offset != null) streamOffset.positionMs = null
+
+                    return dataSpec.withUri(getStreamUrl(uri, variant, offset).toUri())
+                }
+            }
+        )
+
+        // Upcoming tracks pre-fetched in RAM are served before going to the network.
+        val prefetchDataSourceFactory = PrefetchDataSource.Factory(resolvingDataSourceFactory, prefetcher) {
+            // The whole file is available, so the transcoding offset hack must not apply to the next stream.
+            streamOffset.positionMs = null
+        }
+
+        // Tracks stored on disk by the smart cache are played before anything else.
+        val smartCacheDataSourceFactory = SmartCacheDataSource.Factory(prefetchDataSourceFactory, smartCacheManager) {
+            streamOffset.positionMs = null
+        }
+        return DefaultMediaSourceFactory(smartCacheDataSourceFactory)
+    }
+
+    /** Whether the player can seek into [mediaItem]; streams transcoded on the fly can't be. */
+    private fun canSeek(mediaItem: MediaItem): Boolean {
+        val uri = mediaItem.localConfiguration?.uri ?: return true
+        if (uri.scheme != "media" || currentStreamVariant().bitrate == "No Transcoding") return true
+        return smartCacheManager.isCached(uri) || prefetcher.get(uri) != null
+    }
+
+    private fun scrobbleSubmission(mediaItem: MediaItem, positionMs: Long) {
+        if (mediaItem.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION) return
+        serviceIOScope.launch {
+            songRepository.scrobbleSong(mediaItem.mediaMetadata.id ?: "", positionMs.toInt(), 1f,
+                ScrobbleEvent.START , true)
+        }
     }
 
     /**
@@ -883,6 +950,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         scrobbleJob?.cancel()
         sleepTimerJob?.cancel()
         if (::prefetcher.isInitialized) prefetcher.stop()
+        if (::crossfader.isInitialized) crossfader.release()
         instance = null
         super.onDestroy()
     }

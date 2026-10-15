@@ -25,6 +25,13 @@ class PlaybackSettingsManager @Inject constructor(
 
         private val AUTOPLAY_SONGS = booleanPreferencesKey("autoplay")
 
+        private val CROSSFADE_SECONDS_KEY = intPreferencesKey("crossfade_seconds")
+        const val MAX_CROSSFADE_SECONDS = 12
+
+        private val EQUALIZER_ENABLED_KEY = booleanPreferencesKey("equalizer_enabled")
+        private val EQUALIZER_PRESET_KEY = intPreferencesKey("equalizer_preset")
+        private val EQUALIZER_BAND_LEVELS_KEY = stringPreferencesKey("equalizer_band_levels")
+
         private val SCROBBLE_PERCENT_KEY = intPreferencesKey("scrobble_percent")
 
         private val PREFETCH_MINUTES_KEY = intPreferencesKey("prefetch_minutes")
@@ -130,6 +137,53 @@ class PlaybackSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[SMART_CACHE_MAX_SIZE_GB_KEY] = sizeGb
+            }
+        }
+    }
+
+    /** How long two songs overlap when one ends, 0 when crossfade is disabled. */
+    val crossfadeSecondsFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[CROSSFADE_SECONDS_KEY] ?: 0
+    }
+
+    suspend fun setCrossfadeSeconds(seconds: Int) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[CROSSFADE_SECONDS_KEY] = seconds.coerceIn(0, MAX_CROSSFADE_SECONDS)
+            }
+        }
+    }
+
+    val equalizerEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[EQUALIZER_ENABLED_KEY] ?: false
+    }
+
+    suspend fun setEqualizerEnabled(enabled: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[EQUALIZER_ENABLED_KEY] = enabled
+            }
+        }
+    }
+
+    /** The equalizer preset of the device in use, -1 when the bands were set by hand. */
+    val equalizerPresetFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[EQUALIZER_PRESET_KEY] ?: -1
+    }
+
+    /** The level of each equalizer band in millibels, empty when they were never set. */
+    val equalizerBandLevelsFlow: Flow<List<Int>> = context.dataStore.data.map { preferences ->
+        preferences[EQUALIZER_BAND_LEVELS_KEY]
+            ?.split(",")
+            ?.mapNotNull { it.toIntOrNull() }
+            ?: emptyList()
+    }
+
+    suspend fun setEqualizerBands(preset: Int, bandLevels: List<Int>) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[EQUALIZER_PRESET_KEY] = preset
+                preferences[EQUALIZER_BAND_LEVELS_KEY] = bandLevels.joinToString(",")
             }
         }
     }

@@ -19,8 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -29,20 +31,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.craftworks.music.R
+import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
+import com.craftworks.music.ui.elements.dialogs.equalizerPresetLabel
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.tv.TranscodingFormatDialog
+import com.craftworks.music.ui.viewmodels.EqualizerViewModel
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
 @Preview(device = "id:tv_1080p", showSystemUi = true, showBackground = true)
-fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel()) {
+fun TvS_PlaybackScreen(
+    navHostController: NavHostController = rememberNavController(),
+    smartCacheViewModel: SmartCacheViewModel = hiltViewModel(),
+    equalizerViewModel: EqualizerViewModel = hiltViewModel()
+) {
     var showWifiTranscodingDialog by remember { mutableStateOf(false) }
     var showDataTranscodingDialog by remember { mutableStateOf(false) }
     var showTranscodingFormatDialog by remember { mutableStateOf(false) }
@@ -61,6 +72,11 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
 
     val trackOfflineScrobbles by smartCacheViewModel.trackOfflineScrobbles.collectAsStateWithLifecycle()
     val pendingScrobbles by smartCacheViewModel.pendingScrobbles.collectAsStateWithLifecycle()
+
+    val equalizer = equalizerViewModel.info
+    val equalizerEnabled by equalizerViewModel.enabled.collectAsStateWithLifecycle()
+    val equalizerPreset by equalizerViewModel.preset.collectAsStateWithLifecycle()
+    val equalizerBandLevels by equalizerViewModel.bandLevels.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -168,6 +184,42 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
         }
 
         item {
+            val crossfadeSeconds by PlaybackSettingsManager(context).crossfadeSecondsFlow.collectAsState(0)
+
+            SettingsSliderItem(
+                title = if (crossfadeSeconds > 0)
+                    stringResource(R.string.playback_crossfade_seconds, crossfadeSeconds)
+                else
+                    stringResource(R.string.playback_crossfade_off),
+                description = stringResource(R.string.playback_crossfade_description),
+                value = crossfadeSeconds,
+                range = 0..PlaybackSettingsManager.MAX_CROSSFADE_SECONDS,
+                step = 1,
+                onValueChange = {
+                    coroutineScope.launch { PlaybackSettingsManager(context).setCrossfadeSeconds(it) }
+                }
+            )
+        }
+
+        item {
+            SettingsButtonItem(
+                title = stringResource(R.string.playback_equalizer),
+                subtitle = when {
+                    equalizer == null -> stringResource(R.string.playback_equalizer_unsupported)
+                    equalizerEnabled -> equalizerPresetLabel(equalizer.presets, equalizerPreset, equalizerBandLevels)
+                    else -> stringResource(R.string.playback_equalizer_off)
+                },
+                icon = ImageVector.vectorResource(R.drawable.rounded_equalizer_24),
+                description = stringResource(R.string.playback_equalizer_description),
+                onClick = {
+                    navHostController.navigate(Screen.S_Equalizer) {
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        item {
             SettingsSwitchItem(
                 title = if (pendingScrobbles > 0)
                     stringResource(R.string.playback_track_offline_scrobbles_pending, pendingScrobbles)
@@ -249,4 +301,60 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
     if (showTranscodingFormatDialog) TranscodingFormatDialog(setShowDialog = {
         showTranscodingFormatDialog = it
     })
+}
+
+/** A slider moving by [step] in [range], also with the left and right keys of the remote. */
+@Composable
+private fun SettingsSliderItem(
+    title: String,
+    value: Int,
+    range: IntRange,
+    step: Int,
+    description: String? = null,
+    onValueChange: (Int) -> Unit
+) {
+    fun snap(newValue: Float) = ((newValue / step).roundToInt() * step).coerceIn(range.first, range.last)
+
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier
+            .padding(vertical = 8.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (description != null) {
+                SettingsDescription(description, Modifier.padding(bottom = 8.dp))
+            }
+            Slider(
+                value = value.toFloat(),
+                onValueChange = { onValueChange(snap(it)) },
+                valueRange = range.first.toFloat()..range.last.toFloat(),
+                steps = ((range.last - range.first) / step - 1).coerceAtLeast(0),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onKeyEvent { keyEvent ->
+                        when (keyEvent.key) {
+                            Key.DirectionRight -> {
+                                if (keyEvent.type == KeyEventType.KeyDown) onValueChange(snap(value + step.toFloat()))
+                                true
+                            }
+
+                            Key.DirectionLeft -> {
+                                if (keyEvent.type == KeyEventType.KeyDown) onValueChange(snap(value - step.toFloat()))
+                                true
+                            }
+
+                            else -> false
+                        }
+                    }
+            )
+        }
+    }
 }
