@@ -1,79 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_appearance">Appearance</string>
-    <string name="appearance_username">Name</string>
-    <string name="appearance_theme">Theme</string>
-    <string name="theme_dark">Dark</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_system">System</string>
-    <string name="now_playing_background_style">Background Style</string>
-    <string name="background_style_plain">Plain</string>
-    <string name="background_style_blur">Blurred</string>
-    <string name="background_style_anim">Animated</string>
-    <string name="now_playing_screen_standby">Disable Screen Standby</string>
-    <string name="appearance_oled_mode">OLED Protection</string>
-    <string name="appearance_oled_protection_mode">OLED Protection Mode</string>
-    <string name="oled_protection_mode_off">Off</string>
-    <string name="oled_protection_mode_lyrics_only">Lyrics Only</string>
-    <string name="oled_protection_mode_minimal">Minimal</string>
-    <string name="appearance_navbar_items">Navigation Bar Items</string>
-    <string name="appearance_home_items">Home Screen Items</string>
-    <string name="now_playing_title_alignment">Now Playing Title Alignment</string>
-    <string name="appearance_now_playing_lyrics_alignment">Now Playing Lyrics Alignment</string>
-    <string name="alignment_setting_left">Left</string>
-    <string name="alignment_setting_center">Center</string>
-    <string name="alignment_setting_right">Right</string>
-    <string name="appearance_now_playing_lyrics_blur">Lyrics Blur Effect</string>
-    <string name="appearance_lyrics_auto_scroll">Autoscroll Plain Lyrics</string>
-    <string name="appearance_lyrics_recenter">Recenter After Scroll</string>
-    <string name="appearance_lyrics_word_bounce">Lyrics Word Bounce</string>
-    <string name="appearance_lyrics_animation_speed">Lyrics Animation Speed</string>
-    <string name="now_playing_more_info">Show More Info</string>
-    <string name="appearance_provider_logo">Show Provider Logo</string>
-    <string name="appearance_refresh_animation">Show Refresh Animation</string>
-    <string name="appearance_track_numbers_in_album_view">Show Track Numbers in Album View</string>
-    <string name="appearance_album_details_action_buttons">Album Details Buttons</string>
-    <string name="appearance_artist_details_action_buttons">Artist Details Buttons</string>
-    <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
-    <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
-    <string name="settings_media_providers">Media Providers</string>
-    <string name="media_providers_media_source">Media Source</string>
-    <string name="add_media_provider_local_directory">Directory</string>
-    <string name="add_media_provider_server_url">Server URL</string>
-    <string name="add_media_provider_server_username">Username</string>
-    <string name="add_media_provider_server_password">Password</string>
-    <string name="add_media_provider_server_allow_self_signed_certs">Allow self-signed certs</string>
-    <string name="add_media_provider_login">Login</string>
-    <string name="settings_lyrics_providers">Lyrics Providers</string>
-    <string name="media_providers_lrclib_url">LRCLIB Url</string>
-    <string name="settings_playback">Playback</string>
-    <string name="playback_max_bitrate">Max Bitrate</string>
-    <string name="playback_max_bitrate_wifi">Max Bitrate (Wi-Fi)</string>
-    <string name="playback_max_bitrate_mobile_data">Max Bitrate (Mobile data)</string>
-    <string name="playback_transcoding_format">Transcoding Format</string>
-    <string name="playback_no_transcoding">No Transcoding</string>
-    <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
-    <string name="settings_misc">Miscellaneous</string>
-    <string name="misc_download_template">Download Template</string>
-    <string name="misc_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number
-        </string>
-    <string name="misc_playlist_download_template">Playlist Download Template</string>
-    <string name="misc_playlist_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number\n
-            {playlist} - Playlist title\n
-            {playlist_index} - Playlist track index
-        </string>
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_appearance_description">Tema, pantalla de inicio, letras y diseño</string>
+    <string name="appearance_username">Nombre</string>
+    <string name="appearance_username_description">Se muestra en el saludo de la pantalla de inicio</string>
+    <string name="appearance_theme">Tema</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_system">Sistema</string>
+    <string name="appearance_oled_mode">Protección OLED</string>
+    <string name="appearance_oled_mode_description">Oculta partes de la pantalla de reproducción para evitar que la pantalla se queme</string>
+    <string name="appearance_oled_protection_mode">Modo de protección OLED</string>
+    <string name="oled_protection_mode_off">Desactivado</string>
+    <string name="oled_protection_mode_lyrics_only">Solo letra</string>
+    <string name="oled_protection_mode_minimal">Mínimo</string>
+    <string name="appearance_navbar_items">Pestañas de navegación</string>
+    <string name="appearance_navbar_items_description">Elige y reordena las pestañas principales</string>
+    <string name="appearance_home_items">Secciones de inicio</string>
+    <string name="appearance_home_items_description">Elige y reordena las secciones de la pantalla de inicio</string>
+    <string name="appearance_expressive_home">Inicio expresivo</string>
+    <string name="appearance_expressive_home_description">Una pantalla de inicio más viva, con carrusel, acciones rápidas y tus estadísticas de escucha</string>
+    <string name="appearance_advanced_queue">Cola avanzada</string>
+    <string name="appearance_advanced_queue_description">Selección múltiple, ordenación y acciones en bloque en la cola</string>
+    <string name="appearance_advanced_filter">Filtros avanzados</string>
+    <string name="appearance_advanced_filter_description">Más opciones de orden y filtro para canciones, álbumes y artistas</string>
+    <string name="appearance_now_playing_lyrics_alignment">Alineación de la letra</string>
+    <string name="alignment_setting_left">Izquierda</string>
+    <string name="alignment_setting_center">Centro</string>
+    <string name="alignment_setting_right">Derecha</string>
+    <string name="appearance_now_playing_lyrics_blur">Desenfoque de la letra</string>
+    <string name="appearance_now_playing_lyrics_blur_description">Desenfoca las líneas que no se están cantando</string>
+    <string name="appearance_lyrics_auto_scroll">Desplazar letras simples</string>
+    <string name="appearance_lyrics_auto_scroll_description">Desplaza lentamente las letras sin sincronizar</string>
+    <string name="appearance_lyrics_recenter">Recentrar tras desplazar</string>
+    <string name="appearance_lyrics_recenter_description">Vuelve a seguir la línea actual después de desplazar la letra</string>
+    <string name="appearance_lyrics_word_bounce">Animación de palabras</string>
+    <string name="appearance_lyrics_word_bounce_description">Anima cada palabra al cantarse en las letras sincronizadas por palabra</string>
+    <string name="appearance_lyrics_animation_speed">Velocidad de animación de la letra</string>
+    <string name="appearance_lyrics_animation_speed_description">Rapidez con la que la letra pasa a la línea siguiente</string>
+    <string name="appearance_provider_logo">Mostrar logo del servidor</string>
+    <string name="appearance_provider_logo_description">Muestra el logo del servidor junto al saludo en Inicio</string>
+    <string name="appearance_refresh_animation">Animación al actualizar</string>
+    <string name="appearance_refresh_animation_description">Muestra un efecto de onda al actualizar una pantalla</string>
+    <string name="appearance_track_numbers_in_album_view">Números de pista en los álbumes</string>
+    <string name="appearance_details_dynamic_colors">Color dinámico en las páginas de detalles</string>
+    <string name="appearance_details_dynamic_colors_description">Tiñe las páginas de álbum, artista y lista con los colores de la portada</string>
+    <string name="appearance_album_details_action_buttons">Botones de la página de álbum</string>
+    <string name="appearance_artist_details_action_buttons">Botones de la página de artista</string>
+    <string name="appearance_playlist_details_action_buttons">Botones de la página de lista</string>
+    <string name="appearance_details_action_buttons_description">Botones que se muestran en la página; los demás van al menú ⋮</string>
+    <string name="appearance_action_buttons_editor_title">Editar botones</string>
+    <string name="appearance_action_buttons_visible_row">Fila visible</string>
+    <string name="appearance_now_playing">Pantalla de reproducción</string>
+    <string name="appearance_now_playing_description">Botones, menú, gestos en la portada, barra de progreso y fondo</string>
+    <string name="now_playing_background_style">Fondo</string>
+    <string name="now_playing_background_style_description">Lo que se muestra detrás de la portada y los controles</string>
+    <string name="background_style_plain">Liso</string>
+    <string name="background_style_blur">Desenfocado</string>
+    <string name="background_style_anim">Animado</string>
+    <string name="now_playing_title_alignment">Alineación del título</string>
+    <string name="now_playing_more_info">Mostrar más información</string>
+    <string name="now_playing_more_info_description">Muestra el formato, la tasa de bits y la fuente bajo el título</string>
+    <string name="now_playing_screen_standby">Evitar que la pantalla se apague</string>
+    <string name="now_playing_screen_standby_description">Mantiene la pantalla encendida mientras la pantalla de reproducción está abierta</string>
+    <string name="now_playing_buttons">Botones</string>
+    <string name="now_playing_buttons_description">Elige y coloca los controles de reproducción</string>
+    <string name="now_playing_buttons_hint">Arrastra los botones entre las filas. El botón de reproducir/pausar siempre queda en el centro.</string>
+    <string name="now_playing_buttons_title">Junto al título</string>
+    <string name="now_playing_buttons_controls_start">A la izquierda de reproducir/pausar</string>
+    <string name="now_playing_buttons_controls_end">A la derecha de reproducir/pausar</string>
+    <string name="now_playing_buttons_bottom">Fila inferior</string>
+    <string name="now_playing_buttons_empty">Sin botones</string>
+    <string name="now_playing_menu_actions">Acciones del menú</string>
+    <string name="now_playing_menu_actions_description">Acciones del menú ⋮ de la pantalla de reproducción</string>
+    <string name="now_playing_menu_actions_hint">Elige y reordena las acciones del menú ⋮.</string>
+    <string name="now_playing_seek_bar_style">Estilo de la barra de progreso</string>
+    <string name="seek_bar_style_standard">Estándar</string>
+    <string name="seek_bar_style_wavy">Ondulada</string>
+    <string name="seek_bar_style_thick">Gruesa</string>
+    <string name="seek_bar_style_minimal">Mínima</string>
+    <string name="now_playing_cover_gestures">Gestos en la portada</string>
+    <string name="now_playing_cover_gestures_description">Acciones al tocar o deslizar sobre la portada</string>
+    <string name="cover_gesture_tap">Tocar</string>
+    <string name="cover_gesture_double_tap">Tocar dos veces</string>
+    <string name="cover_gesture_long_press">Mantener pulsado</string>
+    <string name="cover_gesture_swipe_left">Deslizar a la izquierda</string>
+    <string name="cover_gesture_swipe_right">Deslizar a la derecha</string>
+    <string name="cover_gesture_swipe_up">Deslizar hacia arriba</string>
+    <string name="cover_gesture_swipe_down">Deslizar hacia abajo</string>
+    <string name="cover_gesture_none">Ninguna acción</string>
+    <string name="settings_media_providers">Fuentes de música</string>
+    <string name="settings_media_providers_description">Servidores y carpetas locales desde los que reproducir música</string>
+    <string name="media_providers_media_source">Fuente de música</string>
+
+    <!-- Local -->
+    <string name="add_media_provider_local_directory">Carpeta</string>
+
+    <!-- Server -->
+    <string name="add_media_provider_server_url">URL del servidor</string>
+    <string name="add_media_provider_server_username">Usuario</string>
+    <string name="add_media_provider_server_password">Contraseña</string>
+    <string name="add_media_provider_server_allow_self_signed_certs">Permitir certificados autofirmados</string>
+    <string name="add_media_provider_login">Iniciar sesión</string>
+    <string name="settings_lyrics_providers">Fuentes de letras</string>
+    <string name="settings_lyrics_providers_description">De dónde se obtienen las letras y en qué orden</string>
+    <string name="media_providers_lrclib_url">URL de LRCLIB</string>
+    <string name="settings_playback">Reproducción</string>
+    <string name="settings_playback_description">Calidad del streaming, scrobbling y precarga</string>
+
+    <!-- Transcoding -->
+    <string name="playback_max_bitrate">Tasa de bits máxima</string>
+    <string name="playback_max_bitrate_wifi">Tasa de bits máxima (Wi-Fi)</string>
+    <string name="playback_max_bitrate_mobile_data">Tasa de bits máxima (datos móviles)</string>
+    <string name="playback_max_bitrate_wifi_description">Las canciones por encima de esta tasa se transcodifican con Wi-Fi</string>
+    <string name="playback_max_bitrate_mobile_data_description">Las canciones por encima de esta tasa se transcodifican con datos móviles</string>
+    <string name="playback_transcoding_format">Formato de transcodificación</string>
+    <string name="playback_transcoding_format_description">Formato usado al transcodificar una canción a una tasa de bits menor</string>
+    <string name="playback_no_transcoding">Sin transcodificación</string>
+
+    <!-- Autoplay -->
+    <string name="playback_autoplay">Reproducción automática</string>
+    <string name="playback_autoplay_description">Al terminar la cola, sigue con canciones parecidas a la última</string>
+
+    <!-- Crossfade -->
+    <string name="playback_crossfade_seconds">Fundido: %1$d s</string>
+    <string name="playback_crossfade_off">Fundido: desactivado</string>
+    <string name="playback_crossfade_description">Desvanece el final de una canción mientras entra la siguiente</string>
+
+    <!-- Equalizer -->
+    <string name="playback_equalizer">Ecualizador</string>
+    <string name="playback_equalizer_description">Ajusta el sonido de la música con el ecualizador del dispositivo</string>
+    <string name="playback_equalizer_off">Desactivado</string>
+    <string name="playback_equalizer_unsupported">Este dispositivo no tiene ecualizador</string>
+    <string name="playback_equalizer_preset">Preajuste</string>
+    <string name="playback_equalizer_custom">Personalizado</string>
+    <string name="playback_equalizer_flat">Plano</string>
+    <string name="playback_equalizer_band">%1$s: %2$s dB</string>
+
+    <!-- Scrobble -->
+    <string name="playback_min_scrobble_percentage">Porcentaje mínimo para scrobble</string>
+    <string name="playback_min_scrobble_percentage_value">Porcentaje mínimo para scrobble: %1$d %%</string>
+    <string name="playback_min_scrobble_percentage_description">Cuánto debe sonar una canción para contar como escuchada</string>
+    <string name="playback_track_offline_scrobbles">Guardar scrobbles sin conexión</string>
+    <string name="playback_track_offline_scrobbles_pending">Guardar scrobbles sin conexión (%1$d pendientes)</string>
+    <string name="playback_track_offline_scrobbles_description">Guarda las escuchas sin conexión y las envía al recuperar la conexión</string>
+
+    <!-- Pre-fetching -->
+    <string name="playback_prefetch_minutes">Precargar siguientes canciones: %1$d min</string>
+    <string name="playback_prefetch_off">Precargar siguientes canciones: desactivado</string>
+    <string name="playback_prefetch_description">Carga antes las siguientes canciones para evitar cortes con conexiones débiles</string>
+
+    <!-- Smart cache -->
+    <string name="smart_cache_size">Tamaño de la caché inteligente</string>
+    <string name="smart_cache_size_description">Guarda en el dispositivo lo que más escuchas últimamente para oírlo sin conexión</string>
+    <string name="smart_cache_off">Desactivada</string>
+    <string name="smart_cache_size_gb">%1$d GB</string>
+    <string name="smart_cache_size_tb">%1$d TB</string>
+    <string name="smart_cache_usage">%1$s usados de %2$s · %3$d canciones</string>
+    <string name="smart_cache_refresh">Actualizar caché inteligente</string>
+    <string name="smart_cache_refresh_description">Quita las canciones no disponibles y descarga la música que más escuchas últimamente</string>
+    <string name="smart_cache_tap_to_cancel">%1$s · Toca para cancelar</string>
+    <string name="smart_cache_status_checking">Comprobando canciones en caché… %1$d/%2$d</string>
+    <string name="smart_cache_status_ranking">Buscando lo que más escuchas… %1$d encontradas</string>
+    <string name="smart_cache_status_cleaning">Quitando canciones que ya no se necesitan…</string>
+    <string name="smart_cache_status_downloading">Descargando canciones… %1$d/%2$d</string>
+    <string name="smart_cache_status_library">Guardando artistas y listas… %1$d/%2$d</string>
+    <string name="smart_cache_last_refresh">Última actualización: %1$s</string>
+    <string name="smart_cache_error_unsupported">No disponible para esta fuente de música</string>
+    <string name="smart_cache_error_offline">Actualización detenida: no se puede conectar con el servidor</string>
+    <string name="smart_cache_error_no_space">Actualización detenida: no hay suficiente espacio</string>
+    <string name="smart_cache_error_failed">Error al actualizar: %1$s</string>
+    <string name="smart_cache_notification_channel">Caché inteligente</string>
+    <string name="smart_cache_notification_title">Actualizando la caché inteligente</string>
+    <string name="smart_cache_notification_cancel">Cancelar</string>
+    <string name="settings_downloads">Descargas</string>
+    <string name="settings_downloads_description">Canciones descargadas, caché inteligente y nombres de archivo</string>
+    <string name="downloads_storage">Canciones descargadas</string>
+    <string name="downloads_storage_value">%1$s · %2$d canciones</string>
+    <string name="downloads_storage_description">Las canciones descargadas en la app suenan sin red. No cuentan en el tamaño de la caché inteligente</string>
+    <string name="downloads_status_downloading">Descargando canciones… %1$d/%2$d</string>
+    <string name="downloads_status_failed">No se han podido descargar %1$d canciones</string>
+    <string name="downloads_notification_title">Descargando canciones</string>
+    <string name="downloads_browse">Contenido descargado</string>
+    <string name="downloads_browse_description">Consulta y elimina las canciones, álbumes, artistas y listas descargados en la app o guardados por la caché inteligente</string>
+    <string name="downloads_delete_all">Eliminar todas las descargas</string>
+    <string name="downloads_delete_all_description">Elimina todas las canciones descargadas en la app. La caché inteligente se conserva</string>
+    <string name="downloads_delete_all_confirm">¿Eliminar las %1$d canciones descargadas en la app (%2$s)? Ya no podrás escucharlas sin conexión.</string>
+    <string name="downloads_tab_downloads">Descargas</string>
+    <string name="downloads_tab_smart_cache">Caché inteligente</string>
+    <string name="downloads_item_summary">%1$d canciones · %2$s</string>
+    <string name="downloads_item_summary_partial">%1$d de %2$d canciones · %3$s</string>
+    <string name="downloads_empty">Aún no hay nada</string>
+    <string name="downloads_remove">Eliminar</string>
+    <string name="downloads_remove_title">Eliminar del dispositivo</string>
+    <string name="downloads_remove_confirm">¿Eliminar &lt;i&gt;%1$s&lt;/i&gt;? Sus %2$d canciones (%3$s) ya no se podrán escuchar sin conexión.</string>
+    <string name="downloads_remove_smart_cache_note">La próxima actualización de la caché inteligente podría volver a descargarlas.</string>
+    <string name="settings_misc">Otros</string>
+    <string name="settings_misc_description">Nombres de los archivos descargados</string>
+
+    <!-- Download -->
+    <string name="misc_download_template">Plantilla de descarga</string>
+    <string name="misc_download_template_summary">Carpetas y nombre de archivo de las canciones descargadas</string>
+    <string name="misc_download_template_description">{title} - Título de la canción\n{album} - Título del álbum\n{artist} - Artista de la canción\n{album_artist} - Artista del álbum\n{ext} - Extensión\n{track} - Número de pista\n{disc} - Número de disco</string>
+    <string name="misc_playlist_download_template">Plantilla de descarga de listas</string>
+    <string name="misc_playlist_download_template_summary">Carpetas y nombre de archivo de las canciones descargadas desde una lista</string>
+    <string name="misc_playlist_download_template_description">{title} - Título de la canción\n{album} - Título del álbum\n{artist} - Artista de la canción\n{album_artist} - Artista del álbum\n{ext} - Extensión\n{track} - Número de pista\n{disc} - Número de disco\n{playlist} - Título de la lista\n{playlist_index} - Posición en la lista</string>
 </resources>

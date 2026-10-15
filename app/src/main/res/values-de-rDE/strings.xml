@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="nav_home">Home</string>
-    <string name="nav_songs">Songs</string>
+    <!-- Navigation -->
+    <string name="nav_home">Start</string>
+    <string name="nav_songs">Titel</string>
     <string name="nav_albums">Alben</string>
     <string name="nav_artists">Künstler</string>
-    <string name="nav_radios">Internetradio</string>
-    <string name="nav_playlists">Wiedergabelisten</string>
-    <string name="nav_playing">Playing</string>
-    <string name="nav_search">Search</string>
+    <string name="nav_radios">Radios</string>
+    <string name="nav_playlists">Playlists</string>
+    <string name="nav_playing">Wiedergabe</string>
+    <string name="nav_search">Suche</string>
+
+    <!-- Media Providers -->
     <string name="source_local_folder">Lokaler Ordner</string>
-    <string name="label_separator">Separator</string>
+
+    <!-- Misc -->
+    <string name="label_separator">Trennlinie</string>
+    <string name="label_offline_mode">Offline-Modus</string>
+    <string name="label_back_online">Wieder online</string>
 </resources>

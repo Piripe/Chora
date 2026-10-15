@@ -1,11 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_welcome">Benvenuto/a,\n%s!</string>
-    <string name="home_recently_added">Aggiunte Recentemente</string>
-    <string name="home_most_played">Più Ascoltate</string>
-    <string name="home_recently_played">Ascoltate Recentemente</string>
-    <string name="home_explore_library">Esplora La Tua Libreria</string>
+    <!-- Home -->
+    <string name="home_welcome">Ciao,\n%s!</string>
+    <string name="home_recently_added">Aggiunti di recente</string>
+    <string name="home_most_played">I più ascoltati</string>
+    <string name="home_recently_played">Ascoltati di recente</string>
+    <string name="home_explore_library">Esplora la tua libreria</string>
     <string name="home_settings">Impostazioni</string>
+    <string name="home_greeting_morning">Buongiorno</string>
+    <string name="home_greeting_afternoon">Buon pomeriggio</string>
+    <string name="home_greeting_evening">Buonasera</string>
+    <string name="home_greeting_night">Ascolti notturni</string>
+    <string name="home_shuffle_library">Casuale</string>
+    <string name="home_random_album">Sorprendimi</string>
+    <string name="home_your_listening">I tuoi ascolti</string>
+    <string name="home_top_artist">Artista top</string>
+    <string name="home_on_repeat">In loop</string>
+    <string name="home_this_week">Questa settimana</string>
+    <string name="home_see_all">Mostra tutto</string>
+    <plurals name="home_plays">
+        <item quantity="one">%d ascolto</item>
+        <item quantity="many">%d ascolti</item>
+        <item quantity="other">%d ascolti</item>
+    </plurals>
+    <plurals name="home_songs_played">
+        <item quantity="one">%d brano ascoltato</item>
+        <item quantity="many">%d brani ascoltati</item>
+        <item quantity="other">%d brani ascoltati</item>
+    </plurals>
+
+    <!-- Artist Details -->
     <string name="artist_details_discography">Discografia</string>
+
+    <!-- Album Details -->
     <string name="album_details_disc">Disco %s</string>
 </resources>

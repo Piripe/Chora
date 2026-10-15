@@ -2,27 +2,99 @@
 <resources>
     <!-- Common -->
     <string name="action_done">Fatto</string>
+    <string name="action_cancel">Annulla</string>
+    <string name="action_ok">OK</string>
     <string name="action_close">Chiudi</string>
     <string name="action_save">Salva</string>
     <string name="action_remove">Rimuovi</string>
-    <string name="action_reset">Reimposta</string>
+    <string name="action_reset">Ripristina</string>
+    <string name="action_delete">Elimina</string>
     <string name="action_search">Cerca</string>
     <string name="action_play">Riproduci</string>
-    <string name="action_shuffle">Shuffle</string>
+    <string name="action_shuffle">Riproduzione casuale</string>
     <string name="action_add">Aggiungi</string>
     <string name="action_add_to_queue">Aggiungi alla coda</string>
-    <string name="action_play_next">Riproduci successivo</string>
-    <string name="action_add_to_playlist">Aggiungi alla playlist</string>
+    <string name="action_remove_from_queue">Rimuovi dalla coda</string>
+    <string name="action_clear_queue">Svuota la coda</string>
+    <string name="action_play_next">Riproduci dopo</string>
+    <string name="action_move_to_start">Sposta all\'inizio</string>
+    <string name="action_move_next">Riproduci dopo</string>
+    <string name="action_move_to_end">Sposta alla fine</string>
+    <string name="action_add_to_playlist">Aggiungi a una playlist</string>
     <string name="action_add_to_favorites">Aggiungi ai preferiti</string>
     <string name="action_remove_from_favorites">Rimuovi dai preferiti</string>
-    <string name="action_set_rating">Imposta valutazione</string>
-    <string name="action_next">Prossimo</string>
+
+    <!-- Queue selection -->
+    <string name="action_select_all">Seleziona tutto</string>
+    <string name="action_invert_selection">Inverti selezione</string>
+    <string name="action_select_range">Seleziona intervallo</string>
+    <string name="action_select_by">Seleziona per…</string>
+    <string name="action_clear_selection">Deseleziona tutto</string>
+    <string name="action_selection_options">Opzioni di selezione</string>
+    <string name="action_set_rating">Valuta</string>
+    <string name="action_next">Brano successivo</string>
     <string name="action_skip_for_now">Salta per ora</string>
     <string name="action_download">Scarica</string>
+    <string name="action_share">Condividi</string>
     <string name="action_more">Altro</string>
+
+    <!-- Now playing -->
+    <string name="action_play_pause">Riproduci / Pausa</string>
+    <string name="action_previous">Brano precedente</string>
+    <string name="action_repeat">Ripeti</string>
+    <string name="action_seek_back">Indietro di %1$d secondi</string>
+    <string name="action_seek_forward">Avanti di %1$d secondi</string>
+    <string name="action_lyrics">Testo</string>
+    <string name="action_queue">Coda</string>
+    <string name="action_sleep_timer">Timer di spegnimento</string>
+    <string name="action_favorite">Preferito</string>
+    <string name="action_go_to_artist">Vai all\'artista</string>
+    <string name="action_go_to_album">Vai all\'album</string>
     <string name="action_add_radio">Aggiungi radio</string>
+
+    <!-- Radio and instant mix -->
+    <string name="action_start_radio">Avvia radio</string>
+    <string name="action_instant_mix">Mix istantaneo</string>
+    <string name="radio_no_songs_found">Nessun brano simile trovato</string>
+
+    <!-- Playlists -->
     <string name="action_create_playlist">Crea playlist</string>
     <string name="action_remove_from_playlist">Rimuovi dalla playlist</string>
-    <string name="button_toggle_favorites">Aggiungi/Rimuovi dai preferiti</string>
-    <string name="button_toggle_sort_order">Alterna ordine di ordinamento</string>
+
+    <!-- Favorites -->
+    <string name="button_toggle_favorites">Mostra preferiti</string>
+
+    <!-- Sort order -->
+    <string name="button_toggle_sort_order">Inverti ordinamento</string>
+
+    <!-- Tooltips (shown when long-pressing icon buttons) -->
+    <string name="action_back">Indietro</string>
+    <string name="action_close_search">Chiudi ricerca</string>
+    <string name="action_open_settings">Apri impostazioni</string>
+    <string name="action_refresh_section">Aggiorna sezione</string>
+    <string name="action_more_options">Altre opzioni</string>
+    <string name="action_pause">Pausa</string>
+    <string name="action_play_album">Riproduci album</string>
+    <string name="action_show_favorites_only">Mostra solo i preferiti</string>
+    <string name="action_show_all">Mostra tutto</string>
+    <string name="action_sort_ascending">Ordine crescente</string>
+    <string name="action_sort_descending">Ordine decrescente</string>
+    <string name="action_rate_stars">Valuta %1$d / 5</string>
+    <string name="action_delete_provider">Elimina sorgente</string>
+    <string name="action_edit_url">Modifica URL</string>
+    <string name="action_show_password">Mostra password</string>
+    <string name="action_hide_password">Nascondi password</string>
+    <string name="action_add_button">Aggiungi pulsante</string>
+    <string name="action_remove_button">Rimuovi pulsante</string>
+    <string name="action_shuffle_on">Attiva riproduzione casuale</string>
+    <string name="action_shuffle_off">Disattiva riproduzione casuale</string>
+    <string name="action_repeat_one">Ripeti brano attuale</string>
+    <string name="action_repeat_all">Ripeti coda</string>
+    <string name="action_repeat_off">Disattiva ripetizione</string>
+    <string name="action_show_lyrics">Mostra testo</string>
+    <string name="action_hide_lyrics">Nascondi testo</string>
+    <string name="action_show_queue">Mostra coda</string>
+    <string name="action_set_sleep_timer">Imposta timer di spegnimento</string>
+    <string name="action_download_song">Scarica brano</string>
+    <string name="action_parent_folder">Cartella superiore</string>
 </resources>

@@ -49,7 +49,7 @@ fun RatingDialog(
                             Icon(
                                 imageVector = if (star <= selectedRating) Icons.Rounded.Star
                                 else ImageVector.vectorResource(R.drawable.rounded_star_outline_24),
-                                contentDescription = "Star $star",
+                                contentDescription = stringResource(R.string.action_rate_stars, star),
                                 tint = if (star <= selectedRating) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(32.dp)
@@ -66,12 +66,12 @@ fun RatingDialog(
                     onDismiss()
                 }
             ) {
-                Text("Save")
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )

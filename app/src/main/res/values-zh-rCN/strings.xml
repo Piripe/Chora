@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="nav_home">Home</string>
+    <!-- Navigation -->
+    <string name="nav_home">首页</string>
     <string name="nav_songs">歌曲</string>
     <string name="nav_albums">专辑</string>
-    <string name="nav_artists">艺术家</string>
-    <string name="nav_radios">网络电台</string>
+    <string name="nav_artists">艺人</string>
+    <string name="nav_radios">电台</string>
     <string name="nav_playlists">歌单</string>
-    <string name="nav_playing">Playing</string>
-    <string name="nav_search">Search</string>
-    <string name="source_local_folder">本地目录</string>
-    <string name="label_separator">Separator</string>
+    <string name="nav_playing">正在播放</string>
+    <string name="nav_search">搜索</string>
+
+    <!-- Media Providers -->
+    <string name="source_local_folder">本地文件夹</string>
+
+    <!-- Misc -->
+    <string name="label_separator">分隔线</string>
+    <string name="label_offline_mode">离线模式</string>
+    <string name="label_back_online">已恢复联网</string>
 </resources>

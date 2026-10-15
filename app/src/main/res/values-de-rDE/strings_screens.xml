@@ -1,11 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Home -->
     <string name="home_welcome">Willkommen,\n%s!</string>
     <string name="home_recently_added">Kürzlich hinzugefügt</string>
-    <string name="home_most_played">Meistgespielt</string>
-    <string name="home_recently_played">Kürzlich Gespielt</string>
-    <string name="home_explore_library">Von Ihrer Bibliothek entdecken</string>
+    <string name="home_most_played">Meistgehört</string>
+    <string name="home_recently_played">Zuletzt gehört</string>
+    <string name="home_explore_library">Entdecke deine Bibliothek</string>
     <string name="home_settings">Einstellungen</string>
+    <string name="home_greeting_morning">Guten Morgen</string>
+    <string name="home_greeting_afternoon">Guten Tag</string>
+    <string name="home_greeting_evening">Guten Abend</string>
+    <string name="home_greeting_night">Musik für die späte Nacht</string>
+    <string name="home_shuffle_library">Zufallswiedergabe</string>
+    <string name="home_random_album">Überrasch mich</string>
+    <string name="home_your_listening">Deine Hörgewohnheiten</string>
+    <string name="home_top_artist">Top-Künstler</string>
+    <string name="home_on_repeat">In Dauerschleife</string>
+    <string name="home_this_week">Diese Woche</string>
+    <string name="home_see_all">Alle anzeigen</string>
+    <plurals name="home_plays">
+        <item quantity="one">%d Wiedergabe</item>
+        <item quantity="other">%d Wiedergaben</item>
+    </plurals>
+    <plurals name="home_songs_played">
+        <item quantity="one">%d Titel gehört</item>
+        <item quantity="other">%d Titel gehört</item>
+    </plurals>
+
+    <!-- Artist Details -->
     <string name="artist_details_discography">Diskografie</string>
+
+    <!-- Album Details -->
     <string name="album_details_disc">CD %s</string>
 </resources>

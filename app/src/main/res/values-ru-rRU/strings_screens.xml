@@ -1,11 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_welcome">Добро пожаловать!\n%s!</string>
-    <string name="home_recently_added">Недавно Добавленные</string>
-    <string name="home_most_played">Часто Прослушиваемые</string>
-    <string name="home_recently_played">Недавно Прослушиваемые</string>
-    <string name="home_explore_library">Обзор Из Вашей Библиотеки</string>
+    <!-- Home -->
+    <string name="home_welcome">Добро пожаловать,\n%s!</string>
+    <string name="home_recently_added">Недавно добавленные</string>
+    <string name="home_most_played">Часто слушаемые</string>
+    <string name="home_recently_played">Недавно прослушанные</string>
+    <string name="home_explore_library">Откройте для себя свою медиатеку</string>
     <string name="home_settings">Настройки</string>
+    <string name="home_greeting_morning">Доброе утро</string>
+    <string name="home_greeting_afternoon">Добрый день</string>
+    <string name="home_greeting_evening">Добрый вечер</string>
+    <string name="home_greeting_night">Ночное прослушивание</string>
+    <string name="home_shuffle_library">Перемешать</string>
+    <string name="home_random_album">Удиви меня</string>
+    <string name="home_your_listening">Ваша статистика</string>
+    <string name="home_top_artist">Топ-исполнитель</string>
+    <string name="home_on_repeat">На повторе</string>
+    <string name="home_this_week">На этой неделе</string>
+    <string name="home_see_all">Показать все</string>
+    <plurals name="home_plays">
+        <item quantity="one">%d прослушивание</item>
+        <item quantity="few">%d прослушивания</item>
+        <item quantity="many">%d прослушиваний</item>
+        <item quantity="other">%d прослушивания</item>
+    </plurals>
+    <plurals name="home_songs_played">
+        <item quantity="one">%d трек прослушан</item>
+        <item quantity="few">%d трека прослушано</item>
+        <item quantity="many">%d треков прослушано</item>
+        <item quantity="other">%d трека прослушано</item>
+    </plurals>
+
+    <!-- Artist Details -->
     <string name="artist_details_discography">Дискография</string>
+
+    <!-- Album Details -->
     <string name="album_details_disc">Диск %s</string>
 </resources>

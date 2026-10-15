@@ -1,79 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_appearance">外观</string>
-    <string name="appearance_username">名称</string>
-    <string name="appearance_theme">Theme</string>
-    <string name="theme_dark">Dark</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_system">System</string>
-    <string name="now_playing_background_style">Background Style</string>
-    <string name="background_style_plain">Plain</string>
-    <string name="background_style_blur">Blurred</string>
-    <string name="background_style_anim">Animated</string>
-    <string name="now_playing_screen_standby">Disable Screen Standby</string>
-    <string name="appearance_oled_mode">OLED Protection</string>
-    <string name="appearance_oled_protection_mode">OLED Protection Mode</string>
-    <string name="oled_protection_mode_off">Off</string>
-    <string name="oled_protection_mode_lyrics_only">Lyrics Only</string>
-    <string name="oled_protection_mode_minimal">Minimal</string>
+    <string name="settings_appearance_description">主题、首页、歌词与布局</string>
+    <string name="appearance_username">名字</string>
+    <string name="appearance_username_description">显示在首页的问候语中</string>
+    <string name="appearance_theme">主题</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="appearance_oled_mode">OLED 保护</string>
+    <string name="appearance_oled_mode_description">隐藏播放界面的部分内容，防止屏幕烧屏</string>
+    <string name="appearance_oled_protection_mode">OLED 保护模式</string>
+    <string name="oled_protection_mode_off">关闭</string>
+    <string name="oled_protection_mode_lyrics_only">仅歌词</string>
+    <string name="oled_protection_mode_minimal">极简</string>
     <string name="appearance_navbar_items">导航栏项目</string>
-    <string name="appearance_home_items">主页项目</string>
-    <string name="now_playing_title_alignment">Now Playing Title Alignment</string>
-    <string name="appearance_now_playing_lyrics_alignment">Now Playing Lyrics Alignment</string>
-    <string name="alignment_setting_left">Left</string>
-    <string name="alignment_setting_center">Center</string>
-    <string name="alignment_setting_right">Right</string>
+    <string name="appearance_navbar_items_description">选择主导航标签并调整顺序</string>
+    <string name="appearance_home_items">首页栏目</string>
+    <string name="appearance_home_items_description">选择首页栏目并调整顺序</string>
+    <string name="appearance_expressive_home">生动首页</string>
+    <string name="appearance_expressive_home_description">更生动的首页，包含轮播、快捷操作和收听统计</string>
+    <string name="appearance_advanced_queue">使用高级播放队列</string>
+    <string name="appearance_advanced_queue_description">在播放队列中多选、排序和批量操作</string>
+    <string name="appearance_advanced_filter">使用高级筛选</string>
+    <string name="appearance_advanced_filter_description">为歌曲、专辑和艺人提供更多排序和筛选选项</string>
+    <string name="appearance_now_playing_lyrics_alignment">歌词对齐方式</string>
+    <string name="alignment_setting_left">左对齐</string>
+    <string name="alignment_setting_center">居中</string>
+    <string name="alignment_setting_right">右对齐</string>
     <string name="appearance_now_playing_lyrics_blur">歌词模糊效果</string>
-    <string name="appearance_lyrics_auto_scroll">Autoscroll Plain Lyrics</string>
-    <string name="appearance_lyrics_recenter">Recenter After Scroll</string>
-    <string name="appearance_lyrics_word_bounce">Lyrics Word Bounce</string>
+    <string name="appearance_now_playing_lyrics_blur_description">模糊当前未演唱的歌词行</string>
+    <string name="appearance_lyrics_auto_scroll">自动滚动普通歌词</string>
+    <string name="appearance_lyrics_auto_scroll_description">缓慢滚动没有时间轴的歌词</string>
+    <string name="appearance_lyrics_recenter">滚动后自动回位</string>
+    <string name="appearance_lyrics_recenter_description">手动滚动歌词后，继续跟随当前行</string>
+    <string name="appearance_lyrics_word_bounce">逐字跳动效果</string>
+    <string name="appearance_lyrics_word_bounce_description">在逐字同步歌词中，为正在演唱的每个字添加动画</string>
     <string name="appearance_lyrics_animation_speed">歌词动画速度</string>
-    <string name="now_playing_more_info">显示更多信息</string>
-    <string name="appearance_provider_logo">Show Provider Logo</string>
+    <string name="appearance_lyrics_animation_speed_description">歌词切换到下一行的速度</string>
+    <string name="appearance_provider_logo">显示服务器标志</string>
+    <string name="appearance_provider_logo_description">在首页问候语旁显示服务器标志</string>
     <string name="appearance_refresh_animation">显示刷新动画</string>
-    <string name="appearance_track_numbers_in_album_view">专辑页显示曲目编号</string>
-    <string name="appearance_album_details_action_buttons">Album Details Buttons</string>
-    <string name="appearance_artist_details_action_buttons">Artist Details Buttons</string>
-    <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
-    <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
-    <string name="settings_media_providers">媒体源</string>
-    <string name="media_providers_media_source">Media Source</string>
-    <string name="add_media_provider_local_directory">Directory</string>
-    <string name="add_media_provider_server_url">Server URL</string>
-    <string name="add_media_provider_server_username">Username</string>
-    <string name="add_media_provider_server_password">Password</string>
-    <string name="add_media_provider_server_allow_self_signed_certs">Allow self-signed certs</string>
-    <string name="add_media_provider_login">Login</string>
-    <string name="settings_lyrics_providers">Lyrics Providers</string>
-    <string name="media_providers_lrclib_url">LRCLIB Url</string>
+    <string name="appearance_refresh_animation_description">刷新页面时显示波纹效果</string>
+    <string name="appearance_track_numbers_in_album_view">在专辑中显示曲目编号</string>
+    <string name="appearance_details_dynamic_colors">详情页动态取色</string>
+    <string name="appearance_details_dynamic_colors_description">使用封面颜色为专辑、艺人和歌单页面着色</string>
+    <string name="appearance_album_details_action_buttons">专辑页按钮</string>
+    <string name="appearance_artist_details_action_buttons">艺人页按钮</string>
+    <string name="appearance_playlist_details_action_buttons">歌单页按钮</string>
+    <string name="appearance_details_action_buttons_description">显示在页面上的按钮，其余按钮放入 ⋮ 菜单</string>
+    <string name="appearance_action_buttons_editor_title">编辑按钮</string>
+    <string name="appearance_action_buttons_visible_row">可见行</string>
+    <string name="appearance_now_playing">播放界面</string>
+    <string name="appearance_now_playing_description">按钮、菜单、封面手势、进度条和背景</string>
+    <string name="now_playing_background_style">背景样式</string>
+    <string name="now_playing_background_style_description">封面和控件后方显示的内容</string>
+    <string name="background_style_plain">纯色</string>
+    <string name="background_style_blur">模糊</string>
+    <string name="background_style_anim">动态</string>
+    <string name="now_playing_title_alignment">标题对齐方式</string>
+    <string name="now_playing_more_info">显示更多信息</string>
+    <string name="now_playing_more_info_description">在标题下方显示格式、比特率和来源</string>
+    <string name="now_playing_screen_standby">屏幕常亮</string>
+    <string name="now_playing_screen_standby_description">打开播放界面时保持屏幕常亮</string>
+    <string name="now_playing_buttons">按钮</string>
+    <string name="now_playing_buttons_description">选择并排列播放控制按钮</string>
+    <string name="now_playing_buttons_hint">在各行之间拖动按钮。播放/暂停按钮始终位于中间。</string>
+    <string name="now_playing_buttons_title">标题旁</string>
+    <string name="now_playing_buttons_controls_start">播放/暂停左侧</string>
+    <string name="now_playing_buttons_controls_end">播放/暂停右侧</string>
+    <string name="now_playing_buttons_bottom">底部一行</string>
+    <string name="now_playing_buttons_empty">无按钮</string>
+    <string name="now_playing_menu_actions">菜单操作</string>
+    <string name="now_playing_menu_actions_description">播放界面 ⋮ 菜单中的操作</string>
+    <string name="now_playing_menu_actions_hint">选择 ⋮ 菜单中的操作并调整顺序。</string>
+    <string name="now_playing_seek_bar_style">进度条样式</string>
+    <string name="seek_bar_style_standard">标准</string>
+    <string name="seek_bar_style_wavy">波浪</string>
+    <string name="seek_bar_style_thick">粗</string>
+    <string name="seek_bar_style_minimal">极简</string>
+    <string name="now_playing_cover_gestures">封面手势</string>
+    <string name="now_playing_cover_gestures_description">点按或滑动封面时执行的操作</string>
+    <string name="cover_gesture_tap">点按</string>
+    <string name="cover_gesture_double_tap">双击</string>
+    <string name="cover_gesture_long_press">长按</string>
+    <string name="cover_gesture_swipe_left">向左滑动</string>
+    <string name="cover_gesture_swipe_right">向右滑动</string>
+    <string name="cover_gesture_swipe_up">向上滑动</string>
+    <string name="cover_gesture_swipe_down">向下滑动</string>
+    <string name="cover_gesture_none">无操作</string>
+    <string name="settings_media_providers">音乐源</string>
+    <string name="settings_media_providers_description">用于播放音乐的服务器和本地文件夹</string>
+    <string name="media_providers_media_source">音乐源</string>
+
+    <!-- Local -->
+    <string name="add_media_provider_local_directory">文件夹</string>
+
+    <!-- Server -->
+    <string name="add_media_provider_server_url">服务器地址</string>
+    <string name="add_media_provider_server_username">用户名</string>
+    <string name="add_media_provider_server_password">密码</string>
+    <string name="add_media_provider_server_allow_self_signed_certs">允许自签名证书</string>
+    <string name="add_media_provider_login">登录</string>
+    <string name="settings_lyrics_providers">歌词来源</string>
+    <string name="settings_lyrics_providers_description">歌词的获取来源及其优先顺序</string>
+    <string name="media_providers_lrclib_url">LRCLIB 地址</string>
     <string name="settings_playback">播放</string>
+    <string name="settings_playback_description">串流音质、Scrobble 与预加载</string>
+
+    <!-- Transcoding -->
     <string name="playback_max_bitrate">最高比特率</string>
-    <string name="playback_max_bitrate_wifi">最高比特率（WiFi）</string>
+    <string name="playback_max_bitrate_wifi">最高比特率（Wi-Fi）</string>
     <string name="playback_max_bitrate_mobile_data">最高比特率（移动数据）</string>
+    <string name="playback_max_bitrate_wifi_description">使用 Wi-Fi 时，高于此比特率的歌曲将被转码</string>
+    <string name="playback_max_bitrate_mobile_data_description">使用移动数据时，高于此比特率的歌曲将被转码</string>
     <string name="playback_transcoding_format">转码格式</string>
-    <string name="playback_no_transcoding">No Transcoding</string>
-    <string name="playback_min_scrobble_percentage">最低收听记录百分比</string>
-    <string name="settings_misc">Miscellaneous</string>
-    <string name="misc_download_template">Download Template</string>
-    <string name="misc_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number
-        </string>
-    <string name="misc_playlist_download_template">Playlist Download Template</string>
-    <string name="misc_playlist_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number\n
-            {playlist} - Playlist title\n
-            {playlist_index} - Playlist track index
-        </string>
+    <string name="playback_transcoding_format_description">将歌曲转码为较低比特率时使用的格式</string>
+    <string name="playback_no_transcoding">不转码</string>
+
+    <!-- Autoplay -->
+    <string name="playback_autoplay">自动播放</string>
+    <string name="playback_autoplay_description">播放队列结束后，继续播放与最后一首相似的歌曲</string>
+
+    <!-- Crossfade -->
+    <string name="playback_crossfade_seconds">淡入淡出：%1$d 秒</string>
+    <string name="playback_crossfade_off">淡入淡出：关闭</string>
+    <string name="playback_crossfade_description">歌曲结尾渐弱的同时下一首渐强</string>
+
+    <!-- Equalizer -->
+    <string name="playback_equalizer">均衡器</string>
+    <string name="playback_equalizer_description">使用设备自带的均衡器调整音乐音效</string>
+    <string name="playback_equalizer_off">关闭</string>
+    <string name="playback_equalizer_unsupported">此设备不支持均衡器</string>
+    <string name="playback_equalizer_preset">预设</string>
+    <string name="playback_equalizer_custom">自定义</string>
+    <string name="playback_equalizer_flat">平直</string>
+    <string name="playback_equalizer_band">%1$s：%2$s dB</string>
+
+    <!-- Scrobble -->
+    <string name="playback_min_scrobble_percentage">最低 Scrobble 百分比</string>
+    <string name="playback_min_scrobble_percentage_value">最低 Scrobble 百分比：%1$d%%</string>
+    <string name="playback_min_scrobble_percentage_description">歌曲需播放多少才算作已收听</string>
+    <string name="playback_track_offline_scrobbles">记录离线 Scrobble</string>
+    <string name="playback_track_offline_scrobbles_pending">记录离线 Scrobble（%1$d 条待发送）</string>
+    <string name="playback_track_offline_scrobbles_description">保存离线时的播放记录，恢复联网后发送</string>
+
+    <!-- Pre-fetching -->
+    <string name="playback_prefetch_minutes">预加载后续歌曲：%1$d 分钟</string>
+    <string name="playback_prefetch_off">预加载后续歌曲：关闭</string>
+    <string name="playback_prefetch_description">提前加载后续歌曲，避免在网络较差时卡顿</string>
+
+    <!-- Smart cache -->
+    <string name="smart_cache_size">智能缓存大小</string>
+    <string name="smart_cache_size_description">在设备上保存您近期最常听的歌曲，供离线收听</string>
+    <string name="smart_cache_off">关闭</string>
+    <string name="smart_cache_size_gb">%1$d GB</string>
+    <string name="smart_cache_size_tb">%1$d TB</string>
+    <string name="smart_cache_usage">已用 %1$s / %2$s · %3$d 首歌曲</string>
+    <string name="smart_cache_refresh">刷新智能缓存</string>
+    <string name="smart_cache_refresh_description">移除不可用的歌曲，并下载您近期最常听的音乐</string>
+    <string name="smart_cache_tap_to_cancel">%1$s · 点按即可取消</string>
+    <string name="smart_cache_status_checking">正在检查已缓存的歌曲… %1$d/%2$d</string>
+    <string name="smart_cache_status_ranking">正在查找您最常听的歌曲… 已找到 %1$d 首</string>
+    <string name="smart_cache_status_cleaning">正在移除不再需要的歌曲…</string>
+    <string name="smart_cache_status_downloading">正在下载歌曲… %1$d/%2$d</string>
+    <string name="smart_cache_status_library">正在保存艺人和歌单… %1$d/%2$d</string>
+    <string name="smart_cache_last_refresh">上次刷新：%1$s</string>
+    <string name="smart_cache_error_unsupported">此音乐源不支持该功能</string>
+    <string name="smart_cache_error_offline">刷新已停止：无法连接服务器</string>
+    <string name="smart_cache_error_no_space">刷新已停止：存储空间不足</string>
+    <string name="smart_cache_error_failed">刷新失败：%1$s</string>
+    <string name="smart_cache_notification_channel">智能缓存</string>
+    <string name="smart_cache_notification_title">正在刷新智能缓存</string>
+    <string name="smart_cache_notification_cancel">取消</string>
+    <string name="settings_downloads">下载</string>
+    <string name="settings_downloads_description">已下载歌曲、智能缓存和文件名</string>
+    <string name="downloads_storage">已下载歌曲</string>
+    <string name="downloads_storage_value">%1$s · %2$d 首歌曲</string>
+    <string name="downloads_storage_description">下载到应用内的歌曲无需网络即可播放，且不计入智能缓存大小</string>
+    <string name="downloads_status_downloading">正在下载歌曲… %1$d/%2$d</string>
+    <string name="downloads_status_failed">%1$d 首歌曲下载失败</string>
+    <string name="downloads_notification_title">正在下载歌曲</string>
+    <string name="downloads_browse">已下载内容</string>
+    <string name="downloads_browse_description">查看并移除下载到应用内或由智能缓存保留的歌曲、专辑、艺人和歌单</string>
+    <string name="downloads_delete_all">删除所有下载</string>
+    <string name="downloads_delete_all_description">删除下载到应用内的所有歌曲，智能缓存将保留</string>
+    <string name="downloads_delete_all_confirm">要删除下载到应用内的 %1$d 首歌曲（%2$s）吗？删除后将无法离线播放。</string>
+    <string name="downloads_tab_downloads">下载</string>
+    <string name="downloads_tab_smart_cache">智能缓存</string>
+    <string name="downloads_item_summary">%1$d 首歌曲 · %2$s</string>
+    <string name="downloads_item_summary_partial">%1$d / %2$d 首歌曲 · %3$s</string>
+    <string name="downloads_empty">这里还没有内容</string>
+    <string name="downloads_remove">删除</string>
+    <string name="downloads_remove_title">从设备中删除</string>
+    <string name="downloads_remove_confirm">要删除 &lt;i&gt;%1$s&lt;/i&gt; 吗？其中的 %2$d 首歌曲（%3$s）将无法离线播放。</string>
+    <string name="downloads_remove_smart_cache_note">下次刷新智能缓存时可能会重新下载它们。</string>
+    <string name="settings_misc">其他</string>
+    <string name="settings_misc_description">下载文件名</string>
+
+    <!-- Download -->
+    <string name="misc_download_template">下载模板</string>
+    <string name="misc_download_template_summary">下载歌曲时使用的文件夹和文件名</string>
+    <string name="misc_download_template_description">{title} - 歌曲标题\n{album} - 专辑标题\n{artist} - 歌曲艺人\n{album_artist} - 专辑艺人\n{ext} - 扩展名\n{track} - 曲目编号\n{disc} - 碟片编号</string>
+    <string name="misc_playlist_download_template">歌单下载模板</string>
+    <string name="misc_playlist_download_template_summary">从歌单下载歌曲时使用的文件夹和文件名</string>
+    <string name="misc_playlist_download_template_description">{title} - 歌曲标题\n{album} - 专辑标题\n{artist} - 歌曲艺人\n{album_artist} - 专辑艺人\n{ext} - 扩展名\n{track} - 曲目编号\n{disc} - 碟片编号\n{playlist} - 歌单标题\n{playlist_index} - 在歌单中的序号</string>
 </resources>

@@ -1,42 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onboarding_no_provider_splash">Вы все еще не добавили провайдера медиа. Добавьте его в настройках, чтобы слушать музыку!</string>
-    <string name="onboarding_all_done">Все готово! Вы можете теперь слушать ваши плейлисты! :)</string>
-    <string name="onboarding_lets_go">Let\'s Go!</string>
-    <string name="radio_add_internet_radio">Добавить Онлайн Радио</string>
-    <string name="radio_modify_internet_radio">Изменить %s</string>
-    <string name="label_radio_name">Название Радио</string>
-    <string name="label_radio_url">Веб-Адрес Радио</string>
-    <string name="label_radio_homepage">Адрес Домашней Веб-Странички Радио</string>
-    <string name="button_new_playlist">Новый Плейлист</string>
-    <string name="playlist_delete_playlist">Удалить Плейлист</string>
-    <string name="delete_playlist_are_you_sure">Вы уверены, что хотите удалить этот плейлист?</string>
-    <string name="add_to_playlist_title">Добавить &lt;i&gt;%s&lt;/i&gt; В Плейлист</string>
-    <string name="add_to_playlist_songs">%s Songs</string>
-    <string name="new_playlist_playlist_name">Название Плейлиста</string>
+    <!-- Onboarding -->
+    <string name="onboarding_no_provider_splash">Вы ещё не добавили источник музыки. Добавьте его, чтобы начать слушать!</string>
+    <string name="onboarding_all_done">Всё готово! Можно начинать слушать музыку!</string>
+    <string name="onboarding_lets_go">Поехали!</string>
+    <string name="onboarding_next">Далее</string>
+
+    <!-- Media providers -->
+    <string name="provider_login_error_title">Ошибка авторизации</string>
+
+    <!-- Radios -->
+    <string name="radio_add_internet_radio">Добавить интернет-радио</string>
+    <string name="radio_modify_internet_radio">Изменить «%s»</string>
+    <string name="label_radio_name">Название станции</string>
+    <string name="label_radio_url">URL потока</string>
+    <string name="label_radio_homepage">Сайт станции</string>
+    <string name="radio_remove">Удалить</string>
+
+    <!-- Download -->
+    <string name="download_target_title">Скачивание</string>
+    <string name="download_target_app">Скачать в приложение</string>
+    <string name="download_target_app_description">Слушайте офлайн в приложении. Управление: Настройки › Загрузки</string>
+    <string name="download_target_device">Сохранить на устройство</string>
+    <string name="download_target_device_description">Файлы сохраняются в папку «Музыка» с именами по шаблонам загрузки</string>
+
+    <!-- Share -->
+    <string name="share_title">Поделиться</string>
+    <string name="share_description">Описание</string>
+    <string name="share_expires">Срок действия ссылки</string>
+    <string name="share_expires_never">Бессрочно</string>
+    <string name="share_expires_day">1 день</string>
+    <string name="share_expires_week">1 неделя</string>
+    <string name="share_expires_month">1 месяц</string>
+    <string name="share_expires_year">1 год</string>
+    <string name="share_create_link">Создать ссылку</string>
+    <string name="share_copy_link">Копировать ссылку</string>
+    <string name="share_link_copied">Ссылка скопирована</string>
+    <string name="share_error">Не удалось создать ссылку. Возможно, на сервере отключена функция «Поделиться».</string>
+
+    <!-- Playlists -->
+    <string name="button_new_playlist">Новый плейлист</string>
+    <string name="playlist_delete_playlist">Удалить плейлист</string>
+    <string name="delete_playlist_are_you_sure">Удалить этот плейлист?</string>
+    <string name="delete_playlist_confirm">Удалить</string>
+    <string name="add_to_playlist_title">Добавить &lt;i&gt;%s&lt;/i&gt; в плейлист</string>
+    <string name="add_to_playlist_songs">Треков: %s</string>
+    <string name="new_playlist_playlist_name">Название плейлиста</string>
+
+    <!-- Sorting -->
+    <string name="button_sort_order_ascending">По возрастанию</string>
+    <string name="button_sort_order_descending">По убыванию</string>
     <string name="button_sort_by">Сортировка</string>
-    <string name="sort_by_album">Album</string>
-    <string name="sort_by_album_artist">Album Artist</string>
-    <string name="sort_by_album_count">Album Count</string>
-    <string name="sort_by_artist">Artist</string>
+    <string name="sort_by_album">Альбом</string>
+    <string name="sort_by_album_artist">Исполнитель альбома</string>
+    <string name="sort_by_album_count">Число альбомов</string>
+    <string name="sort_by_artist">Исполнитель</string>
     <string name="sort_by_bpm">BPM</string>
-    <string name="sort_by_channels">Channels</string>
-    <string name="sort_by_comment">Comment</string>
-    <string name="sort_by_duration">Duration</string>
-    <string name="sort_by_explicit_status">Explicit</string>
-    <string name="sort_by_favorite">По Оценке</string>
-    <string name="sort_by_genre">Genre</string>
+    <string name="sort_by_channels">Каналы</string>
+    <string name="sort_by_comment">Комментарий</string>
+    <string name="sort_by_duration">Длительность</string>
+    <string name="sort_by_explicit_status">Нецензурное</string>
+    <string name="sort_by_favorite">Избранное</string>
+    <string name="sort_by_genre">Жанр</string>
     <string name="sort_by_id">ID</string>
-    <string name="sort_by_name">Name</string>
-    <string name="sort_by_play_count">Play Count</string>
-    <string name="sort_by_random">Random</string>
-    <string name="sort_by_rating">Rating</string>
-    <string name="sort_by_recently_added">Recently Added</string>
-    <string name="sort_by_recently_played">Recently Played</string>
-    <string name="sort_by_release_date">Release Date</string>
-    <string name="sort_by_song_count">Song Count</string>
-    <string name="sort_by_year">Year</string>
-    <string name="notification_download_name">Уведомления О Скачивании</string>
-    <string name="notification_download_desc">Уведомления о статусе загрузки</string>
-    <string name="now_playing_set_sleep_timer">Поставить Таймер Сна</string>
+    <string name="sort_by_name">Название</string>
+    <string name="sort_by_play_count">Число прослушиваний</string>
+    <string name="sort_by_random">Случайно</string>
+    <string name="sort_by_rating">Оценка</string>
+    <string name="sort_by_recently_added">Недавно добавленные</string>
+    <string name="sort_by_recently_played">Недавно прослушанные</string>
+    <string name="sort_by_release_date">Дата выпуска</string>
+    <string name="sort_by_song_count">Число треков</string>
+    <string name="sort_by_track_number">Номер трека</string>
+    <string name="sort_by_year">Год</string>
+
+    <!-- Downloading -->
+    <string name="notification_download_name">Загрузки</string>
+    <string name="notification_download_desc">Ход загрузки</string>
+
+    <!-- Set Sleep Timer -->
+    <string name="now_playing_set_sleep_timer">Таймер сна</string>
+
+    <!-- Queue -->
+    <string name="clear_queue_confirm">Очистить очередь воспроизведения?</string>
+    <string name="sort_queue_title">Сортировка очереди</string>
+    <string name="sort_queue_reverse">В обратном порядке</string>
+    <string name="sort_queue_sort">Сортировать</string>
+    <string name="sort_selection_title">Сортировка выбранного</string>
+    <string name="queue_selection_count">Выбрано: %1$d</string>
+    <string name="select_by_title">Выбрать по</string>
+    <string name="select_by_unknown">Неизвестно</string>
+
+    <!-- Advanced filter -->
+    <string name="button_filter">Фильтр</string>
+    <string name="filter_title">Фильтры</string>
+    <string name="filter_mode_simple">Простой</string>
+    <string name="filter_mode_advanced">Расширенный</string>
+    <string name="filter_rating_any">Любая оценка</string>
+    <string name="filter_rating_unrated">Без оценки</string>
+    <string name="filter_rating_rated">С оценкой</string>
+    <string name="filter_rating_exactly">%1$d ★</string>
+    <string name="filter_rating_at_least">%1$d ★ и выше</string>
+    <string name="filter_rating_up_to">До %1$d ★ (или без оценки)</string>
+    <string name="filter_rating_range">%1$d – %2$d ★</string>
+    <string name="filter_simple_unset">Не важно</string>
+    <string name="filter_simple_year_from">Год с</string>
+    <string name="filter_simple_year_to">Год по</string>
+    <string name="filter_search_artists">Поиск исполнителей</string>
+    <string name="filter_search_albums">Поиск альбомов</string>
+    <string name="filter_search_genres">Поиск жанров</string>
+    <string name="filter_search_no_results">Ничего не найдено</string>
+    <string name="filter_remove_value">Убрать «%1$s»</string>
+    <string name="filter_apply">Применить</string>
+    <string name="filter_clear">Сбросить</string>
+    <string name="filter_add_rule">Добавить правило</string>
+    <string name="filter_remove_rule">Удалить правило</string>
+    <string name="filter_no_rules">Правил нет. Добавьте правило, чтобы отфильтровать список.</string>
+    <string name="filter_match_label">Условие совпадения</string>
+    <string name="filter_match_all">Все правила</string>
+    <string name="filter_match_any">Любое правило</string>
+    <string name="filter_field">Поле</string>
+    <string name="filter_operator">Условие</string>
+    <string name="filter_value">Значение</string>
+    <string name="filter_value_and">и</string>
+    <string name="filter_value_days">Дни</string>
+    <string name="filter_value_date">Дата (ГГГГ-ММ-ДД)</string>
+    <string name="filter_op_contains">Содержит</string>
+    <string name="filter_op_not_contains">Не содержит</string>
+    <string name="filter_op_is">Равно</string>
+    <string name="filter_op_is_not">Не равно</string>
+    <string name="filter_op_starts_with">Начинается с</string>
+    <string name="filter_op_ends_with">Заканчивается на</string>
+    <string name="filter_op_greater_than">Больше</string>
+    <string name="filter_op_less_than">Меньше</string>
+    <string name="filter_op_between">Между</string>
+    <string name="filter_op_is_true">Да</string>
+    <string name="filter_op_is_false">Нет</string>
+    <string name="filter_op_in_the_last">За последние (дней)</string>
+    <string name="filter_op_not_in_the_last">Не за последние (дней)</string>
+    <string name="filter_op_before">До</string>
+    <string name="filter_op_after">После</string>
+    <string name="filter_field_title">Название</string>
+    <string name="filter_field_name">Имя</string>
+    <string name="filter_field_format">Формат</string>
+    <string name="filter_field_path">Путь</string>
+    <string name="filter_field_record_label">Лейбл</string>
+    <string name="filter_field_release_type">Тип релиза</string>
+    <string name="filter_field_duration_seconds">Длительность (сек)</string>
+    <string name="filter_field_disc_number">Номер диска</string>
+    <string name="filter_field_bitrate">Битрейт (кбит/с)</string>
+    <string name="filter_field_sample_rate">Частота дискретизации (Гц)</string>
+    <string name="filter_field_bit_depth">Разрядность</string>
+    <string name="filter_field_compilation">Сборник</string>
+    <string name="filter_field_date_added">Дата добавления</string>
+    <string name="filter_field_last_played">Последнее прослушивание</string>
 </resources>

@@ -333,7 +333,7 @@ fun DeletePlaylist(
                                 .bounceClick()
                         ) {
                             Text(
-                                stringResource(R.string.action_remove),
+                                stringResource(R.string.delete_playlist_confirm),
                                 modifier = Modifier.height(24.dp)
                             )
                         }

@@ -2,27 +2,99 @@
 <resources>
     <!-- Common -->
     <string name="action_done">完成</string>
-    <string name="action_close">Close</string>
-    <string name="action_save">Save</string>
-    <string name="action_remove">Remove</string>
-    <string name="action_reset">Reset</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_ok">确定</string>
+    <string name="action_close">关闭</string>
+    <string name="action_save">保存</string>
+    <string name="action_remove">移除</string>
+    <string name="action_reset">重置</string>
+    <string name="action_delete">删除</string>
     <string name="action_search">搜索</string>
-    <string name="action_play">Play</string>
-    <string name="action_shuffle">Shuffle</string>
-    <string name="action_add">Add</string>
-    <string name="action_add_to_queue">Add To Queue</string>
-    <string name="action_play_next">Play Next</string>
-    <string name="action_add_to_playlist">Add To Playlist</string>
-    <string name="action_add_to_favorites">Add To Favorites</string>
-    <string name="action_remove_from_favorites">Remove From Favorites</string>
-    <string name="action_set_rating">Set Rating</string>
-    <string name="action_next">Next</string>
-    <string name="action_skip_for_now">Skip for now</string>
+    <string name="action_play">播放</string>
+    <string name="action_shuffle">随机播放</string>
+    <string name="action_add">添加</string>
+    <string name="action_add_to_queue">添加到播放队列</string>
+    <string name="action_remove_from_queue">从播放队列中移除</string>
+    <string name="action_clear_queue">清空播放队列</string>
+    <string name="action_play_next">下一首播放</string>
+    <string name="action_move_to_start">移至开头</string>
+    <string name="action_move_next">移至下一首</string>
+    <string name="action_move_to_end">移至末尾</string>
+    <string name="action_add_to_playlist">添加到歌单</string>
+    <string name="action_add_to_favorites">添加到收藏</string>
+    <string name="action_remove_from_favorites">取消收藏</string>
+
+    <!-- Queue selection -->
+    <string name="action_select_all">全选</string>
+    <string name="action_invert_selection">反选</string>
+    <string name="action_select_range">选择范围</string>
+    <string name="action_select_by">按条件选择…</string>
+    <string name="action_clear_selection">取消选择</string>
+    <string name="action_selection_options">选择选项</string>
+    <string name="action_set_rating">评分</string>
+    <string name="action_next">下一首</string>
+    <string name="action_skip_for_now">暂时跳过</string>
     <string name="action_download">下载</string>
-    <string name="action_more">More</string>
-    <string name="action_add_radio">Add Radio</string>
-    <string name="action_create_playlist">Create Playlist</string>
-    <string name="action_remove_from_playlist">Remove From Playlist</string>
-    <string name="button_toggle_favorites">Toggle Favorites</string>
-    <string name="button_toggle_sort_order">Toggle Sort Order</string>
+    <string name="action_share">分享</string>
+    <string name="action_more">更多</string>
+
+    <!-- Now playing -->
+    <string name="action_play_pause">播放 / 暂停</string>
+    <string name="action_previous">上一首</string>
+    <string name="action_repeat">循环</string>
+    <string name="action_seek_back">后退 %1$d 秒</string>
+    <string name="action_seek_forward">前进 %1$d 秒</string>
+    <string name="action_lyrics">歌词</string>
+    <string name="action_queue">播放队列</string>
+    <string name="action_sleep_timer">睡眠定时</string>
+    <string name="action_favorite">收藏</string>
+    <string name="action_go_to_artist">查看艺人</string>
+    <string name="action_go_to_album">查看专辑</string>
+    <string name="action_add_radio">添加电台</string>
+
+    <!-- Radio and instant mix -->
+    <string name="action_start_radio">开启电台</string>
+    <string name="action_instant_mix">即时混音</string>
+    <string name="radio_no_songs_found">未找到相似歌曲</string>
+
+    <!-- Playlists -->
+    <string name="action_create_playlist">创建歌单</string>
+    <string name="action_remove_from_playlist">从歌单中移除</string>
+
+    <!-- Favorites -->
+    <string name="button_toggle_favorites">显示收藏</string>
+
+    <!-- Sort order -->
+    <string name="button_toggle_sort_order">切换排序方向</string>
+
+    <!-- Tooltips (shown when long-pressing icon buttons) -->
+    <string name="action_back">返回</string>
+    <string name="action_close_search">关闭搜索</string>
+    <string name="action_open_settings">打开设置</string>
+    <string name="action_refresh_section">刷新此栏目</string>
+    <string name="action_more_options">更多选项</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_play_album">播放专辑</string>
+    <string name="action_show_favorites_only">仅显示收藏</string>
+    <string name="action_show_all">显示全部</string>
+    <string name="action_sort_ascending">升序排列</string>
+    <string name="action_sort_descending">降序排列</string>
+    <string name="action_rate_stars">评为 %1$d / 5 星</string>
+    <string name="action_delete_provider">删除音乐源</string>
+    <string name="action_edit_url">编辑网址</string>
+    <string name="action_show_password">显示密码</string>
+    <string name="action_hide_password">隐藏密码</string>
+    <string name="action_add_button">添加按钮</string>
+    <string name="action_remove_button">移除按钮</string>
+    <string name="action_shuffle_on">开启随机播放</string>
+    <string name="action_shuffle_off">关闭随机播放</string>
+    <string name="action_repeat_one">单曲循环</string>
+    <string name="action_repeat_all">列表循环</string>
+    <string name="action_repeat_off">关闭循环</string>
+    <string name="action_show_lyrics">显示歌词</string>
+    <string name="action_hide_lyrics">隐藏歌词</string>
+    <string name="action_show_queue">显示播放队列</string>
+    <string name="action_set_sleep_timer">设置睡眠定时</string>
+    <string name="action_download_song">下载歌曲</string>
+    <string name="action_parent_folder">上一级</string>
 </resources>

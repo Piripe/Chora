@@ -327,7 +327,7 @@ fun ModifyRadioDialog(
                 )
                 ListItem(
                     selected = false,
-                    headlineContent = { Text(stringResource(R.string.action_remove)) },
+                    headlineContent = { Text(stringResource(R.string.radio_remove)) },
                     onClick = {
                         coroutineScope.launch {
                             onDeleted(

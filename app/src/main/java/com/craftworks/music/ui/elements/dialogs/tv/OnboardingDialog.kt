@@ -120,7 +120,7 @@ fun OnboardingDialog(
                                 }
                             ) {
                                 Text(
-                                    text = stringResource(R.string.action_next),
+                                    text = stringResource(R.string.onboarding_next),
                                     textAlign = TextAlign.Center
                                 )
                             }
@@ -199,7 +199,7 @@ private fun OnboardingSetupProviders(
         }
     ) {
         Text(
-            text = stringResource(R.string.action_next),
+            text = stringResource(R.string.onboarding_next),
             textAlign = TextAlign.Center
         )
     }

@@ -254,7 +254,7 @@ private fun OverviewStep(
                     shape = MaterialTheme.shapes.large
                 ) {
                     Text(
-                        text = stringResource(R.string.action_next),
+                        text = stringResource(R.string.onboarding_next),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

@@ -1,42 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onboarding_no_provider_splash">您还没有添加媒体源。现在添加一个来开始收听吧！</string>
-    <string name="onboarding_all_done">一切就绪！现在您可以开始收听了！</string>
-    <string name="onboarding_lets_go">Let\'s Go!</string>
+    <!-- Onboarding -->
+    <string name="onboarding_no_provider_splash">您还没有添加音乐源。现在添加一个，开始聆听吧！</string>
+    <string name="onboarding_all_done">一切就绪！现在可以开始聆听音乐了！</string>
+    <string name="onboarding_lets_go">开始吧！</string>
+    <string name="onboarding_next">下一步</string>
+
+    <!-- Media providers -->
+    <string name="provider_login_error_title">认证失败</string>
+
+    <!-- Radios -->
     <string name="radio_add_internet_radio">添加网络电台</string>
-    <string name="radio_modify_internet_radio">修改 %s</string>
+    <string name="radio_modify_internet_radio">编辑“%s”</string>
     <string name="label_radio_name">电台名称</string>
-    <string name="label_radio_url">电台地址</string>
-    <string name="label_radio_homepage">Radio Homepage URL</string>
-    <string name="button_new_playlist">新歌单</string>
+    <string name="label_radio_url">电台流地址</string>
+    <string name="label_radio_homepage">电台主页地址</string>
+    <string name="radio_remove">删除</string>
+
+    <!-- Download -->
+    <string name="download_target_title">下载</string>
+    <string name="download_target_app">下载到应用内</string>
+    <string name="download_target_app_description">在应用内离线播放，可在“设置 › 下载”中管理</string>
+    <string name="download_target_device">保存到设备</string>
+    <string name="download_target_device_description">将文件保存到“音乐”文件夹，并按下载模板命名</string>
+
+    <!-- Share -->
+    <string name="share_title">分享</string>
+    <string name="share_description">描述</string>
+    <string name="share_expires">链接有效期</string>
+    <string name="share_expires_never">永久有效</string>
+    <string name="share_expires_day">1 天</string>
+    <string name="share_expires_week">1 周</string>
+    <string name="share_expires_month">1 个月</string>
+    <string name="share_expires_year">1 年</string>
+    <string name="share_create_link">创建链接</string>
+    <string name="share_copy_link">复制链接</string>
+    <string name="share_link_copied">链接已复制</string>
+    <string name="share_error">无法创建链接，服务器可能已关闭分享功能。</string>
+
+    <!-- Playlists -->
+    <string name="button_new_playlist">新建歌单</string>
     <string name="playlist_delete_playlist">删除歌单</string>
-    <string name="delete_playlist_are_you_sure">您确定要删除该歌单吗？</string>
-    <string name="add_to_playlist_title">Add &lt;i&gt;%s&lt;/i&gt; To Playlist</string>
-    <string name="add_to_playlist_songs">%s Songs</string>
+    <string name="delete_playlist_are_you_sure">确定要删除此歌单吗？</string>
+    <string name="delete_playlist_confirm">删除</string>
+    <string name="add_to_playlist_title">将 &lt;i&gt;%s&lt;/i&gt; 添加到歌单</string>
+    <string name="add_to_playlist_songs">%s 首歌曲</string>
     <string name="new_playlist_playlist_name">歌单名称</string>
+
+    <!-- Sorting -->
+    <string name="button_sort_order_ascending">升序</string>
+    <string name="button_sort_order_descending">降序</string>
     <string name="button_sort_by">排序方式</string>
-    <string name="sort_by_album">Album</string>
-    <string name="sort_by_album_artist">Album Artist</string>
-    <string name="sort_by_album_count">Album Count</string>
-    <string name="sort_by_artist">Artist</string>
+    <string name="sort_by_album">专辑</string>
+    <string name="sort_by_album_artist">专辑艺人</string>
+    <string name="sort_by_album_count">专辑数</string>
+    <string name="sort_by_artist">艺人</string>
     <string name="sort_by_bpm">BPM</string>
-    <string name="sort_by_channels">Channels</string>
-    <string name="sort_by_comment">Comment</string>
-    <string name="sort_by_duration">Duration</string>
-    <string name="sort_by_explicit_status">Explicit</string>
+    <string name="sort_by_channels">声道数</string>
+    <string name="sort_by_comment">备注</string>
+    <string name="sort_by_duration">时长</string>
+    <string name="sort_by_explicit_status">露骨内容</string>
     <string name="sort_by_favorite">收藏</string>
-    <string name="sort_by_genre">Genre</string>
+    <string name="sort_by_genre">流派</string>
     <string name="sort_by_id">ID</string>
-    <string name="sort_by_name">Name</string>
-    <string name="sort_by_play_count">Play Count</string>
-    <string name="sort_by_random">Random</string>
-    <string name="sort_by_rating">Rating</string>
-    <string name="sort_by_recently_added">Recently Added</string>
-    <string name="sort_by_recently_played">Recently Played</string>
-    <string name="sort_by_release_date">Release Date</string>
-    <string name="sort_by_song_count">Song Count</string>
-    <string name="sort_by_year">Year</string>
-    <string name="notification_download_name">Download Notifications</string>
-    <string name="notification_download_desc">Notifications for download status</string>
-    <string name="now_playing_set_sleep_timer">Set Sleep Timer</string>
+    <string name="sort_by_name">名称</string>
+    <string name="sort_by_play_count">播放次数</string>
+    <string name="sort_by_random">随机</string>
+    <string name="sort_by_rating">评分</string>
+    <string name="sort_by_recently_added">最近添加</string>
+    <string name="sort_by_recently_played">最近播放</string>
+    <string name="sort_by_release_date">发行日期</string>
+    <string name="sort_by_song_count">歌曲数</string>
+    <string name="sort_by_track_number">曲目编号</string>
+    <string name="sort_by_year">年份</string>
+
+    <!-- Downloading -->
+    <string name="notification_download_name">下载</string>
+    <string name="notification_download_desc">下载进度通知</string>
+
+    <!-- Set Sleep Timer -->
+    <string name="now_playing_set_sleep_timer">设置睡眠定时</string>
+
+    <!-- Queue -->
+    <string name="clear_queue_confirm">确定要清空播放队列吗？</string>
+    <string name="sort_queue_title">排序播放队列</string>
+    <string name="sort_queue_reverse">倒序</string>
+    <string name="sort_queue_sort">排序</string>
+    <string name="sort_selection_title">排序所选歌曲</string>
+    <string name="queue_selection_count">已选择 %1$d 项</string>
+    <string name="select_by_title">按条件选择</string>
+    <string name="select_by_unknown">未知</string>
+
+    <!-- Advanced filter -->
+    <string name="button_filter">筛选</string>
+    <string name="filter_title">筛选</string>
+    <string name="filter_mode_simple">简单</string>
+    <string name="filter_mode_advanced">高级</string>
+    <string name="filter_rating_any">任意评分</string>
+    <string name="filter_rating_unrated">未评分</string>
+    <string name="filter_rating_rated">已评分</string>
+    <string name="filter_rating_exactly">%1$d ★</string>
+    <string name="filter_rating_at_least">%1$d ★ 及以上</string>
+    <string name="filter_rating_up_to">最多 %1$d ★（或未评分）</string>
+    <string name="filter_rating_range">%1$d – %2$d ★</string>
+    <string name="filter_simple_unset">不限</string>
+    <string name="filter_simple_year_from">起始年份</string>
+    <string name="filter_simple_year_to">结束年份</string>
+    <string name="filter_search_artists">搜索艺人</string>
+    <string name="filter_search_albums">搜索专辑</string>
+    <string name="filter_search_genres">搜索流派</string>
+    <string name="filter_search_no_results">无结果</string>
+    <string name="filter_remove_value">移除“%1$s”</string>
+    <string name="filter_apply">应用</string>
+    <string name="filter_clear">清除</string>
+    <string name="filter_add_rule">添加规则</string>
+    <string name="filter_remove_rule">删除规则</string>
+    <string name="filter_no_rules">暂无规则。添加规则以筛选列表。</string>
+    <string name="filter_match_label">匹配方式</string>
+    <string name="filter_match_all">满足所有规则</string>
+    <string name="filter_match_any">满足任一规则</string>
+    <string name="filter_field">字段</string>
+    <string name="filter_operator">条件</string>
+    <string name="filter_value">值</string>
+    <string name="filter_value_and">至</string>
+    <string name="filter_value_days">天数</string>
+    <string name="filter_value_date">日期（YYYY-MM-DD）</string>
+    <string name="filter_op_contains">包含</string>
+    <string name="filter_op_not_contains">不包含</string>
+    <string name="filter_op_is">等于</string>
+    <string name="filter_op_is_not">不等于</string>
+    <string name="filter_op_starts_with">开头为</string>
+    <string name="filter_op_ends_with">结尾为</string>
+    <string name="filter_op_greater_than">大于</string>
+    <string name="filter_op_less_than">小于</string>
+    <string name="filter_op_between">介于</string>
+    <string name="filter_op_is_true">是</string>
+    <string name="filter_op_is_false">否</string>
+    <string name="filter_op_in_the_last">最近（天）内</string>
+    <string name="filter_op_not_in_the_last">最近（天）外</string>
+    <string name="filter_op_before">早于</string>
+    <string name="filter_op_after">晚于</string>
+    <string name="filter_field_title">标题</string>
+    <string name="filter_field_name">名称</string>
+    <string name="filter_field_format">格式</string>
+    <string name="filter_field_path">路径</string>
+    <string name="filter_field_record_label">唱片公司</string>
+    <string name="filter_field_release_type">发行类型</string>
+    <string name="filter_field_duration_seconds">时长（秒）</string>
+    <string name="filter_field_disc_number">碟片编号</string>
+    <string name="filter_field_bitrate">比特率（kbps）</string>
+    <string name="filter_field_sample_rate">采样率（Hz）</string>
+    <string name="filter_field_bit_depth">位深度</string>
+    <string name="filter_field_compilation">合辑</string>
+    <string name="filter_field_date_added">添加日期</string>
+    <string name="filter_field_last_played">上次播放</string>
 </resources>

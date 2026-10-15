@@ -52,7 +52,7 @@ fun PlaylistDeletionConfirmationDialog(
                 setShowDialog(false)
             }) {
                 Text(
-                    stringResource(R.string.action_close)
+                    stringResource(R.string.action_cancel)
                 )
             }
         }

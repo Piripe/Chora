@@ -374,7 +374,7 @@ fun CreateMediaProviderDialog(
                     if (errorMessage != null) {
                         AlertDialog(
                             onDismissRequest = { errorMessage = null },
-                            title = { Text("Auth error") },
+                            title = { Text(stringResource(R.string.provider_login_error_title)) },
                             text = {
                                 // Wrap content in a scrollable Column
                                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -382,7 +382,7 @@ fun CreateMediaProviderDialog(
                                 }
                             },
                             confirmButton = {
-                                TextButton(onClick = { errorMessage = null }) { Text("Ok") }
+                                TextButton(onClick = { errorMessage = null }) { Text(stringResource(R.string.action_ok)) }
                             }
                         )
                         /*Column(

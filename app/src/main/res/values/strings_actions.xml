@@ -3,6 +3,7 @@
     <!-- Common -->
     <string name="action_done">Done</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
     <string name="action_close">Close</string>
     <string name="action_save">Save</string>
     <string name="action_remove">Remove</string>
@@ -99,4 +100,5 @@
     <string name="action_show_queue">Show Queue</string>
     <string name="action_set_sleep_timer">Set Sleep Timer</string>
     <string name="action_download_song">Download Song</string>
+    <string name="action_parent_folder">Go Up</string>
 </resources>

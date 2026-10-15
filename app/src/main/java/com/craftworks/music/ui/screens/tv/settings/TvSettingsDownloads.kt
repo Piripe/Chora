@@ -252,7 +252,7 @@ fun TvS_DownloadedContentScreen(viewModel: DownloadedContentViewModel = hiltView
                 trailingContent = {
                     Icon(
                         imageVector = Icons.Rounded.Delete,
-                        contentDescription = stringResource(R.string.action_remove)
+                        contentDescription = stringResource(R.string.downloads_remove)
                     )
                 }
             )

@@ -50,6 +50,7 @@
         <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
         <string name="appearance_details_action_buttons_description">Buttons shown on the page, the others go in the ⋮ menu</string>
         <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
+        <string name="appearance_action_buttons_visible_row">Visible row</string>
     <string name="appearance_now_playing">Now Playing</string>
         <string name="appearance_now_playing_description">Buttons, menu, cover gestures, seek bar and background</string>
         <string name="now_playing_background_style">Background Style</string>
@@ -188,6 +189,7 @@
         <string name="downloads_item_summary">%1$d songs · %2$s</string>
         <string name="downloads_item_summary_partial">%1$d of %2$d songs · %3$s</string>
         <string name="downloads_empty">Nothing here yet</string>
+        <string name="downloads_remove">Remove</string>
         <string name="downloads_remove_title">Remove From Device</string>
         <string name="downloads_remove_confirm">Remove &lt;i&gt;%1$s&lt;/i&gt;? Its %2$d songs (%3$s) won\'t play offline anymore.</string>
         <string name="downloads_remove_smart_cache_note">The next smart cache refresh may download them again.</string>

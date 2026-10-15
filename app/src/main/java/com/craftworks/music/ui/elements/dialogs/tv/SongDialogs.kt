@@ -412,7 +412,7 @@ private fun NewPlaylist(
 
         ListItem(
             selected = false,
-            headlineContent = { Text(stringResource(R.string.action_add)) },
+            headlineContent = { Text(stringResource(R.string.action_create_playlist)) },
             onClick = {
                 viewModel.createPlaylist(playlistName, listOf(song.mediaMetadata.extras?.getString("id") ?: ""), context)
                 setDialogMenu(DialogMenu.MAIN)
@@ -478,7 +478,7 @@ private fun SetRating(
                 Icon(
                     imageVector = if (star <= selectedRating) Icons.Rounded.Star
                     else ImageVector.vectorResource(R.drawable.rounded_star_outline_24),
-                    contentDescription = "Star $star",
+                    contentDescription = stringResource(R.string.action_rate_stars, star),
                     tint = if (star <= selectedRating) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(32.dp)

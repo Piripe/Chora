@@ -67,7 +67,7 @@ fun AddRadioDialog(
                         )
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.action_close),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier
                                 .width(30.dp)
@@ -203,7 +203,7 @@ fun ModifyRadioDialog(
                                 .height(50.dp)
                                 .bounceClick()
                         ) {
-                            Text(stringResource(R.string.action_remove))
+                            Text(stringResource(R.string.radio_remove))
                         }
                         Button(
                             onClick = {

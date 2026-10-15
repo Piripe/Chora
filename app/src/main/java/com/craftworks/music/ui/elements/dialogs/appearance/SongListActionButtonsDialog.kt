@@ -529,7 +529,7 @@ fun SongListActionButtonsDialog(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Visible row", style = MaterialTheme.typography.labelLarge)
+                        Text(stringResource(R.string.appearance_action_buttons_visible_row), style = MaterialTheme.typography.labelLarge)
 
                         Box(
                             modifier = Modifier
@@ -561,7 +561,7 @@ fun SongListActionButtonsDialog(
                                     onClick = {},
                                     modifier = Modifier.size(MoreSize)
                                 ) {
-                                    Icon(Icons.Outlined.MoreVert, contentDescription = "More")
+                                    Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.action_more))
                                 }
 
                                 LazyRow(

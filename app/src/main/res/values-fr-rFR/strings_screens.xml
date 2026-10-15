@@ -1,11 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="home_welcome">Bienvenue,\n%s !</string>
-    <string name="home_recently_added">Récemment ajoutés</string>
-    <string name="home_most_played">Plus joués</string>
-    <string name="home_recently_played">Joués récemment</string>
-    <string name="home_explore_library">Explorer votre médiathèque</string>
+    <!-- Home -->
+    <string name="home_welcome">Bienvenue,\n%s !</string>
+    <string name="home_recently_added">Ajoutés récemment</string>
+    <string name="home_most_played">Les plus écoutés</string>
+    <string name="home_recently_played">Écoutés récemment</string>
+    <string name="home_explore_library">À découvrir dans votre bibliothèque</string>
     <string name="home_settings">Paramètres</string>
+    <string name="home_greeting_morning">Bonjour</string>
+    <string name="home_greeting_afternoon">Bon après-midi</string>
+    <string name="home_greeting_evening">Bonsoir</string>
+    <string name="home_greeting_night">Écoute nocturne</string>
+    <string name="home_shuffle_library">Aléatoire</string>
+    <string name="home_random_album">Surprenez-moi</string>
+    <string name="home_your_listening">Vos écoutes</string>
+    <string name="home_top_artist">Artiste n° 1</string>
+    <string name="home_on_repeat">En boucle</string>
+    <string name="home_this_week">Cette semaine</string>
+    <string name="home_see_all">Tout afficher</string>
+    <plurals name="home_plays">
+        <item quantity="one">%d écoute</item>
+        <item quantity="many">%d écoutes</item>
+        <item quantity="other">%d écoutes</item>
+    </plurals>
+    <plurals name="home_songs_played">
+        <item quantity="one">%d titre écouté</item>
+        <item quantity="many">%d titres écoutés</item>
+        <item quantity="other">%d titres écoutés</item>
+    </plurals>
+
+    <!-- Artist Details -->
     <string name="artist_details_discography">Discographie</string>
+
+    <!-- Album Details -->
     <string name="album_details_disc">Disque %s</string>
 </resources>

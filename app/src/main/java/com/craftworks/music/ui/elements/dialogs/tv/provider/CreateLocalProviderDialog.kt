@@ -131,7 +131,7 @@ fun CreateLocalProviderDialog(
                     leadingContent = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Go up"
+                            contentDescription = stringResource(R.string.action_parent_folder)
                         )
                     },
                     onClick = {

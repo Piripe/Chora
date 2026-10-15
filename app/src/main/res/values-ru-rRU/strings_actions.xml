@@ -1,28 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Common -->
-    <string name="action_done">Готово!</string>
-    <string name="action_close">Удалить</string>
-    <string name="action_save">Save</string>
-    <string name="action_remove">Remove</string>
+    <string name="action_done">Готово</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_ok">ОК</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_remove">Убрать</string>
     <string name="action_reset">Сбросить</string>
-    <string name="action_search">Поиск</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_search">Найти</string>
     <string name="action_play">Воспроизвести</string>
     <string name="action_shuffle">Перемешать</string>
     <string name="action_add">Добавить</string>
-    <string name="action_add_to_queue">Add To Queue</string>
-    <string name="action_play_next">Play Next</string>
-    <string name="action_add_to_playlist">Add To Playlist</string>
-    <string name="action_add_to_favorites">Add To Favorites</string>
-    <string name="action_remove_from_favorites">Remove From Favorites</string>
-    <string name="action_set_rating">Set Rating</string>
-    <string name="action_next">Следующий</string>
-    <string name="action_skip_for_now">Skip for now</string>
+    <string name="action_add_to_queue">Добавить в очередь</string>
+    <string name="action_remove_from_queue">Убрать из очереди</string>
+    <string name="action_clear_queue">Очистить очередь</string>
+    <string name="action_play_next">Играть следующим</string>
+    <string name="action_move_to_start">В начало</string>
+    <string name="action_move_next">Играть следующим</string>
+    <string name="action_move_to_end">В конец</string>
+    <string name="action_add_to_playlist">Добавить в плейлист</string>
+    <string name="action_add_to_favorites">Добавить в избранное</string>
+    <string name="action_remove_from_favorites">Убрать из избранного</string>
+
+    <!-- Queue selection -->
+    <string name="action_select_all">Выбрать все</string>
+    <string name="action_invert_selection">Инвертировать выбор</string>
+    <string name="action_select_range">Выбрать диапазон</string>
+    <string name="action_select_by">Выбрать по…</string>
+    <string name="action_clear_selection">Снять выделение</string>
+    <string name="action_selection_options">Параметры выбора</string>
+    <string name="action_set_rating">Оценить</string>
+    <string name="action_next">Следующий трек</string>
+    <string name="action_skip_for_now">Пропустить</string>
     <string name="action_download">Скачать</string>
-    <string name="action_more">More</string>
-    <string name="action_add_radio">Add Radio</string>
-    <string name="action_create_playlist">Создать Плейлист</string>
-    <string name="action_remove_from_playlist">Remove From Playlist</string>
-    <string name="button_toggle_favorites">Toggle Favorites</string>
-    <string name="button_toggle_sort_order">Toggle Sort Order</string>
+    <string name="action_share">Поделиться</string>
+    <string name="action_more">Ещё</string>
+
+    <!-- Now playing -->
+    <string name="action_play_pause">Воспроизведение / пауза</string>
+    <string name="action_previous">Предыдущий трек</string>
+    <string name="action_repeat">Повтор</string>
+    <string name="action_seek_back">Назад на %1$d с</string>
+    <string name="action_seek_forward">Вперёд на %1$d с</string>
+    <string name="action_lyrics">Текст</string>
+    <string name="action_queue">Очередь</string>
+    <string name="action_sleep_timer">Таймер сна</string>
+    <string name="action_favorite">Избранное</string>
+    <string name="action_go_to_artist">Перейти к исполнителю</string>
+    <string name="action_go_to_album">Перейти к альбому</string>
+    <string name="action_add_radio">Добавить радио</string>
+
+    <!-- Radio and instant mix -->
+    <string name="action_start_radio">Запустить радио</string>
+    <string name="action_instant_mix">Микс по треку</string>
+    <string name="radio_no_songs_found">Похожие треки не найдены</string>
+
+    <!-- Playlists -->
+    <string name="action_create_playlist">Создать плейлист</string>
+    <string name="action_remove_from_playlist">Убрать из плейлиста</string>
+
+    <!-- Favorites -->
+    <string name="button_toggle_favorites">Показать избранное</string>
+
+    <!-- Sort order -->
+    <string name="button_toggle_sort_order">Изменить порядок сортировки</string>
+
+    <!-- Tooltips (shown when long-pressing icon buttons) -->
+    <string name="action_back">Назад</string>
+    <string name="action_close_search">Закрыть поиск</string>
+    <string name="action_open_settings">Открыть настройки</string>
+    <string name="action_refresh_section">Обновить раздел</string>
+    <string name="action_more_options">Другие действия</string>
+    <string name="action_pause">Пауза</string>
+    <string name="action_play_album">Воспроизвести альбом</string>
+    <string name="action_show_favorites_only">Только избранное</string>
+    <string name="action_show_all">Показать все</string>
+    <string name="action_sort_ascending">По возрастанию</string>
+    <string name="action_sort_descending">По убыванию</string>
+    <string name="action_rate_stars">Оценить на %1$d из 5</string>
+    <string name="action_delete_provider">Удалить источник</string>
+    <string name="action_edit_url">Изменить URL</string>
+    <string name="action_show_password">Показать пароль</string>
+    <string name="action_hide_password">Скрыть пароль</string>
+    <string name="action_add_button">Добавить кнопку</string>
+    <string name="action_remove_button">Убрать кнопку</string>
+    <string name="action_shuffle_on">Включить перемешивание</string>
+    <string name="action_shuffle_off">Выключить перемешивание</string>
+    <string name="action_repeat_one">Повторять текущий трек</string>
+    <string name="action_repeat_all">Повторять очередь</string>
+    <string name="action_repeat_off">Выключить повтор</string>
+    <string name="action_show_lyrics">Показать текст</string>
+    <string name="action_hide_lyrics">Скрыть текст</string>
+    <string name="action_show_queue">Показать очередь</string>
+    <string name="action_set_sleep_timer">Установить таймер сна</string>
+    <string name="action_download_song">Скачать трек</string>
+    <string name="action_parent_folder">На уровень выше</string>
 </resources>

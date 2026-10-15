@@ -1,79 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_appearance">Внешний вид</string>
-    <string name="appearance_username">Никнейм</string>
-    <string name="appearance_theme">Theme</string>
-    <string name="theme_dark">Dark</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_system">System</string>
-    <string name="now_playing_background_style">Background Style</string>
-    <string name="background_style_plain">Plain</string>
-    <string name="background_style_blur">Blurred</string>
-    <string name="background_style_anim">Animated</string>
-    <string name="now_playing_screen_standby">Disable Screen Standby</string>
-    <string name="appearance_oled_mode">OLED Protection</string>
-    <string name="appearance_oled_protection_mode">OLED Protection Mode</string>
-    <string name="oled_protection_mode_off">Off</string>
-    <string name="oled_protection_mode_lyrics_only">Lyrics Only</string>
-    <string name="oled_protection_mode_minimal">Minimal</string>
-    <string name="appearance_navbar_items">Элементы Панели Навигации</string>
-    <string name="appearance_home_items">Элементы Главной Страницы</string>
-    <string name="now_playing_title_alignment">Now Playing Title Alignment</string>
-    <string name="appearance_now_playing_lyrics_alignment">Now Playing Lyrics Alignment</string>
-    <string name="alignment_setting_left">Left</string>
-    <string name="alignment_setting_center">Center</string>
-    <string name="alignment_setting_right">Right</string>
-    <string name="appearance_now_playing_lyrics_blur">Эффект Блюра Субтитров</string>
-    <string name="appearance_lyrics_auto_scroll">Автоматически Скроллить Стандартные Субтитры</string>
-    <string name="appearance_lyrics_recenter">Поставить По Центру После Скролла</string>
-    <string name="appearance_lyrics_word_bounce">Lyrics Word Bounce</string>
-    <string name="appearance_lyrics_animation_speed">Скорость Анимации Субтитров</string>
-    <string name="now_playing_more_info">Показывать Дополнительную Информацию</string>
-    <string name="appearance_provider_logo">Отображать Navidrome Лого На Главном Экране</string>
-    <string name="appearance_refresh_animation">Показывать Анимацию Обновления</string>
-    <string name="appearance_track_numbers_in_album_view">Показывать Номера Песен В Альбоме</string>
-    <string name="appearance_album_details_action_buttons">Album Details Buttons</string>
-    <string name="appearance_artist_details_action_buttons">Artist Details Buttons</string>
-    <string name="appearance_playlist_details_action_buttons">Playlist Details Buttons</string>
-    <string name="appearance_action_buttons_editor_title">Edit Buttons</string>
-    <string name="settings_media_providers">Медиа-провайдеры</string>
-    <string name="media_providers_media_source">Media Source</string>
-    <string name="add_media_provider_local_directory">Directory</string>
-    <string name="add_media_provider_server_url">Server URL</string>
-    <string name="add_media_provider_server_username">Username</string>
-    <string name="add_media_provider_server_password">Password</string>
-    <string name="add_media_provider_server_allow_self_signed_certs">Allow self-signed certs</string>
-    <string name="add_media_provider_login">Login</string>
-    <string name="settings_lyrics_providers">Lyrics Providers</string>
-    <string name="media_providers_lrclib_url">LRCLIB Url</string>
-    <string name="settings_playback">Проигрывание</string>
-    <string name="playback_max_bitrate">Максимальный Битрейт</string>
-    <string name="playback_max_bitrate_wifi">Максимальный Битрейт (от WiFi)</string>
-    <string name="playback_max_bitrate_mobile_data">Максимальный Битрейт (от Мобильного Интернета)</string>
-    <string name="playback_transcoding_format">Формат Транскодирования</string>
-    <string name="playback_no_transcoding">No Transcoding</string>
-    <string name="playback_min_scrobble_percentage">Минимальный Процент Скробблинга (Отслеживание Музыки)</string>
-    <string name="settings_misc">Miscellaneous</string>
-    <string name="misc_download_template">Download Template</string>
-    <string name="misc_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number
-        </string>
-    <string name="misc_playlist_download_template">Playlist Download Template</string>
-    <string name="misc_playlist_download_template_description">
-            {title} - Song title\n
-            {album} - Album title\n
-            {artist} - Song artist\n
-            {album_artist} - Album artist\n
-            {ext} - Extension\n
-            {track} - Track number\n
-            {disc} - Disc number\n
-            {playlist} - Playlist title\n
-            {playlist_index} - Playlist track index
-        </string>
+    <string name="settings_appearance">Оформление</string>
+    <string name="settings_appearance_description">Тема, главный экран, тексты и расположение</string>
+    <string name="appearance_username">Имя</string>
+    <string name="appearance_username_description">Отображается в приветствии на главном экране</string>
+    <string name="appearance_theme">Тема</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="appearance_oled_mode">Защита OLED</string>
+    <string name="appearance_oled_mode_description">Скрывает части экрана воспроизведения, чтобы избежать выгорания</string>
+    <string name="appearance_oled_protection_mode">Режим защиты OLED</string>
+    <string name="oled_protection_mode_off">Выключен</string>
+    <string name="oled_protection_mode_lyrics_only">Только текст</string>
+    <string name="oled_protection_mode_minimal">Минимальный</string>
+    <string name="appearance_navbar_items">Вкладки навигации</string>
+    <string name="appearance_navbar_items_description">Выбор и порядок основных вкладок</string>
+    <string name="appearance_home_items">Разделы главного экрана</string>
+    <string name="appearance_home_items_description">Выбор и порядок разделов главного экрана</string>
+    <string name="appearance_expressive_home">Выразительный главный экран</string>
+    <string name="appearance_expressive_home_description">Более живой главный экран с каруселью, быстрыми действиями и статистикой прослушиваний</string>
+    <string name="appearance_advanced_queue">Расширенная очередь</string>
+    <string name="appearance_advanced_queue_description">Множественный выбор, сортировка и групповые действия в очереди</string>
+    <string name="appearance_advanced_filter">Расширенные фильтры</string>
+    <string name="appearance_advanced_filter_description">Больше вариантов сортировки и фильтрации треков, альбомов и исполнителей</string>
+    <string name="appearance_now_playing_lyrics_alignment">Выравнивание текста песни</string>
+    <string name="alignment_setting_left">По левому краю</string>
+    <string name="alignment_setting_center">По центру</string>
+    <string name="alignment_setting_right">По правому краю</string>
+    <string name="appearance_now_playing_lyrics_blur">Размытие текста песни</string>
+    <string name="appearance_now_playing_lyrics_blur_description">Размывает строки, которые сейчас не поются</string>
+    <string name="appearance_lyrics_auto_scroll">Автопрокрутка обычного текста</string>
+    <string name="appearance_lyrics_auto_scroll_description">Медленно прокручивает текст без синхронизации</string>
+    <string name="appearance_lyrics_recenter">Возврат после прокрутки</string>
+    <string name="appearance_lyrics_recenter_description">После ручной прокрутки снова следить за текущей строкой</string>
+    <string name="appearance_lyrics_word_bounce">Анимация слов</string>
+    <string name="appearance_lyrics_word_bounce_description">Анимирует каждое слово в момент исполнения в пословно синхронизированных текстах</string>
+    <string name="appearance_lyrics_animation_speed">Скорость анимации текста</string>
+    <string name="appearance_lyrics_animation_speed_description">Как быстро текст переходит к следующей строке</string>
+    <string name="appearance_provider_logo">Логотип сервера</string>
+    <string name="appearance_provider_logo_description">Показывать логотип сервера рядом с приветствием на главном экране</string>
+    <string name="appearance_refresh_animation">Анимация обновления</string>
+    <string name="appearance_refresh_animation_description">Эффект волны при обновлении экрана</string>
+    <string name="appearance_track_numbers_in_album_view">Номера треков в альбомах</string>
+    <string name="appearance_details_dynamic_colors">Динамические цвета на страницах</string>
+    <string name="appearance_details_dynamic_colors_description">Окрашивать страницы альбомов, исполнителей и плейлистов в цвета обложки</string>
+    <string name="appearance_album_details_action_buttons">Кнопки на странице альбома</string>
+    <string name="appearance_artist_details_action_buttons">Кнопки на странице исполнителя</string>
+    <string name="appearance_playlist_details_action_buttons">Кнопки на странице плейлиста</string>
+    <string name="appearance_details_action_buttons_description">Кнопки на странице; остальные попадают в меню ⋮</string>
+    <string name="appearance_action_buttons_editor_title">Изменить кнопки</string>
+    <string name="appearance_action_buttons_visible_row">Видимый ряд</string>
+    <string name="appearance_now_playing">Экран воспроизведения</string>
+    <string name="appearance_now_playing_description">Кнопки, меню, жесты на обложке, полоса прокрутки и фон</string>
+    <string name="now_playing_background_style">Фон</string>
+    <string name="now_playing_background_style_description">Что отображается за обложкой и элементами управления</string>
+    <string name="background_style_plain">Однотонный</string>
+    <string name="background_style_blur">Размытый</string>
+    <string name="background_style_anim">Анимированный</string>
+    <string name="now_playing_title_alignment">Выравнивание названия</string>
+    <string name="now_playing_more_info">Подробная информация</string>
+    <string name="now_playing_more_info_description">Показывать формат, битрейт и источник под названием</string>
+    <string name="now_playing_screen_standby">Не выключать экран</string>
+    <string name="now_playing_screen_standby_description">Экран не гаснет, пока открыт экран воспроизведения</string>
+    <string name="now_playing_buttons">Кнопки</string>
+    <string name="now_playing_buttons_description">Выбор и расположение кнопок управления</string>
+    <string name="now_playing_buttons_hint">Перетаскивайте кнопки между рядами. Кнопка воспроизведения/паузы всегда остаётся в центре.</string>
+    <string name="now_playing_buttons_title">Рядом с названием</string>
+    <string name="now_playing_buttons_controls_start">Слева от воспроизведения/паузы</string>
+    <string name="now_playing_buttons_controls_end">Справа от воспроизведения/паузы</string>
+    <string name="now_playing_buttons_bottom">Нижний ряд</string>
+    <string name="now_playing_buttons_empty">Нет кнопок</string>
+    <string name="now_playing_menu_actions">Действия меню</string>
+    <string name="now_playing_menu_actions_description">Действия в меню ⋮ экрана воспроизведения</string>
+    <string name="now_playing_menu_actions_hint">Выберите действия меню ⋮ и задайте их порядок.</string>
+    <string name="now_playing_seek_bar_style">Стиль полосы прокрутки</string>
+    <string name="seek_bar_style_standard">Стандартный</string>
+    <string name="seek_bar_style_wavy">Волнистый</string>
+    <string name="seek_bar_style_thick">Толстый</string>
+    <string name="seek_bar_style_minimal">Минималистичный</string>
+    <string name="now_playing_cover_gestures">Жесты на обложке</string>
+    <string name="now_playing_cover_gestures_description">Действия при нажатии на обложку или свайпе по ней</string>
+    <string name="cover_gesture_tap">Нажатие</string>
+    <string name="cover_gesture_double_tap">Двойное нажатие</string>
+    <string name="cover_gesture_long_press">Долгое нажатие</string>
+    <string name="cover_gesture_swipe_left">Свайп влево</string>
+    <string name="cover_gesture_swipe_right">Свайп вправо</string>
+    <string name="cover_gesture_swipe_up">Свайп вверх</string>
+    <string name="cover_gesture_swipe_down">Свайп вниз</string>
+    <string name="cover_gesture_none">Нет действия</string>
+    <string name="settings_media_providers">Источники музыки</string>
+    <string name="settings_media_providers_description">Серверы и локальные папки, из которых воспроизводится музыка</string>
+    <string name="media_providers_media_source">Источник музыки</string>
+
+    <!-- Local -->
+    <string name="add_media_provider_local_directory">Папка</string>
+
+    <!-- Server -->
+    <string name="add_media_provider_server_url">URL сервера</string>
+    <string name="add_media_provider_server_username">Имя пользователя</string>
+    <string name="add_media_provider_server_password">Пароль</string>
+    <string name="add_media_provider_server_allow_self_signed_certs">Разрешить самоподписанные сертификаты</string>
+    <string name="add_media_provider_login">Войти</string>
+    <string name="settings_lyrics_providers">Источники текстов</string>
+    <string name="settings_lyrics_providers_description">Откуда загружаются тексты песен и в каком порядке</string>
+    <string name="media_providers_lrclib_url">URL LRCLIB</string>
+    <string name="settings_playback">Воспроизведение</string>
+    <string name="settings_playback_description">Качество потока, скробблинг и предзагрузка</string>
+
+    <!-- Transcoding -->
+    <string name="playback_max_bitrate">Максимальный битрейт</string>
+    <string name="playback_max_bitrate_wifi">Максимальный битрейт (Wi-Fi)</string>
+    <string name="playback_max_bitrate_mobile_data">Максимальный битрейт (мобильная сеть)</string>
+    <string name="playback_max_bitrate_wifi_description">Треки с битрейтом выше этого перекодируются при Wi-Fi</string>
+    <string name="playback_max_bitrate_mobile_data_description">Треки с битрейтом выше этого перекодируются в мобильной сети</string>
+    <string name="playback_transcoding_format">Формат перекодирования</string>
+    <string name="playback_transcoding_format_description">Формат, в который перекодируется трек при снижении битрейта</string>
+    <string name="playback_no_transcoding">Без перекодирования</string>
+
+    <!-- Autoplay -->
+    <string name="playback_autoplay">Автовоспроизведение</string>
+    <string name="playback_autoplay_description">Когда очередь закончится, продолжать треками, похожими на последний</string>
+
+    <!-- Crossfade -->
+    <string name="playback_crossfade_seconds">Плавный переход: %1$d с</string>
+    <string name="playback_crossfade_off">Плавный переход: выкл.</string>
+    <string name="playback_crossfade_description">Конец трека затихает, пока плавно нарастает следующий</string>
+
+    <!-- Equalizer -->
+    <string name="playback_equalizer">Эквалайзер</string>
+    <string name="playback_equalizer_description">Настройка звучания с помощью эквалайзера устройства</string>
+    <string name="playback_equalizer_off">Выключен</string>
+    <string name="playback_equalizer_unsupported">На этом устройстве нет эквалайзера</string>
+    <string name="playback_equalizer_preset">Пресет</string>
+    <string name="playback_equalizer_custom">Пользовательский</string>
+    <string name="playback_equalizer_flat">Ровный</string>
+    <string name="playback_equalizer_band">%1$s: %2$s дБ</string>
+
+    <!-- Scrobble -->
+    <string name="playback_min_scrobble_percentage">Мин. процент для скробблинга</string>
+    <string name="playback_min_scrobble_percentage_value">Мин. процент для скробблинга: %1$d%%</string>
+    <string name="playback_min_scrobble_percentage_description">Какую часть трека нужно прослушать, чтобы он засчитался</string>
+    <string name="playback_track_offline_scrobbles">Офлайн-скробблинг</string>
+    <string name="playback_track_offline_scrobbles_pending">Офлайн-скробблинг (в очереди: %1$d)</string>
+    <string name="playback_track_offline_scrobbles_description">Сохранять прослушивания без сети и отправлять их при подключении</string>
+
+    <!-- Pre-fetching -->
+    <string name="playback_prefetch_minutes">Предзагрузка следующих треков: %1$d мин</string>
+    <string name="playback_prefetch_off">Предзагрузка следующих треков: выкл.</string>
+    <string name="playback_prefetch_description">Заранее загружать следующие треки, чтобы избежать прерываний при слабом соединении</string>
+
+    <!-- Smart cache -->
+    <string name="smart_cache_size">Размер умного кэша</string>
+    <string name="smart_cache_size_description">Хранить на устройстве треки, которые вы чаще всего слушаете в последнее время, для прослушивания офлайн</string>
+    <string name="smart_cache_off">Выключен</string>
+    <string name="smart_cache_size_gb">%1$d ГБ</string>
+    <string name="smart_cache_size_tb">%1$d ТБ</string>
+    <string name="smart_cache_usage">Занято %1$s из %2$s · треков: %3$d</string>
+    <string name="smart_cache_refresh">Обновить умный кэш</string>
+    <string name="smart_cache_refresh_description">Удалить недоступные треки и скачать музыку, которую вы чаще всего слушаете в последнее время</string>
+    <string name="smart_cache_tap_to_cancel">%1$s · Нажмите для отмены</string>
+    <string name="smart_cache_status_checking">Проверка треков в кэше… %1$d/%2$d</string>
+    <string name="smart_cache_status_ranking">Поиск самых прослушиваемых треков… найдено: %1$d</string>
+    <string name="smart_cache_status_cleaning">Удаление ненужных треков…</string>
+    <string name="smart_cache_status_downloading">Скачивание треков… %1$d/%2$d</string>
+    <string name="smart_cache_status_library">Сохранение исполнителей и плейлистов… %1$d/%2$d</string>
+    <string name="smart_cache_last_refresh">Последнее обновление: %1$s</string>
+    <string name="smart_cache_error_unsupported">Недоступно для этого источника музыки</string>
+    <string name="smart_cache_error_offline">Обновление остановлено: сервер недоступен</string>
+    <string name="smart_cache_error_no_space">Обновление остановлено: недостаточно места</string>
+    <string name="smart_cache_error_failed">Ошибка обновления: %1$s</string>
+    <string name="smart_cache_notification_channel">Умный кэш</string>
+    <string name="smart_cache_notification_title">Обновление умного кэша</string>
+    <string name="smart_cache_notification_cancel">Отмена</string>
+    <string name="settings_downloads">Загрузки</string>
+    <string name="settings_downloads_description">Скачанные треки, умный кэш и имена файлов</string>
+    <string name="downloads_storage">Скачанные треки</string>
+    <string name="downloads_storage_value">%1$s · треков: %2$d</string>
+    <string name="downloads_storage_description">Треки, скачанные в приложение, играют без сети. Они не учитываются в размере умного кэша</string>
+    <string name="downloads_status_downloading">Скачивание треков… %1$d/%2$d</string>
+    <string name="downloads_status_failed">Не удалось скачать треков: %1$d</string>
+    <string name="downloads_notification_title">Скачивание треков</string>
+    <string name="downloads_browse">Скачанное</string>
+    <string name="downloads_browse_description">Просмотр и удаление треков, альбомов, исполнителей и плейлистов, скачанных в приложение или сохранённых умным кэшем</string>
+    <string name="downloads_delete_all">Удалить все загрузки</string>
+    <string name="downloads_delete_all_description">Удалить все треки, скачанные в приложение. Умный кэш сохранится</string>
+    <string name="downloads_delete_all_confirm">Удалить треки, скачанные в приложение (%1$d, %2$s)? Они больше не будут доступны офлайн.</string>
+    <string name="downloads_tab_downloads">Загрузки</string>
+    <string name="downloads_tab_smart_cache">Умный кэш</string>
+    <string name="downloads_item_summary">Треков: %1$d · %2$s</string>
+    <string name="downloads_item_summary_partial">Треков: %1$d из %2$d · %3$s</string>
+    <string name="downloads_empty">Здесь пока пусто</string>
+    <string name="downloads_remove">Удалить</string>
+    <string name="downloads_remove_title">Удалить с устройства</string>
+    <string name="downloads_remove_confirm">Удалить &lt;i&gt;%1$s&lt;/i&gt;? Треки (%2$d, %3$s) больше не будут доступны офлайн.</string>
+    <string name="downloads_remove_smart_cache_note">При следующем обновлении умный кэш может скачать их снова.</string>
+    <string name="settings_misc">Разное</string>
+    <string name="settings_misc_description">Имена скачиваемых файлов</string>
+
+    <!-- Download -->
+    <string name="misc_download_template">Шаблон загрузки</string>
+    <string name="misc_download_template_summary">Папки и имя файла для скачанных треков</string>
+    <string name="misc_download_template_description">{title} - Название трека\n{album} - Название альбома\n{artist} - Исполнитель трека\n{album_artist} - Исполнитель альбома\n{ext} - Расширение\n{track} - Номер трека\n{disc} - Номер диска</string>
+    <string name="misc_playlist_download_template">Шаблон загрузки плейлиста</string>
+    <string name="misc_playlist_download_template_summary">Папки и имя файла для треков, скачанных из плейлиста</string>
+    <string name="misc_playlist_download_template_description">{title} - Название трека\n{album} - Название альбома\n{artist} - Исполнитель трека\n{album_artist} - Исполнитель альбома\n{ext} - Расширение\n{track} - Номер трека\n{disc} - Номер диска\n{playlist} - Название плейлиста\n{playlist_index} - Позиция в плейлисте</string>
 </resources>

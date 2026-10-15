@@ -1,42 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="onboarding_no_provider_splash">You haven\'t added a media provider yet. Add one now to start listening to some tunes!</string>
-    <string name="onboarding_all_done">All done! You can now start listening to some tunes!</string>
-    <string name="onboarding_lets_go">Let\'s Go!</string>
-    <string name="radio_add_internet_radio">Add Internet Radio</string>
-    <string name="radio_modify_internet_radio">Modify %s</string>
-    <string name="label_radio_name">Radio Name</string>
-    <string name="label_radio_url">Radio URL</string>
-    <string name="label_radio_homepage">Radio Homepage URL</string>
-    <string name="button_new_playlist">New Playlist</string>
-    <string name="playlist_delete_playlist">Delete Playlist</string>
-    <string name="delete_playlist_are_you_sure">Are you sure you want to delete this playlist?</string>
-    <string name="add_to_playlist_title">Add &lt;i&gt;%s&lt;/i&gt; To Playlist</string>
-    <string name="add_to_playlist_songs">%s Songs</string>
-    <string name="new_playlist_playlist_name">Playlist Name</string>
-    <string name="button_sort_by">Sort By</string>
-    <string name="sort_by_album">Album</string>
-    <string name="sort_by_album_artist">Album Artist</string>
-    <string name="sort_by_album_count">Album Count</string>
-    <string name="sort_by_artist">Artist</string>
+    <!-- Onboarding -->
+    <string name="onboarding_no_provider_splash">Aún no has añadido ninguna fuente de música. ¡Añade una para empezar a escuchar!</string>
+    <string name="onboarding_all_done">¡Todo listo! ¡Ya puedes empezar a escuchar música!</string>
+    <string name="onboarding_lets_go">¡Vamos!</string>
+    <string name="onboarding_next">Siguiente</string>
+
+    <!-- Media providers -->
+    <string name="provider_login_error_title">Error de autenticación</string>
+
+    <!-- Radios -->
+    <string name="radio_add_internet_radio">Añadir radio por Internet</string>
+    <string name="radio_modify_internet_radio">Editar %s</string>
+    <string name="label_radio_name">Nombre de la emisora</string>
+    <string name="label_radio_url">URL del stream</string>
+    <string name="label_radio_homepage">URL de la web de la emisora</string>
+    <string name="radio_remove">Eliminar</string>
+
+    <!-- Download -->
+    <string name="download_target_title">Descargar</string>
+    <string name="download_target_app">Descargar en la app</string>
+    <string name="download_target_app_description">Escucha sin conexión en la app. Gestiónalo en Ajustes › Descargas</string>
+    <string name="download_target_device">Guardar en el dispositivo</string>
+    <string name="download_target_device_description">Guarda los archivos en la carpeta Música, con el nombre según las plantillas de descarga</string>
+
+    <!-- Share -->
+    <string name="share_title">Compartir</string>
+    <string name="share_description">Descripción</string>
+    <string name="share_expires">Caducidad del enlace</string>
+    <string name="share_expires_never">Nunca</string>
+    <string name="share_expires_day">En 1 día</string>
+    <string name="share_expires_week">En 1 semana</string>
+    <string name="share_expires_month">En 1 mes</string>
+    <string name="share_expires_year">En 1 año</string>
+    <string name="share_create_link">Crear enlace</string>
+    <string name="share_copy_link">Copiar enlace</string>
+    <string name="share_link_copied">Enlace copiado</string>
+    <string name="share_error">No se ha podido crear el enlace. Puede que compartir esté desactivado en el servidor.</string>
+
+    <!-- Playlists -->
+    <string name="button_new_playlist">Nueva lista</string>
+    <string name="playlist_delete_playlist">Eliminar lista</string>
+    <string name="delete_playlist_are_you_sure">¿Seguro que quieres eliminar esta lista?</string>
+    <string name="delete_playlist_confirm">Eliminar</string>
+    <string name="add_to_playlist_title">Añadir &lt;i&gt;%s&lt;/i&gt; a una lista</string>
+    <string name="add_to_playlist_songs">%s canciones</string>
+    <string name="new_playlist_playlist_name">Nombre de la lista</string>
+
+    <!-- Sorting -->
+    <string name="button_sort_order_ascending">Ascendente</string>
+    <string name="button_sort_order_descending">Descendente</string>
+    <string name="button_sort_by">Ordenar por</string>
+    <string name="sort_by_album">Álbum</string>
+    <string name="sort_by_album_artist">Artista del álbum</string>
+    <string name="sort_by_album_count">Número de álbumes</string>
+    <string name="sort_by_artist">Artista</string>
     <string name="sort_by_bpm">BPM</string>
-    <string name="sort_by_channels">Channels</string>
-    <string name="sort_by_comment">Comment</string>
-    <string name="sort_by_duration">Duration</string>
-    <string name="sort_by_explicit_status">Explicit</string>
-    <string name="sort_by_favorite">Favorite</string>
-    <string name="sort_by_genre">Genre</string>
+    <string name="sort_by_channels">Canales</string>
+    <string name="sort_by_comment">Comentario</string>
+    <string name="sort_by_duration">Duración</string>
+    <string name="sort_by_explicit_status">Explícito</string>
+    <string name="sort_by_favorite">Favoritos</string>
+    <string name="sort_by_genre">Género</string>
     <string name="sort_by_id">ID</string>
-    <string name="sort_by_name">Name</string>
-    <string name="sort_by_play_count">Play Count</string>
-    <string name="sort_by_random">Random</string>
-    <string name="sort_by_rating">Rating</string>
-    <string name="sort_by_recently_added">Recently Added</string>
-    <string name="sort_by_recently_played">Recently Played</string>
-    <string name="sort_by_release_date">Release Date</string>
-    <string name="sort_by_song_count">Song Count</string>
-    <string name="sort_by_year">Year</string>
-    <string name="notification_download_name">Download Notifications</string>
-    <string name="notification_download_desc">Notifications for download status</string>
-    <string name="now_playing_set_sleep_timer">Set Sleep Timer</string>
+    <string name="sort_by_name">Nombre</string>
+    <string name="sort_by_play_count">Reproducciones</string>
+    <string name="sort_by_random">Aleatorio</string>
+    <string name="sort_by_rating">Valoración</string>
+    <string name="sort_by_recently_added">Añadido recientemente</string>
+    <string name="sort_by_recently_played">Escuchado recientemente</string>
+    <string name="sort_by_release_date">Fecha de lanzamiento</string>
+    <string name="sort_by_song_count">Número de canciones</string>
+    <string name="sort_by_track_number">Número de pista</string>
+    <string name="sort_by_year">Año</string>
+
+    <!-- Downloading -->
+    <string name="notification_download_name">Descargas</string>
+    <string name="notification_download_desc">Progreso de las descargas</string>
+
+    <!-- Set Sleep Timer -->
+    <string name="now_playing_set_sleep_timer">Programar temporizador</string>
+
+    <!-- Queue -->
+    <string name="clear_queue_confirm">¿Seguro que quieres vaciar la cola?</string>
+    <string name="sort_queue_title">Ordenar la cola</string>
+    <string name="sort_queue_reverse">Invertir orden</string>
+    <string name="sort_queue_sort">Ordenar</string>
+    <string name="sort_selection_title">Ordenar selección</string>
+    <string name="queue_selection_count">%1$d seleccionadas</string>
+    <string name="select_by_title">Seleccionar por</string>
+    <string name="select_by_unknown">Desconocido</string>
+
+    <!-- Advanced filter -->
+    <string name="button_filter">Filtrar</string>
+    <string name="filter_title">Filtros</string>
+    <string name="filter_mode_simple">Simple</string>
+    <string name="filter_mode_advanced">Avanzado</string>
+    <string name="filter_rating_any">Cualquier valoración</string>
+    <string name="filter_rating_unrated">Sin valorar</string>
+    <string name="filter_rating_rated">Valoradas</string>
+    <string name="filter_rating_exactly">%1$d ★</string>
+    <string name="filter_rating_at_least">%1$d ★ o más</string>
+    <string name="filter_rating_up_to">Hasta %1$d ★ (o sin valorar)</string>
+    <string name="filter_rating_range">%1$d – %2$d ★</string>
+    <string name="filter_simple_unset">Indiferente</string>
+    <string name="filter_simple_year_from">Desde el año</string>
+    <string name="filter_simple_year_to">Hasta el año</string>
+    <string name="filter_search_artists">Buscar artistas</string>
+    <string name="filter_search_albums">Buscar álbumes</string>
+    <string name="filter_search_genres">Buscar géneros</string>
+    <string name="filter_search_no_results">Sin resultados</string>
+    <string name="filter_remove_value">Quitar %1$s</string>
+    <string name="filter_apply">Aplicar</string>
+    <string name="filter_clear">Borrar</string>
+    <string name="filter_add_rule">Añadir regla</string>
+    <string name="filter_remove_rule">Quitar regla</string>
+    <string name="filter_no_rules">No hay reglas. Añade una regla para filtrar la lista.</string>
+    <string name="filter_match_label">Coincidir con</string>
+    <string name="filter_match_all">Todas las reglas</string>
+    <string name="filter_match_any">Alguna regla</string>
+    <string name="filter_field">Campo</string>
+    <string name="filter_operator">Condición</string>
+    <string name="filter_value">Valor</string>
+    <string name="filter_value_and">y</string>
+    <string name="filter_value_days">Días</string>
+    <string name="filter_value_date">Fecha (AAAA-MM-DD)</string>
+    <string name="filter_op_contains">Contiene</string>
+    <string name="filter_op_not_contains">No contiene</string>
+    <string name="filter_op_is">Es</string>
+    <string name="filter_op_is_not">No es</string>
+    <string name="filter_op_starts_with">Empieza por</string>
+    <string name="filter_op_ends_with">Termina en</string>
+    <string name="filter_op_greater_than">Mayor que</string>
+    <string name="filter_op_less_than">Menor que</string>
+    <string name="filter_op_between">Entre</string>
+    <string name="filter_op_is_true">Sí</string>
+    <string name="filter_op_is_false">No</string>
+    <string name="filter_op_in_the_last">En los últimos (días)</string>
+    <string name="filter_op_not_in_the_last">No en los últimos (días)</string>
+    <string name="filter_op_before">Antes de</string>
+    <string name="filter_op_after">Después de</string>
+    <string name="filter_field_title">Título</string>
+    <string name="filter_field_name">Nombre</string>
+    <string name="filter_field_format">Formato</string>
+    <string name="filter_field_path">Ruta</string>
+    <string name="filter_field_record_label">Sello discográfico</string>
+    <string name="filter_field_release_type">Tipo de lanzamiento</string>
+    <string name="filter_field_duration_seconds">Duración (segundos)</string>
+    <string name="filter_field_disc_number">Número de disco</string>
+    <string name="filter_field_bitrate">Tasa de bits (kbps)</string>
+    <string name="filter_field_sample_rate">Frecuencia de muestreo (Hz)</string>
+    <string name="filter_field_bit_depth">Profundidad de bits</string>
+    <string name="filter_field_compilation">Recopilatorio</string>
+    <string name="filter_field_date_added">Fecha de adición</string>
+    <string name="filter_field_last_played">Última reproducción</string>
 </resources>

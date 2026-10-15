@@ -216,11 +216,11 @@ private fun DownloadedItemRow(item: DownloadedItem, imageShape: Shape, onRemove:
                 overflow = TextOverflow.Ellipsis
             )
         }
-        ActionTooltip(stringResource(R.string.action_remove)) {
+        ActionTooltip(stringResource(R.string.downloads_remove)) {
             IconButton(onClick = onRemove) {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
-                    contentDescription = stringResource(R.string.action_remove),
+                    contentDescription = stringResource(R.string.downloads_remove),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

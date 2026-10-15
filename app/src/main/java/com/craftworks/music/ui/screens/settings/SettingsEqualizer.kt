@@ -44,9 +44,7 @@ import com.craftworks.music.ui.elements.EqualizerBands
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.EqualizerViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
-    ExperimentalFoundationApi::class
-)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun S_EqualizerScreen(
     navHostController: NavHostController = rememberNavController(),
