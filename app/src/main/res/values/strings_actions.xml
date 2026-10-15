@@ -69,6 +69,7 @@
     <string name="action_back">Back</string>
     <string name="action_close_search">Close Search</string>
     <string name="action_open_settings">Open Settings</string>
+    <string name="action_refresh_section">Refresh Section</string>
     <string name="action_more_options">More Options</string>
     <string name="action_pause">Pause</string>
     <string name="action_play_album">Play Album</string>

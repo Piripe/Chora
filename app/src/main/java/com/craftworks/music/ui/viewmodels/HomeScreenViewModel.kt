@@ -14,6 +14,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,6 +37,10 @@ class HomeScreenViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _refreshingSections = MutableStateFlow<Set<String>>(emptySet())
+    /** Keys of the home sections currently being reloaded by [refreshSection]. */
+    val refreshingSections: StateFlow<Set<String>> = _refreshingSections.asStateFlow()
+
     init {
         loadHomeScreenData()
 
@@ -50,37 +55,49 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
-                val recentlyPlayedDeferred = async { albumRepository.getAlbums(
-                    MediaQuery.AlbumListQuery(
-                    AlbumListSort.RECENTLY_PLAYED, SortOrder.DESC, limit = 20, startIndex = 0
-                    )
-                ) }
-                val recentDeferred = async { albumRepository.getAlbums(
-                    MediaQuery.AlbumListQuery(
-                        AlbumListSort.RECENTLY_ADDED, SortOrder.DESC, limit = 20, startIndex = 0
-                    )
-                ) }
-                val mostPlayedDeferred = async { albumRepository.getAlbums(
-                    MediaQuery.AlbumListQuery(
-                        AlbumListSort.PLAY_COUNT, SortOrder.DESC, limit = 20, startIndex = 0
-                    )
-                ) }
-                val shuffledDeferred = async { albumRepository.getAlbums(
-                    MediaQuery.AlbumListQuery(
-                        AlbumListSort.RANDOM, SortOrder.ASC, limit = 20, startIndex = 0
-                    )
-                ) }
-
-                _recentlyPlayedAlbums.value = recentlyPlayedDeferred.await()
-                _recentAlbums.value = recentDeferred.await()
-                _mostPlayedAlbums.value = mostPlayedDeferred.await()
-                _shuffledAlbums.value = shuffledDeferred.await()
+                HOME_SECTIONS.map { key -> async { loadSection(key) } }.forEach { it.await() }
             }
             _isLoading.value = false
         }
     }
 
+    /** Reloads only the home section with this [key] (see [HOME_SECTIONS]). */
+    fun refreshSection(key: String) {
+        if (key !in HOME_SECTIONS || key in _refreshingSections.value) return
+        viewModelScope.launch {
+            _refreshingSections.update { it + key }
+            try {
+                loadSection(key)
+            } finally {
+                _refreshingSections.update { it - key }
+            }
+        }
+    }
+
+    private suspend fun loadSection(key: String) {
+        val (sort, order) = when (key) {
+            "recently_played" -> AlbumListSort.RECENTLY_PLAYED to SortOrder.DESC
+            "recently_added" -> AlbumListSort.RECENTLY_ADDED to SortOrder.DESC
+            "most_played" -> AlbumListSort.PLAY_COUNT to SortOrder.DESC
+            "random_songs" -> AlbumListSort.RANDOM to SortOrder.ASC
+            else -> return
+        }
+        val albums = albumRepository.getAlbums(
+            MediaQuery.AlbumListQuery(sort, order, limit = 20, startIndex = 0)
+        )
+        when (key) {
+            "recently_played" -> _recentlyPlayedAlbums.value = albums
+            "recently_added" -> _recentAlbums.value = albums
+            "most_played" -> _mostPlayedAlbums.value = albums
+            "random_songs" -> _shuffledAlbums.value = albums
+        }
+    }
+
     suspend fun getAlbumSongs(albumId: String): List<MediaItem> {
         return albumRepository.getAlbum(albumId) ?: emptyList()
+    }
+
+    companion object {
+        val HOME_SECTIONS = listOf("recently_played", "recently_added", "most_played", "random_songs")
     }
 }

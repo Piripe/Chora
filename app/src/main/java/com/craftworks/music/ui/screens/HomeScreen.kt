@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -27,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -352,6 +354,8 @@ fun ProviderLogo(provider: MediaProvider){
     viewModel: HomeScreenViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val refreshingSections by viewModel.refreshingSections.collectAsStateWithLifecycle()
+    val isRefreshing = key in refreshingSections
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -380,6 +384,29 @@ fun ProviderLogo(provider: MediaProvider){
                 fontWeight = FontWeight.SemiBold,
                 fontSize = MaterialTheme.typography.headlineSmall.fontSize
             )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            ActionTooltip(stringResource(R.string.action_refresh_section)) {
+                IconButton(
+                    onClick = { viewModel.refreshSection(key) },
+                    enabled = !isRefreshing,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
+                            contentDescription = stringResource(R.string.action_refresh_section),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 

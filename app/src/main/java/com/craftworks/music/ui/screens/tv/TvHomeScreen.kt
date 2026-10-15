@@ -1,6 +1,14 @@
 package com.craftworks.music.ui.screens.tv
 
 import android.graphics.drawable.BitmapDrawable
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.tv.material3.IconButton
+import androidx.tv.material3.IconButtonDefaults
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -120,6 +128,8 @@ fun TvHomeScreen(
     }
 
 
+    val refreshingSections by viewModel.refreshingSections.collectAsStateWithLifecycle()
+
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -199,6 +209,8 @@ fun TvHomeScreen(
                 CarouselItem(
                     album = album,
                     carouselFocused = carouselFocused,
+                    isRefreshing = "random_songs" in refreshingSections,
+                    onRefresh = { viewModel.refreshSection("random_songs") },
                     modifier = Modifier.animateEnterExit(
                         enter = slideInHorizontally(animationSpec = tween(1000)) { it / 16 },
                         exit = slideOutHorizontally(animationSpec = tween(1000)) { -it / 16 }
@@ -238,13 +250,22 @@ fun TvHomeScreen(
             Column (
                 Modifier.focusGroup()
             ) {
-                Text(
-                    text = stringResource(titleMap[item.key] ?: R.string.home_recently_played),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 48.dp, vertical = 8.dp)
-                )
+                ) {
+                    Text(
+                        text = stringResource(titleMap[item.key] ?: R.string.home_recently_played),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    RefreshSectionButton(
+                        isRefreshing = item.key in refreshingSections,
+                        onClick = { viewModel.refreshSection(item.key) }
+                    )
+                }
 
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
@@ -273,7 +294,9 @@ fun TvHomeScreen(
 private fun CarouselItem(
     album: MediaItem,
     carouselFocused: Boolean = false,
+    isRefreshing: Boolean = false,
     onPlay: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -399,18 +422,54 @@ private fun CarouselItem(
 
             Spacer(Modifier.height(28.dp))
 
-            Button(
-                onClick = onPlay,
-                modifier = buttonModifier
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    contentDescription = null
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.action_play))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Button(
+                    onClick = onPlay,
+                    modifier = buttonModifier
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PlayArrow,
+                        contentDescription = null
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.action_play))
+                }
+                Spacer(Modifier.width(12.dp))
+                RefreshSectionButton(isRefreshing = isRefreshing, onClick = onRefresh)
             }
         }
+    }
+}
+
+/** Reloads one home section. Stays enabled while refreshing so it keeps the D-pad focus. */
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun RefreshSectionButton(
+    isRefreshing: Boolean,
+    onClick: () -> Unit,
+) {
+    val rotation = remember { Animatable(0f) }
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            while (true) {
+                rotation.animateTo(rotation.value + 360f, tween(800, easing = LinearEasing))
+            }
+        } else {
+            rotation.snapTo(0f)
+        }
+    }
+
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(40.dp)
+    ) {
+        Icon(
+            imageVector = ImageVector.vectorResource(R.drawable.rounded_refresh_24),
+            contentDescription = stringResource(R.string.action_refresh_section),
+            modifier = Modifier
+                .size(IconButtonDefaults.SmallIconSize)
+                .graphicsLayer { rotationZ = rotation.value }
+        )
     }
 }
 
