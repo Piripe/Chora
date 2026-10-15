@@ -498,6 +498,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         ActionButtonType.ADD_TO_PLAYLIST to stringResource(R.string.action_add_to_playlist),
                         ActionButtonType.DOWNLOAD to stringResource(R.string.action_download),
                         ActionButtonType.SHARE to stringResource(R.string.action_share),
+                        ActionButtonType.RADIO to stringResource(R.string.action_start_radio),
                     )
 
                     SettingsDialogButton(
@@ -561,6 +562,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     ActionButtonType.ADD_TO_PLAYLIST,
                     ActionButtonType.DOWNLOAD,
                     ActionButtonType.SHARE,
+                    ActionButtonType.RADIO,
                 ),
                 onSet = {
                     runBlocking {
@@ -584,6 +586,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     ActionButtonType.ADD_TO_PLAYLIST,
                     ActionButtonType.DOWNLOAD,
                     ActionButtonType.SHARE,
+                    ActionButtonType.RADIO,
                 ),
                 onSet = {
                     runBlocking {

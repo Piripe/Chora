@@ -49,6 +49,7 @@ import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
@@ -160,16 +161,17 @@ fun S_PlaybackScreen(
                     )
                 }
 
-                /*
+                // Autoplay
                 Column(
                     modifier = Modifier.clip(RoundedCornerShape(16.dp)),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    val autoPlay by PlaybackSettingsManager(context).autoPlayFlow.collectAsStateWithLifecycle(true)
+                    val autoPlay by PlaybackSettingsManager(context).autoPlayFlow.collectAsStateWithLifecycle(false)
                     SettingsSwitch(
-                        autoPlay,
-                        stringResource(R.string.Setting_LyricsAutoscroll),
-                        ImageVector.vectorResource(R.drawable.rounded_text_select_move_down_24),
+                        selected = autoPlay,
+                        settingsName = stringResource(R.string.playback_autoplay),
+                        settingsIcon = ImageVector.vectorResource(R.drawable.rounded_sensors_24),
+                        settingsDescription = stringResource(R.string.playback_autoplay_description),
                         toggleEvent = {
                             coroutineScope.launch {
                                 PlaybackSettingsManager(context).setAutoPlay(!autoPlay)
@@ -177,7 +179,6 @@ fun S_PlaybackScreen(
                         }
                     )
                 }
-                */
 
                 // Scrobble Percent
                 Column(

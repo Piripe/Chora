@@ -115,6 +115,10 @@
         <string name="playback_transcoding_format_description">Format used when a song is transcoded to a lower bitrate</string>
         <string name="playback_no_transcoding">No Transcoding</string>
 
+        // Autoplay
+        <string name="playback_autoplay">Autoplay</string>
+        <string name="playback_autoplay_description">When the queue ends, keep playing songs similar to the last one</string>
+
         // Scrobble
         <string name="playback_min_scrobble_percentage">Min. Scrobble Percentage</string>
         <string name="playback_min_scrobble_percentage_value">Min. Scrobble Percentage: %1$d%%</string>

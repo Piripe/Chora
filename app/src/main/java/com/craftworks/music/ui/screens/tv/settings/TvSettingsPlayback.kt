@@ -155,6 +155,19 @@ fun TvS_PlaybackScreen(smartCacheViewModel: SmartCacheViewModel = hiltViewModel(
         }
 
         item {
+            val autoPlay by PlaybackSettingsManager(context).autoPlayFlow.collectAsState(false)
+            SettingsSwitchItem(
+                title = stringResource(R.string.playback_autoplay),
+                icon = ImageVector.vectorResource(R.drawable.rounded_sensors_24),
+                description = stringResource(R.string.playback_autoplay_description),
+                checked = autoPlay,
+                onCheckedChange = {
+                    coroutineScope.launch { PlaybackSettingsManager(context).setAutoPlay(it) }
+                }
+            )
+        }
+
+        item {
             SettingsSwitchItem(
                 title = if (pendingScrobbles > 0)
                     stringResource(R.string.playback_track_offline_scrobbles_pending, pendingScrobbles)

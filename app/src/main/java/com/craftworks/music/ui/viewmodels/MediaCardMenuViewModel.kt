@@ -1,25 +1,38 @@
 package com.craftworks.music.ui.viewmodels
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.session.MediaController
+import com.craftworks.music.R
 import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.ArtistRepository
+import com.craftworks.music.data.repository.MixRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.settings.MiscSettingsManager
+import com.craftworks.music.player.SongHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** Backs the long press menus of the album and artist cards, see AlbumCardMenu and ArtistCardMenu. */
+/**
+ * Backs the long press menus of the album and artist cards, see AlbumCardMenu and ArtistCardMenu,
+ * and the radio / instant mix actions of the song menus.
+ */
 @HiltViewModel
 class MediaCardMenuViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val albumRepository: AlbumRepository,
     private val artistRepository: ArtistRepository,
+    private val mixRepository: MixRepository,
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
     private val miscSettingsManager: MiscSettingsManager,
@@ -35,6 +48,34 @@ class MediaCardMenuViewModel @Inject constructor(
             ?: artistRepository.getArtistAlbums(artistId)
         return albums.flatMap { album ->
             album.mediaMetadata.extras?.getString("id")?.let { getAlbumSongs(it) } ?: emptyList()
+        }
+    }
+
+    /** Songs similar to the album, see [MixRepository.getAlbumRadio]. */
+    suspend fun getAlbumRadio(album: MediaItem): List<MediaItem> =
+        mixRepository.getAlbumRadio(album.mediaMetadata)
+
+    /** Songs similar to the artist, see [MixRepository.getArtistRadio]. */
+    suspend fun getArtistRadio(artist: MediaModel.Artist): List<MediaItem> =
+        mixRepository.getArtistRadio(artist)
+
+    /** The song followed by similar songs, see [MixRepository.getInstantMix]. */
+    suspend fun getInstantMix(song: MediaItem): List<MediaItem> =
+        mixRepository.getInstantMix(song)
+
+    /**
+     * Replaces the queue with the mix [getMix] returns and plays it, outliving the menu that started it.
+     * Tells the user when no songs were found, else calls [onPlay].
+     */
+    fun playMix(getMix: suspend () -> List<MediaItem>, onPlay: () -> Unit = {}, mediaController: () -> MediaController?) {
+        viewModelScope.launch {
+            val songs = getMix()
+            if (songs.isEmpty()) {
+                Toast.makeText(context, R.string.radio_no_songs_found, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            SongHelper.play(songs, 0, mediaController())
+            onPlay()
         }
     }
 

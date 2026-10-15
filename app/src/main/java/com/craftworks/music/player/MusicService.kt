@@ -47,10 +47,12 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.ArtistRepository
 import com.craftworks.music.data.repository.LyricsRepository
+import com.craftworks.music.data.repository.MixRepository
 import com.craftworks.music.data.repository.PlaylistRepository
 import com.craftworks.music.data.repository.RadioRepository
 import com.craftworks.music.data.repository.SongRepository
@@ -102,6 +104,8 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     private lateinit var prefetcher: TrackPrefetcher
     private var prefetchMinutes = 0
     private var sleepTimerJob: Job? = null
+    private var autoPlay = false
+    private var autoPlayJob: Job? = null
     private var _sleepTimerRemainingTime = MutableStateFlow(0)
     val sleepTimerRemainingTime: StateFlow<Int> = _sleepTimerRemainingTime.asStateFlow()
 
@@ -117,12 +121,16 @@ class ChoraMediaLibraryService : MediaLibraryService() {
     @Inject lateinit var radioRepository: RadioRepository
     @Inject lateinit var playlistRepository: PlaylistRepository
     @Inject lateinit var lyricsRepository: LyricsRepository
+    @Inject lateinit var mixRepository: MixRepository
 
     companion object {
         private var instance: ChoraMediaLibraryService? = null
 
         // Used to estimate the queue length when a track has no duration.
         private const val DEFAULT_TRACK_DURATION_MS = 4 * 60_000L
+
+        // How many songs autoplay adds when the queue ends.
+        private const val AUTOPLAY_SONG_COUNT = 20
 
         fun getInstance(): ChoraMediaLibraryService? {
             return instance
@@ -355,19 +363,12 @@ class ChoraMediaLibraryService : MediaLibraryService() {
                 }
 
                 updatePrefetchQueue()
-
-                /*
-                serviceMainScope.launch {
-                    playbackSettingsManager.autoPlayFlow.collect {
-                        if (it && player.currentMediaItemIndex == player.mediaItemCount - 1)
-                            player.addMediaItems(songRepository.getSimilarSongs(mediaItem?.mediaMetadata?.extras?.getString("navidromeID")!!, 1))
-                    }
-                }
-                */
+                extendQueueIfEnding()
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
                 updatePrefetchQueue()
+                extendQueueIfEnding()
             }
 
             override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
@@ -376,6 +377,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
 
             override fun onRepeatModeChanged(repeatMode: Int) {
                 updatePrefetchQueue()
+                extendQueueIfEnding()
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -467,7 +469,36 @@ class ChoraMediaLibraryService : MediaLibraryService() {
             offlineManager.isOffline.collect { updatePrefetchQueue() }
         }
 
+        serviceMainScope.launch {
+            playbackSettingsManager.autoPlayFlow
+                .distinctUntilChanged()
+                .collect {
+                    autoPlay = it
+                    extendQueueIfEnding()
+                }
+        }
+
         Log.d("AA", "Initialized MediaLibraryService.")
+    }
+
+    /**
+     * With autoplay on, adds songs similar to the last song of the queue once it starts, so the
+     * music keeps playing like a radio.
+     */
+    private fun extendQueueIfEnding() {
+        if (!autoPlay || autoPlayJob?.isActive == true) return
+        if (player.repeatMode != Player.REPEAT_MODE_OFF || player.hasNextMediaItem()) return
+        val last = player.currentMediaItem ?: return
+        if (last.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION) return
+        if (last.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.RADIO) != true) return
+
+        autoPlayJob = serviceMainScope.launch {
+            val songs = mixRepository.getInstantMix(last, AUTOPLAY_SONG_COUNT + 1).drop(1)
+            // The queue may have changed while the songs were fetched.
+            if (player.currentMediaItem?.mediaId != last.mediaId || player.hasNextMediaItem()) return@launch
+            val queued = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+            player.addMediaItems(songs.filter { it.mediaId !in queued })
+        }
     }
 
     private fun currentStreamVariant(): StreamVariant = runBlocking {

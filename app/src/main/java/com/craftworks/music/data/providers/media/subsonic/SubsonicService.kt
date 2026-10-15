@@ -163,6 +163,14 @@ interface SubsonicService {
         @Query("count") count: Int? = 50,
     ): SubsonicResponse
 
+    /** [id] is a song, album or artist ID. */
+    @GET("rest/getSimilarSongs.view")
+    suspend fun getSimilarSongs(
+        @Query("id") id: String,
+        @Query("count") count: Int? = 50,
+    ): SubsonicResponse
+
+    /** [id] is an artist ID. */
     @GET("rest/getSimilarSongs2.view")
     suspend fun getSimilarSongs2(
         @Query("id") id: String,

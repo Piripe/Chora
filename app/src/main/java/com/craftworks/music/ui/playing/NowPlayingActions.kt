@@ -21,7 +21,9 @@ enum class NowPlayingAction {
     PLAY_PAUSE, PREVIOUS, NEXT, SHUFFLE, REPEAT, SEEK_BACK, SEEK_FORWARD,
     LYRICS, QUEUE, SLEEP_TIMER, DOWNLOAD, SHARE,
     FAVORITE, RATING, ADD_TO_PLAYLIST, GO_TO_ARTIST, GO_TO_ALBUM,
-    MENU
+    MENU,
+    /** Replaces the songs after the current one with songs similar to it. */
+    INSTANT_MIX
 }
 
 /** Where a button is shown. The play/pause button is always in the middle of [CONTROLS_START] and [CONTROLS_END]. */
@@ -88,6 +90,7 @@ val defaultNowPlayingMenuItems: List<NowPlayingMenuItem> = listOf(
     NowPlayingAction.ADD_TO_PLAYLIST,
     NowPlayingAction.GO_TO_ARTIST,
     NowPlayingAction.GO_TO_ALBUM,
+    NowPlayingAction.INSTANT_MIX,
     NowPlayingAction.DOWNLOAD,
     NowPlayingAction.SHARE,
     NowPlayingAction.LYRICS,
@@ -147,6 +150,7 @@ data class NowPlayingActionContext(
         NowPlayingAction.ADD_TO_PLAYLIST -> !isRadio && providerFeatures?.contains(ProviderFeature.PLAYLISTS) == true
         NowPlayingAction.GO_TO_ARTIST -> !isRadio && hasArtist
         NowPlayingAction.GO_TO_ALBUM -> !isRadio && hasAlbum
+        NowPlayingAction.INSTANT_MIX -> !isRadio && providerFeatures?.contains(ProviderFeature.RADIO) == true
         NowPlayingAction.MENU -> !isRadio
         else -> true
     }
@@ -171,6 +175,7 @@ fun nowPlayingActionLabel(action: NowPlayingAction): String = when (action) {
     NowPlayingAction.ADD_TO_PLAYLIST -> stringResource(R.string.action_add_to_playlist)
     NowPlayingAction.GO_TO_ARTIST -> stringResource(R.string.action_go_to_artist)
     NowPlayingAction.GO_TO_ALBUM -> stringResource(R.string.action_go_to_album)
+    NowPlayingAction.INSTANT_MIX -> stringResource(R.string.action_instant_mix)
     NowPlayingAction.MENU -> stringResource(R.string.action_more)
 }
 
@@ -198,6 +203,7 @@ fun nowPlayingActionIcon(action: NowPlayingAction, active: Boolean = false): Ima
     NowPlayingAction.ADD_TO_PLAYLIST -> ImageVector.vectorResource(R.drawable.rounded_add_24)
     NowPlayingAction.GO_TO_ARTIST -> ImageVector.vectorResource(R.drawable.rounded_artist_24)
     NowPlayingAction.GO_TO_ALBUM -> ImageVector.vectorResource(androidx.media3.session.R.drawable.media3_icon_album)
+    NowPlayingAction.INSTANT_MIX -> ImageVector.vectorResource(R.drawable.rounded_sensors_24)
     NowPlayingAction.MENU -> ImageVector.vectorResource(R.drawable.more_vert_24px)
 }
 

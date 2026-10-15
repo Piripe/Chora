@@ -73,6 +73,7 @@ fun TvAlbumDialog(
         libraryType = LibraryType.ALBUM,
         initiallyStarred = album.mediaMetadata.favorite ?: false,
         getSongs = { viewModel.getAlbumSongs(albumId) },
+        getRadio = { viewModel.getAlbumRadio(album) },
         onDismissRequest = onDismissRequest,
         viewModel = viewModel
     )
@@ -95,6 +96,7 @@ fun TvArtistDialog(
         libraryType = LibraryType.ARTIST,
         initiallyStarred = artist.userFavorite ?: false,
         getSongs = { viewModel.getArtistSongs(artist.id) },
+        getRadio = { viewModel.getArtistRadio(artist) },
         onDismissRequest = onDismissRequest,
         viewModel = viewModel
     )
@@ -111,6 +113,7 @@ private fun TvMediaCardDialog(
     libraryType: LibraryType,
     initiallyStarred: Boolean,
     getSongs: suspend () -> List<MediaItem>,
+    getRadio: suspend () -> List<MediaItem>,
     onDismissRequest: () -> Unit,
     viewModel: MediaCardMenuViewModel
 ) {
@@ -206,6 +209,16 @@ private fun TvMediaCardDialog(
                             headlineContent = { Text(stringResource(R.string.action_add_to_queue)) },
                             onClick = { withSongs { songs, controller -> SongHelper.enqueue(songs, controller) } }
                         )
+                        if (features?.contains(ProviderFeature.RADIO) == true) {
+                            ListItem(
+                                selected = false,
+                                headlineContent = { Text(stringResource(R.string.action_start_radio)) },
+                                onClick = {
+                                    onDismissRequest()
+                                    viewModel.playMix(getRadio) { currentMediaController(context) }
+                                }
+                            )
+                        }
                         if (features?.contains(ProviderFeature.FAVORITES) == true) {
                             ListItem(
                                 selected = false,

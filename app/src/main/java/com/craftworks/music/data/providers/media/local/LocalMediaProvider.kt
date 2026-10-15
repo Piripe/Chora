@@ -35,6 +35,7 @@ import com.craftworks.music.data.model.User
 import com.craftworks.music.data.model.UserInfoResponse
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.utils.PagingUtils
+import com.craftworks.music.utils.SimilarSongs
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -72,7 +73,8 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
 
     @Transient
     override val featureFlags: EnumSet<ProviderFeature> = EnumSet.of(
-        ProviderFeature.OFFLINE_PLAYBACK
+        ProviderFeature.OFFLINE_PLAYBACK,
+        ProviderFeature.RADIO
     )
 
     @Transient
@@ -287,7 +289,8 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         albumId: String,
         count: Int?
     ): List<MediaModel.Song> {
-        TODO("Not yet implemented")
+        val songs = getAllLocalSongs()
+        return SimilarSongs.pick(songs, songs.filter { it.albumId == albumId }, count ?: 50)
     }
 
     override suspend fun getArtistList(query: MediaQuery.ArtistListQuery): List<MediaModel.Artist> {
@@ -298,7 +301,10 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         artistId: String,
         count: Int?
     ): List<MediaModel.Song> {
-        TODO("Not yet implemented")
+        val songs = getAllLocalSongs()
+        val albumIds = getAlbumArtistDetail(artistId).albums.orEmpty().map { it.id }.toSet()
+        val seeds = songs.filter { song -> song.albumId in albumIds || (song.artists + song.albumArtists).any { it.id == artistId } }
+        return SimilarSongs.pick(songs, seeds, count ?: 50)
     }
 
     override suspend fun getDownloadUrl(id: String): String {
@@ -401,8 +407,16 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         count: Int?,
         musicFolderId: List<String>?
     ): List<MediaModel.Song> {
-        TODO("Not yet implemented")
+        val songs = getAllLocalSongs()
+        return SimilarSongs.pick(songs, songs.filter { it.id == songId }, count ?: 50)
     }
+
+    private fun getAllLocalSongs(): List<MediaModel.Song> =
+        LocalUtils.getLocalSongs(
+            appContext, id, "${MediaStore.Audio.Media.TITLE} ASC",
+            data.libraries.filter { it.second }.map { it.first.name }
+        )
+
 
     override suspend fun getSongDetail(id: String): MediaModel.Song {
         TODO("Not yet implemented")
@@ -450,7 +464,11 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         limit: Int?,
         type: String?
     ): List<MediaModel.Song> {
-        TODO("Not yet implemented")
+        // No play counts here: the songs of the artist, in a random order.
+        return getAllLocalSongs()
+            .filter { song -> (song.artists + song.albumArtists).any { it.id == artistId } || song.artistName.equals(artist, true) }
+            .shuffled()
+            .take(limit ?: 50)
     }
 
     override suspend fun getUserInfo(

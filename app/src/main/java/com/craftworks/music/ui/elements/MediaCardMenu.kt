@@ -50,6 +50,7 @@ fun AlbumCardMenu(
         libraryType = LibraryType.ALBUM,
         initiallyStarred = album.mediaMetadata.favorite ?: false,
         getSongs = { viewModel.getAlbumSongs(albumId) },
+        getRadio = { viewModel.getAlbumRadio(album) },
         viewModel = viewModel
     )
 }
@@ -71,6 +72,7 @@ fun ArtistCardMenu(
         libraryType = LibraryType.ARTIST,
         initiallyStarred = artist.userFavorite ?: false,
         getSongs = { viewModel.getArtistSongs(artist.id) },
+        getRadio = { viewModel.getArtistRadio(artist) },
         viewModel = viewModel
     )
 }
@@ -89,6 +91,7 @@ private fun MediaCardMenu(
     libraryType: LibraryType,
     initiallyStarred: Boolean,
     getSongs: suspend () -> List<MediaItem>,
+    getRadio: suspend () -> List<MediaItem>,
     viewModel: MediaCardMenuViewModel
 ) {
     val context = LocalContext.current
@@ -121,6 +124,12 @@ private fun MediaCardMenu(
         }
         MenuSheetItem(ImageVector.vectorResource(R.drawable.outline_queue_add_24), stringResource(R.string.action_add_to_queue)) {
             withSongs { songs, controller -> SongHelper.enqueue(songs, controller) }
+        }
+        if (features?.contains(ProviderFeature.RADIO) == true) {
+            MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_sensors_24), stringResource(R.string.action_start_radio)) {
+                onDismissRequest()
+                viewModel.playMix(getRadio) { currentMediaController(context) }
+            }
         }
         val canFavorite = features?.contains(ProviderFeature.FAVORITES) == true
         val canAddToPlaylist = features?.contains(ProviderFeature.PLAYLISTS) == true

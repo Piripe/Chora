@@ -68,6 +68,8 @@ import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
+import com.craftworks.music.ui.elements.currentMediaController
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 
 private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING, DOWNLOAD, SHARE }
@@ -82,7 +84,8 @@ fun SongDialog(
     song: MediaItem = MediaItem.EMPTY,
     onSetRating: (Int) -> Unit = { },
     onDownload: (MediaItem, DownloadTarget) -> Unit = { _, _ -> },
-    setShowDialog: (Boolean) -> Unit = { }
+    setShowDialog: (Boolean) -> Unit = { },
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -155,6 +158,17 @@ fun SongDialog(
 
                 when (dialogMenu) {
                     DialogMenu.MAIN -> {
+                        if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.RADIO) == true) {
+                            ListItem(
+                                selected = false,
+                                headlineContent = { Text(stringResource(R.string.action_instant_mix)) },
+                                onClick = {
+                                    mixViewModel.playMix({ mixViewModel.getInstantMix(song) }) { currentMediaController(context) }
+                                    setShowDialog(false)
+                                }
+                            )
+                        }
+
                         ListItem(
                             selected = false,
                             headlineContent = {

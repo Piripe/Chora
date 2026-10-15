@@ -55,6 +55,11 @@
 
     <string name="action_add_radio">Add Radio</string>
 
+    // Radio and instant mix
+    <string name="action_start_radio">Start Radio</string>
+    <string name="action_instant_mix">Instant Mix</string>
+    <string name="radio_no_songs_found">No similar songs found</string>
+
     // Playlists
     <string name="action_create_playlist">Create Playlist</string>
     <string name="action_remove_from_playlist">Remove From Playlist</string>

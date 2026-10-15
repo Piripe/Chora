@@ -58,11 +58,13 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.MediaModel
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.tv.TvAlbumCard
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -73,7 +75,8 @@ fun TvArtistDetailsScreen(
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
     viewModel: ArtistDetailsViewModel = hiltViewModel(),
-    initialArtist: MediaModel.Artist? = null
+    initialArtist: MediaModel.Artist? = null,
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel()
 ) {
     LaunchedEffect(selectedArtistId) {
         if (selectedArtistId != null) viewModel.loadArtistDetails(selectedArtistId, initialArtist)
@@ -238,6 +241,32 @@ fun TvArtistDetailsScreen(
                                 )
                                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                                 Text(stringResource(R.string.action_shuffle))
+                            }
+
+                            if (artist?.getProvider()?.featureFlags?.contains(ProviderFeature.RADIO) == true) {
+                                OutlinedButton(
+                                    onClick = {
+                                        mixViewModel.playMix(
+                                            getMix = { artist?.let { mixViewModel.getArtistRadio(it) }.orEmpty() },
+                                            onPlay = {
+                                                navHostController.navigate(Screen.NowPlayingLandscape) {
+                                                    launchSingleTop = true
+                                                }
+                                            }
+                                        ) { mediaController }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f),
+                                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+                                ) {
+                                    Icon(
+                                        ImageVector.vectorResource(R.drawable.rounded_sensors_24),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                                    )
+                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                    Text(stringResource(R.string.action_start_radio))
+                                }
                             }
                         }
                     }

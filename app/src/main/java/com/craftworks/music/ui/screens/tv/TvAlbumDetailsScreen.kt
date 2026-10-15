@@ -64,14 +64,17 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.favorite
+import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.tv.SongDialog
 import com.craftworks.music.ui.elements.tv.TvHorizontalSongCard
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,7 +87,8 @@ fun TvAlbumDetails(
     selectedAlbumImage: Uri = Uri.EMPTY,
     mediaController: MediaController? = null,
     navHostController: NavHostController = rememberNavController(),
-    viewModel: AlbumDetailsViewModel = hiltViewModel()
+    viewModel: AlbumDetailsViewModel = hiltViewModel(),
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val currentAlbum = viewModel.songsInAlbum.collectAsStateWithLifecycle().value
@@ -261,6 +265,31 @@ fun TvAlbumDetails(
                         )
                         Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                         Text(stringResource(R.string.action_shuffle))
+                    }
+
+                    if (currentAlbum[0].mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.RADIO) == true) {
+                        OutlinedButton(
+                            onClick = {
+                                mixViewModel.playMix(
+                                    getMix = { mixViewModel.getAlbumRadio(currentAlbum[0]) },
+                                    onPlay = {
+                                        navHostController.navigate(Screen.NowPlayingLandscape) {
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                ) { mediaController }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding
+                        ) {
+                            Icon(
+                                ImageVector.vectorResource(R.drawable.rounded_sensors_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                            )
+                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                            Text(stringResource(R.string.action_start_radio))
+                        }
                     }
                 }
             }

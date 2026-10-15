@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.graphics.Color
@@ -14,16 +15,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
 import androidx.palette.graphics.Palette
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import com.craftworks.music.R
 import com.craftworks.music.data.model.DownloadTarget
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.favorite
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.LyricsRepository
+import com.craftworks.music.data.repository.MixRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
@@ -50,6 +54,7 @@ class NowPlayingViewModel @Inject constructor (
     val appearanceSettingsManager: AppearanceSettingsManager,
     val playbackSettingsManager: PlaybackSettingsManager,
     val miscSettingsManager: MiscSettingsManager,
+    private val mixRepository: MixRepository,
 ) : ViewModel() {
     private val _lyricsOpen = MutableStateFlow(false)
     val lyricsOpen = _lyricsOpen.asStateFlow()
@@ -89,6 +94,24 @@ class NowPlayingViewModel @Inject constructor (
 
     private val _meta = MutableStateFlow(MediaItem.EMPTY)
     val metadata = _meta.asStateFlow()
+
+    /** Keeps the current song playing and replaces the songs after it with songs similar to it. */
+    fun startInstantMix(player: Player?) {
+        if (player == null) return
+        val current = player.currentMediaItem ?: return
+        viewModelScope.launch {
+            val mix = mixRepository.getInstantMix(current).drop(1)
+            if (mix.isEmpty()) {
+                Toast.makeText(context, R.string.radio_no_songs_found, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            // The mix is played in its order, after the song playing now (it may have changed meanwhile).
+            player.shuffleModeEnabled = false
+            val next = player.currentMediaItemIndex + 1
+            if (next < player.mediaItemCount) player.removeMediaItems(next, player.mediaItemCount)
+            player.addMediaItems(mix)
+        }
+    }
 
     val autoPlay = playbackSettingsManager.autoPlayFlow
     fun setAutoPlay(autoPlay: Boolean) =

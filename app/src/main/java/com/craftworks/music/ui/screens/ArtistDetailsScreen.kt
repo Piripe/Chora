@@ -81,6 +81,7 @@ import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.bleedHorizontal
 import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.delay
@@ -96,7 +97,8 @@ fun ArtistDetails(
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
     viewModel: ArtistDetailsViewModel = hiltViewModel(),
-    initialArtist: MediaModel.Artist? = null
+    initialArtist: MediaModel.Artist? = null,
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel()
 ) {
     var showLoading by remember { mutableStateOf(false) }
 
@@ -317,6 +319,9 @@ fun ArtistDetails(
                                     },
                                     ActionButtonType.SHARE to {
                                         showShareDialog = true
+                                    },
+                                    ActionButtonType.RADIO to {
+                                        artist?.let { mixViewModel.playMix({ mixViewModel.getArtistRadio(it) }) { mediaController } }
                                     },
                                 )
 

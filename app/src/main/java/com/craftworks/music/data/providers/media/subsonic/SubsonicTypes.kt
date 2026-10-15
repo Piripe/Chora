@@ -50,6 +50,10 @@ data class SubsonicBody(
     // Songs
     val song: SubsonicSong? = null,
     val songsByGenre: SubsonicSongList? = null,
+    val randomSongs: SubsonicSongList? = null,
+    val topSongs: SubsonicSongList? = null,
+    val similarSongs: SubsonicSongList? = null,
+    val similarSongs2: SubsonicSongList? = null,
 
     // Albums
     val albumList: SubsonicAlbumList? = null,

@@ -39,6 +39,7 @@ private val actionsClosingMenu = setOf(
     NowPlayingAction.ADD_TO_PLAYLIST,
     NowPlayingAction.GO_TO_ARTIST,
     NowPlayingAction.GO_TO_ALBUM,
+    NowPlayingAction.INSTANT_MIX,
 )
 
 /** The details menu: the enabled [items] available for the current track, in their order. */

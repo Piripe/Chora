@@ -117,7 +117,8 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
         ProviderFeature.PLAYLISTS,
         ProviderFeature.RATINGS,
         ProviderFeature.FILTER_BY_ID,
-        ProviderFeature.SHARING
+        ProviderFeature.SHARING,
+        ProviderFeature.RADIO
     )
 
     @Transient

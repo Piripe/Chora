@@ -78,6 +78,7 @@ import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.StringUtils
 import com.craftworks.music.utils.fadingEdge
 import kotlinx.coroutines.delay
@@ -92,7 +93,8 @@ fun AlbumDetails(
     selectedAlbumImage: Uri = Uri.EMPTY,
     navHostController: NavHostController = rememberNavController(),
     mediaController: MediaController? = null,
-    viewModel: AlbumDetailsViewModel = hiltViewModel()
+    viewModel: AlbumDetailsViewModel = hiltViewModel(),
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel()
 ) {
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
 
@@ -324,6 +326,9 @@ fun AlbumDetails(
                                     },
                                     ActionButtonType.SHARE to {
                                         showShareDialog = true
+                                    },
+                                    ActionButtonType.RADIO to {
+                                        mixViewModel.playMix({ mixViewModel.getAlbumRadio(currentAlbum[0]) }) { mediaController }
                                     },
                                 )
 

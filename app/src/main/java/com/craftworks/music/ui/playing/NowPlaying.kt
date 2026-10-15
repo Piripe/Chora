@@ -171,6 +171,7 @@ fun NowPlayingContent(
                 onHide()
                 navHostController.navigate(Screen.AlbumDetails(it, metadata?.artworkUri.toString()))
             }
+            NowPlayingAction.INSTANT_MIX -> viewModel.startInstantMix(player)
             NowPlayingAction.MENU -> viewModel.setDetailsOpen(!detailsOpen)
         }
     }

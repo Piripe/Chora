@@ -66,6 +66,7 @@ import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
+import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import com.craftworks.music.utils.StringUtils
 
@@ -77,6 +78,7 @@ fun HorizontalSongCard(
     onClick: () -> Unit,
     extraMenuItems: (@Composable (onDismiss: () -> Unit) -> Unit)? = null,
     viewModel: SongsScreenViewModel = hiltViewModel(),
+    mixViewModel: MediaCardMenuViewModel = hiltViewModel(),
     mediaController: MediaController?
 ) {
     val context = LocalContext.current
@@ -270,6 +272,12 @@ fun HorizontalSongCard(
                     MenuSheetItem(ImageVector.vectorResource(R.drawable.outline_queue_add_24), stringResource(R.string.action_add_to_queue)) {
                         SongHelper.enqueue(listOf(song), mediaController)
                         expanded = false
+                    }
+                    if (features?.contains(ProviderFeature.RADIO) == true) {
+                        MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_sensors_24), stringResource(R.string.action_instant_mix)) {
+                            mixViewModel.playMix({ mixViewModel.getInstantMix(song) }) { mediaController }
+                            expanded = false
+                        }
                     }
                     HorizontalDivider()
                     MenuSheetItem(
