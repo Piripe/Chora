@@ -37,8 +37,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -74,7 +72,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
@@ -93,6 +90,8 @@ import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
+import com.craftworks.music.ui.elements.MenuSheet
+import com.craftworks.music.ui.elements.MenuSheetItem
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
@@ -622,23 +621,8 @@ fun ReorderableCollectionItemScope.QueueItemContent(
 }
 
 @Composable
-private fun QueueMenuButton(icon: Int, text: Int, action: () -> Unit) {
-    ListItem(
-        onClick = action,
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ),
-        leadingContent = {
-            Icon(
-                imageVector = ImageVector.vectorResource(icon),
-                contentDescription = stringResource(text)
-            )
-        },
-        content = { Text(stringResource(text)) }
-    )
-}
+private fun QueueMenuButton(icon: Int, text: Int, action: () -> Unit) =
+    MenuSheetItem(ImageVector.vectorResource(icon), stringResource(text), action)
 
 @Composable
 fun QueueItemMenu(
@@ -672,72 +656,57 @@ fun QueueItemMenu(
             title = metadata.title.toString(),
             onDismissRequest = onDialogDismiss
         )
-    } else Dialog(onDismissRequest = { onDialogDismiss() }) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = queueItem.mediaItem.mediaMetadata.title.toString(),
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(8.dp)
-                    )
-                    QueueMenuButton(R.drawable.remove_circle_24px, R.string.action_remove_from_queue) {
-                        mediaController.removeMediaItem(queueIndex)
-                        onDialogDismiss()
-                    }
-                    if (advancedMenu) {
-                        HorizontalDivider()
-                        QueueMenuButton(R.drawable.vertical_align_top_24px, R.string.action_move_to_start) {
-                            mediaController.moveMediaItem(queueIndex, 0)
-                            onDialogDismiss()
-                        }
-                    }
-                    QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
-                        val to = mediaController.currentMediaItemIndex
-                        if (queueIndex > to) {
-                            mediaController.moveMediaItem(queueIndex, to+1)
-                        } else {
-                            mediaController.moveMediaItem(queueIndex, to)
-                        }
-                        onDialogDismiss()
-                    }
-                    if (advancedMenu) {
-                        QueueMenuButton(R.drawable.vertical_align_bottom_24px, R.string.action_move_to_end) {
-                            mediaController.moveMediaItem(queueIndex, mediaController.mediaItemCount-1)
-                            onDialogDismiss()
-                        }
-                        HorizontalDivider()
-                    }
-                    QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
-                        onAddToPlaylist()
-                        onDialogDismiss()
-                    }
-                    QueueMenuButton(
-                        if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
-                        if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
-                    ) {
-                        viewModel.toggleSongStar(metadata)
-                        onDialogDismiss()
-                    }
-                    if (!isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true) {
-                        QueueMenuButton(R.drawable.rounded_download_24, R.string.action_download) {
-                            showDownloadDialog = true
-                        }
-                    }
-                    if (!isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true) {
-                        QueueMenuButton(R.drawable.rounded_share_24, R.string.action_share) {
-                            showShareDialog = true
-                        }
-                    }
-                }
+    } else MenuSheet(
+        title = queueItem.mediaItem.mediaMetadata.title.toString(),
+        onDismissRequest = onDialogDismiss
+    ) {
+        QueueMenuButton(R.drawable.remove_circle_24px, R.string.action_remove_from_queue) {
+            mediaController.removeMediaItem(queueIndex)
+            onDialogDismiss()
+        }
+        if (advancedMenu) {
+            HorizontalDivider()
+            QueueMenuButton(R.drawable.vertical_align_top_24px, R.string.action_move_to_start) {
+                mediaController.moveMediaItem(queueIndex, 0)
+                onDialogDismiss()
             }
-
+        }
+        QueueMenuButton(R.drawable.play_next_24px, R.string.action_move_next) {
+            val to = mediaController.currentMediaItemIndex
+            if (queueIndex > to) {
+                mediaController.moveMediaItem(queueIndex, to+1)
+            } else {
+                mediaController.moveMediaItem(queueIndex, to)
+            }
+            onDialogDismiss()
+        }
+        if (advancedMenu) {
+            QueueMenuButton(R.drawable.vertical_align_bottom_24px, R.string.action_move_to_end) {
+                mediaController.moveMediaItem(queueIndex, mediaController.mediaItemCount-1)
+                onDialogDismiss()
+            }
+            HorizontalDivider()
+        }
+        QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
+            onAddToPlaylist()
+            onDialogDismiss()
+        }
+        QueueMenuButton(
+            if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
+            if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
+        ) {
+            viewModel.toggleSongStar(metadata)
+            onDialogDismiss()
+        }
+        if (!isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true) {
+            QueueMenuButton(R.drawable.rounded_download_24, R.string.action_download) {
+                showDownloadDialog = true
+            }
+        }
+        if (!isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true) {
+            QueueMenuButton(R.drawable.rounded_share_24, R.string.action_share) {
+                showShareDialog = true
+            }
         }
     }
 }

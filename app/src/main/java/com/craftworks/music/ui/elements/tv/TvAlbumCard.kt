@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +24,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.id
+import com.craftworks.music.ui.elements.dialogs.tv.TvAlbumDialog
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -31,11 +36,14 @@ fun TvAlbumCard(
     val albumTitle = album.mediaMetadata.title?.toString() ?: ""
     val artistName = album.mediaMetadata.artist?.toString() ?: ""
     val coverArtUrl = album.mediaMetadata.artworkUri
+    var showDialog by remember { mutableStateOf(false) }
     StandardCardContainer(
         modifier = modifier.width(128.dp),
         imageCard = {
             Card(
-                onClick = onClick, interactionSource = it, content = {
+                onClick = onClick,
+                onLongClick = { showDialog = true },
+                interactionSource = it, content = {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(coverArtUrl)
@@ -66,4 +74,11 @@ fun TvAlbumCard(
             )
         },
     )
+
+    if (showDialog) {
+        TvAlbumDialog(
+            album = album,
+            onDismissRequest = { showDialog = false }
+        )
+    }
 }

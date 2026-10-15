@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,6 +66,7 @@ import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.HorizontalSongCard
+import com.craftworks.music.ui.elements.MenuSheetItem
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
@@ -296,24 +296,16 @@ fun PlaylistDetails(
                         }
                     },
                     extraMenuItems = { onDismiss ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(R.string.action_remove_from_playlist))
-                            },
-                            onClick = {
-                                viewModel.removeSongFromPlaylist(
-                                    playlistId = playlistMetadata?.id ?: "",
-                                    songId = song.mediaMetadata.id ?: ""
-                                )
-                                onDismiss()
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_playlist_remove_24),
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                        MenuSheetItem(
+                            ImageVector.vectorResource(R.drawable.rounded_playlist_remove_24),
+                            stringResource(R.string.action_remove_from_playlist)
+                        ) {
+                            viewModel.removeSongFromPlaylist(
+                                playlistId = playlistMetadata?.id ?: "",
+                                songId = song.mediaMetadata.id ?: ""
+                            )
+                            onDismiss()
+                        }
                     },
                     mediaController = mediaController
                 )

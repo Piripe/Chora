@@ -2,6 +2,7 @@ package com.craftworks.music.ui.elements
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,7 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -73,12 +75,14 @@ fun HorizontalSongCard(
     modifier: Modifier = Modifier,
     showTrackNumber: Boolean = false,
     onClick: () -> Unit,
-    extraMenuItems: @Composable (onDismiss: () -> Unit) -> Unit = {},
+    extraMenuItems: (@Composable (onDismiss: () -> Unit) -> Unit)? = null,
     viewModel: SongsScreenViewModel = hiltViewModel(),
     mediaController: MediaController?
 ) {
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
 
+    var expanded by remember { mutableStateOf(false) }
     var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
     var showSongRatingDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
@@ -88,7 +92,6 @@ fun HorizontalSongCard(
         .collectAsStateWithLifecycle(viewModel.isSongStarred(song.mediaMetadata))
 
     Card(
-        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,
@@ -97,6 +100,14 @@ fun HorizontalSongCard(
             disabledContentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ),
         modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    expanded = true
+                }
+            )
     ) {
         Row(
             modifier = Modifier
@@ -225,7 +236,6 @@ fun HorizontalSongCard(
                 }
             }
 
-            var expanded by remember { mutableStateOf(false) }
             Box(
                 modifier = Modifier.width(48.dp)
             ) {
@@ -248,137 +258,57 @@ fun HorizontalSongCard(
                     }
                 }
 
-                DropdownMenu(
-                    modifier = Modifier,
-                    expanded = expanded,
+                if (expanded) MenuSheet(
+                    title = song.mediaMetadata.title.toString(),
                     onDismissRequest = { expanded = false }
                 ) {
-                    DropdownMenuItem (
-                        text = {
-                            Text(
-                                if (isStarred) stringResource(R.string.action_remove_from_favorites) else stringResource(
-                                    R.string.action_add_to_favorites
-                                )
-                            )
-                        },
-                        onClick = {
-                            viewModel.toggleSongStar(song.mediaMetadata)
-                            expanded = false
-                        },
-                        leadingIcon = {
-                             Icon(
-                                 imageVector = if (isStarred) ImageVector.vectorResource(
-                                    R.drawable.round_favorite_24
-                                 ) else ImageVector.vectorResource(
-                                     R.drawable.round_favorite_border_24
-                                 ),
-                                 contentDescription = stringResource(
-                                     R.string.action_remove_from_favorites
-                                 )
-                             )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.action_set_rating))
-                        },
-                        onClick = {
-                            showSongRatingDialog = true
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.rounded_star_outline_24),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.action_add_to_queue))
-                        },
-                        onClick = {
-                            SongHelper.enqueue(listOf(song), mediaController)
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.outline_queue_add_24),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.action_play_next))
-                        },
-                        onClick = {
-                            SongHelper.playNext(listOf(song), mediaController)
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.play_next_24px),
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) ?: false) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(R.string.action_add_to_playlist))
-                            },
-                            onClick = {
-                                println("Add Song To Playlist")
-                                showAddSongToPlaylistDialog = true
-                                expanded = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                    val features = song.mediaMetadata.getProvider()?.featureFlags
+                    MenuSheetItem(ImageVector.vectorResource(R.drawable.play_next_24px), stringResource(R.string.action_play_next)) {
+                        SongHelper.playNext(listOf(song), mediaController)
+                        expanded = false
                     }
-                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.DOWNLOADS) ?: false) {
-                        DropdownMenuItem(
-                            enabled = (song.mediaMetadata.getProvider()?.featureFlags?.contains(
-                                ProviderFeature.DOWNLOADS)?:false),
-                            text = {
-                                Text(stringResource(R.string.action_download))
-                            },
-                            onClick = {
-                                showDownloadDialog = true
-                                expanded = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_download_24),
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                    MenuSheetItem(ImageVector.vectorResource(R.drawable.outline_queue_add_24), stringResource(R.string.action_add_to_queue)) {
+                        SongHelper.enqueue(listOf(song), mediaController)
+                        expanded = false
                     }
-                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.SHARING) == true) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(stringResource(R.string.action_share))
-                            },
-                            onClick = {
-                                showShareDialog = true
-                                expanded = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_share_24),
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                    HorizontalDivider()
+                    MenuSheetItem(
+                        ImageVector.vectorResource(if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24),
+                        stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
+                    ) {
+                        viewModel.toggleSongStar(song.mediaMetadata)
+                        expanded = false
+                    }
+                    MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_star_outline_24), stringResource(R.string.action_set_rating)) {
+                        showSongRatingDialog = true
+                        expanded = false
+                    }
+                    if (features?.contains(ProviderFeature.PLAYLISTS) == true) {
+                        MenuSheetItem(Icons.Rounded.Add, stringResource(R.string.action_add_to_playlist)) {
+                            showAddSongToPlaylistDialog = true
+                            expanded = false
+                        }
+                    }
+                    val canDownload = features?.contains(ProviderFeature.DOWNLOADS) == true
+                    val canShare = features?.contains(ProviderFeature.SHARING) == true
+                    if (canDownload || canShare) HorizontalDivider()
+                    if (canDownload) {
+                        MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_download_24), stringResource(R.string.action_download)) {
+                            showDownloadDialog = true
+                            expanded = false
+                        }
+                    }
+                    if (canShare) {
+                        MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_share_24), stringResource(R.string.action_share)) {
+                            showShareDialog = true
+                            expanded = false
+                        }
                     }
 
-                    extraMenuItems { expanded = false }
+                    extraMenuItems?.let {
+                        HorizontalDivider()
+                        it { expanded = false }
+                    }
                 }
             }
         }
