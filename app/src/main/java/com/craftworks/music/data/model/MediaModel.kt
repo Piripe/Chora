@@ -213,6 +213,7 @@ abstract class MediaModel
         }
     }
 
+    @Serializable
     data class Playlist(
         override val id: String,
         override val providerId: String,

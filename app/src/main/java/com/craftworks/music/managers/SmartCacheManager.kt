@@ -7,17 +7,24 @@ import android.text.format.DateUtils
 import android.util.Log
 import androidx.core.content.edit
 import com.craftworks.music.R
+import com.craftworks.music.data.cache.CachedArtist
 import com.craftworks.music.data.cache.CachedArtwork
+import com.craftworks.music.data.cache.CachedPlaylist
 import com.craftworks.music.data.cache.CachedSong
 import com.craftworks.music.data.cache.LibraryCache
+import com.craftworks.music.data.cache.ListeningScore
 import com.craftworks.music.data.cache.SmartCacheDatabase
+import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.AlbumArtistListSort
 import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
+import com.craftworks.music.data.model.PlaylistListSort
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
+import com.craftworks.music.data.model.parseDateMillis
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.managers.OfflineManager.Companion.requiresNetwork
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
@@ -32,7 +39,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,10 +60,11 @@ import java.io.IOException
 import java.io.OutputStream
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class SmartCachePhase { IDLE, CHECKING, RANKING, CLEANING, DOWNLOADING }
+enum class SmartCachePhase { IDLE, CHECKING, RANKING, CLEANING, DOWNLOADING, LIBRARY }
 
 sealed interface SmartCacheError {
     /** No provider, or one that doesn't need the network (local folders). */
@@ -81,6 +92,7 @@ fun SmartCacheState.statusText(resources: Resources): String = when (phase) {
     SmartCachePhase.RANKING -> resources.getString(R.string.smart_cache_status_ranking, progress)
     SmartCachePhase.CLEANING -> resources.getString(R.string.smart_cache_status_cleaning)
     SmartCachePhase.DOWNLOADING -> resources.getString(R.string.smart_cache_status_downloading, progress, total)
+    SmartCachePhase.LIBRARY -> resources.getString(R.string.smart_cache_status_library, progress, total)
     SmartCachePhase.IDLE -> when (val error = lastError) {
         SmartCacheError.Unsupported -> resources.getString(R.string.smart_cache_error_unsupported)
         SmartCacheError.Offline -> resources.getString(R.string.smart_cache_error_offline)
@@ -99,10 +111,14 @@ fun SmartCacheState.statusText(resources: Resources): String = when (phase) {
  * Keeps the most listened songs of the media provider on disk, so they play without the network.
  *
  * A refresh (started by the user) removes the cached songs that are no longer on the provider,
- * ranks the songs (most played on the provider and in the app, then the songs of the most played
- * albums, then of the most played artists) and downloads them in that order until the cache is full.
+ * ranks the songs by [ListeningScore], where recent plays count more than old ones (the songs
+ * listened to lately, then the songs of the albums and artists listened to lately, then the same
+ * for older plays) and downloads them in that order until the cache is full. It then saves the
+ * artists of the cached songs (with their picture, biography and similar artists) and the playlists
+ * holding cached songs, so they can be browsed and searched offline too.
  * The audio files and covers are stored in the app's files, their metadata in [SmartCacheDatabase].
- * Cached songs are also added to the [LibraryCache], so they can be browsed offline after a restart.
+ * Cached songs, artists and playlists are also added to the [LibraryCache], so they can be browsed
+ * offline after a restart.
  */
 @Singleton
 class SmartCacheManager @Inject constructor(
@@ -122,6 +138,9 @@ class SmartCacheManager @Inject constructor(
     // Read from the playback and image loading threads, so kept in memory.
     private val songs = ConcurrentHashMap<String, CachedSong>()
     private val artworks = ConcurrentHashMap<String, CachedArtwork>()
+    private val artists = ConcurrentHashMap<String, CachedArtist>()
+    private val playlists = ConcurrentHashMap<String, CachedPlaylist>()
+    private val artworkDownloads = ConcurrentHashMap<String, CompletableDeferred<String?>>()
 
     /** Guards every change to the cache content (database, files and the maps above). */
     private val mutex = Mutex()
@@ -176,7 +195,7 @@ class SmartCacheManager @Inject constructor(
 
     //endregion
 
-    /** Counts a song played in the app, so the most played ones are cached first. */
+    /** Counts a song played in the app, so the songs listened to the most lately are cached first. */
     fun recordPlay(providerId: String, songId: String) {
         if (songId.isEmpty()) return
         scope.launch { database.recordAppPlay(providerId, songId, System.currentTimeMillis()) }
@@ -242,6 +261,7 @@ class SmartCacheManager @Inject constructor(
 
         applyRanking(provider, ranking)
         downloadSongs(provider, ranking, maxBytes, variant)
+        cacheArtistsAndPlaylists(provider)
         trimToSize(maxBytes)
     }
 
@@ -251,12 +271,11 @@ class SmartCacheManager @Inject constructor(
         if (cached.isEmpty()) return
         setPhase(SmartCachePhase.CHECKING, total = cached.size)
 
-        val removed = mutableListOf<CachedSong>()
-        val updated = mutableListOf<CachedSong>()
-        var checked = 0
+        val removed = ConcurrentLinkedQueue<CachedSong>()
+        val updated = ConcurrentLinkedQueue<CachedSong>()
 
         // One request per album instead of one per song.
-        for ((albumId, albumSongs) in cached.groupBy { it.song.albumId }) {
+        forEachParallel(cached.groupBy { it.song.albumId }.entries, METADATA_PARALLELISM) { (albumId, albumSongs) ->
             val album = fetchOrNull(provider) { it.getAlbumDetail(albumId) }
             val available = album?.songs?.associateBy { it.id }.orEmpty()
 
@@ -265,14 +284,13 @@ class SmartCacheManager @Inject constructor(
                 val fresh = available[cachedSong.songId]
                     ?: fetchOrNull(provider) { it.getSongDetail(cachedSong.songId) }
                 if (fresh == null) removed += cachedSong else updated += cachedSong.copy(song = fresh)
-                checked++
-                _state.update { it.copy(progress = checked) }
+                _state.update { it.copy(progress = it.progress + 1) }
             }
         }
 
         Log.d(TAG, "${removed.size} cached songs are no longer available")
         mutex.withLock {
-            database.updateCachedSongs(updated)
+            database.updateCachedSongs(updated.toList())
             updated.forEach { songs[key(it)] = it }
             deleteSongsLocked(removed)
         }
@@ -281,8 +299,9 @@ class SmartCacheManager @Inject constructor(
     }
 
     /**
-     * The songs to cache, in order: the most played songs on the provider and in the app
-     * (alternately), then the songs of the most played albums, then of the most played artists.
+     * The songs to cache, by [ListeningScore] (plays on the provider and in the app, recent ones
+     * counting more): first the songs listened to lately, then the songs of the albums and of the
+     * artists listened to lately, then the same for the ones listened to longer ago.
      * Stops once the songs fill [budgetBytes].
      */
     private suspend fun rankSongs(
@@ -291,6 +310,7 @@ class SmartCacheManager @Inject constructor(
         variant: StreamVariant
     ): Map<String, MediaModel.Song> {
         setPhase(SmartCachePhase.RANKING)
+        val now = System.currentTimeMillis()
 
         val ranking = LinkedHashMap<String, MediaModel.Song>()
         var rankedBytes = 0L
@@ -312,36 +332,13 @@ class SmartCacheManager @Inject constructor(
             _state.update { it.copy(progress = ranking.size) }
         }
 
-        // 1. Most played songs, on the provider and in the app.
-        val providerTopSongs = if (SongListSort.PLAY_COUNT in provider.supportedSongSort) {
-            Pager<MediaModel.Song>(SONG_PAGE_SIZE, { it.id }) { start ->
-                provider.getSongList(
-                    MediaQuery.SongListQuery(
-                        sortBy = SongListSort.PLAY_COUNT,
-                        sortOrder = SortOrder.DESC,
-                        limit = SONG_PAGE_SIZE,
-                        startIndex = start
-                    )
-                )
-            }
-        } else null
-        val appTopSongIds = database.getMostPlayedSongIds(provider.id)
-
-        var providerSongsDone = providerTopSongs == null
-        var appIndex = 0
-        while (!isFull() && (!providerSongsDone || appIndex < appTopSongIds.size)) {
-            if (!providerSongsDone) {
-                val song = providerTopSongs?.next(provider)
-                // Sorted by play count: the first song never played ends the list.
-                if (song == null || (song.playCount ?: 0) <= 0) providerSongsDone = true
-                else add(song)
-            }
-            if (appIndex < appTopSongIds.size) {
-                resolveSong(provider, appTopSongIds[appIndex++])?.let(::add)
+        suspend fun addSongs(songIds: List<Scored<String>>, candidates: Map<String, MediaModel.Song>) {
+            for ((songId) in songIds) {
+                if (isFull()) break
+                (candidates[songId] ?: resolveSong(provider, songId))?.let(::add)
             }
         }
 
-        // 2. Songs of the most played albums.
         val processedAlbums = mutableSetOf<String>()
         suspend fun addAlbum(albumId: String) {
             if (isFull() || !processedAlbums.add(albumId)) return
@@ -352,50 +349,165 @@ class SmartCacheManager @Inject constructor(
                 .forEach(::add)
         }
 
-        if (AlbumListSort.PLAY_COUNT in provider.supportedAlbumSort) {
-            val topAlbums = Pager<MediaModel.Album>(ALBUM_PAGE_SIZE, { it.id }) { start ->
-                provider.getAlbumList(
-                    MediaQuery.AlbumListQuery(
-                        sortBy = AlbumListSort.PLAY_COUNT,
-                        sortOrder = SortOrder.DESC,
-                        limit = ALBUM_PAGE_SIZE,
-                        startIndex = start
-                    )
-                )
-            }
-            while (!isFull()) {
-                val album = topAlbums.next(provider) ?: break
-                if ((album.playCount ?: 0.0) <= 0.0) break
+        suspend fun addAlbums(albums: List<Scored<MediaModel.Album>>) {
+            for ((album) in albums) {
+                if (isFull()) break
                 addAlbum(album.id)
             }
         }
 
-        // 3. Albums of the most played artists, their most played albums first.
-        if (AlbumArtistListSort.PLAY_COUNT in provider.supportedAlbumArtistSort) {
-            val topArtists = Pager<MediaModel.Artist>(ARTIST_PAGE_SIZE, { it.id }) { start ->
-                provider.getAlbumArtistList(
-                    MediaQuery.AlbumArtistListQuery(
-                        sortBy = AlbumArtistListSort.PLAY_COUNT,
-                        sortOrder = SortOrder.DESC,
-                        limit = ARTIST_PAGE_SIZE,
-                        startIndex = start
-                    )
-                )
-            }
-            while (!isFull()) {
-                val artist = topArtists.next(provider) ?: break
-                if ((artist.playCount ?: 0.0) <= 0.0) break
+        // The artists' albums listened to the most lately first.
+        suspend fun addArtists(artists: List<Scored<MediaModel.Artist>>) {
+            for ((artist) in artists) {
+                if (isFull()) break
                 val albums = fetchOrNull(provider) { it.getAlbumArtistDetail(artist.id).albums }.orEmpty()
-                for (album in albums.sortedByDescending { it.playCount ?: 0.0 }) {
+                for (album in albums.sortedByDescending { ListeningScore.of(it.playCount, it.lastPlayedAt, now) }) {
                     if (isFull()) break
                     addAlbum(album.id)
                 }
             }
         }
 
+        val candidates = songCandidates(provider, budgetBytes, variant, now)
+        val (recentSongs, olderSongs) = candidates.scores.partition { it.score >= ListeningScore.RECENT_MIN_SCORE }
+        addSongs(recentSongs, candidates.songs)
+
+        val albums = if (isFull()) emptyList() else albumCandidates(provider, now)
+        val (recentAlbums, olderAlbums) = albums.partition { it.score >= ListeningScore.RECENT_MIN_SCORE }
+        addAlbums(recentAlbums)
+
+        val topArtists = if (isFull()) emptyList() else artistCandidates(provider, now)
+        val (recentArtists, olderArtists) = topArtists.partition { it.score >= ListeningScore.RECENT_MIN_SCORE }
+        addArtists(recentArtists)
+
+        // Listened to a lot, but a long time ago.
+        addSongs(olderSongs, candidates.songs)
+        addAlbums(olderAlbums)
+        addArtists(olderArtists)
+
         Log.d(TAG, "Ranked ${ranking.size} songs (~$rankedBytes bytes of $budgetBytes)")
         return ranking
     }
+
+    private data class Scored<T>(val item: T, val score: Double)
+
+    /** The songs to rank, by id, and their ids by [ListeningScore], highest first. */
+    private class SongCandidates(val songs: Map<String, MediaModel.Song>, val scores: List<Scored<String>>)
+
+    /**
+     * The songs played on the provider or in the app. Only the songs played the most on the provider
+     * that may still rank within [budgetBytes] are fetched, along with the ones played lately.
+     * Songs only known from the app plays are fetched when ranked.
+     */
+    private suspend fun songCandidates(
+        provider: MediaProvider,
+        budgetBytes: Long,
+        variant: StreamVariant,
+        now: Long
+    ): SongCandidates {
+        val scores = HashMap(database.getAppPlayScores(provider.id, now))
+        val candidates = HashMap<String, MediaModel.Song>()
+
+        fun addCandidate(song: MediaModel.Song) {
+            candidates[song.id] = song
+            scores[song.id] = maxOf(scores[song.id] ?: 0.0, ListeningScore.of(song.playCount, song.lastPlayedAt, now))
+        }
+
+        // Most played: a song never scores more than its play count, so once the songs scoring
+        // at least the next play count fill the budget, the next ones can't rank anymore.
+        if (SongListSort.PLAY_COUNT in provider.supportedSongSort) {
+            val topSongs = songPager(provider, SongListSort.PLAY_COUNT)
+            var fetched = 0
+            while (fetched < MAX_TOP_SONGS) {
+                val song = topSongs.next(provider) ?: break
+                val playCount = song.playCount ?: 0
+                // Sorted by play count: the first song never played ends the list.
+                if (playCount <= 0) break
+                if (fetched > 0 && fetched % SONG_PAGE_SIZE == 0) {
+                    val coveredBytes = candidates.values
+                        .filter { (scores[it.id] ?: 0.0) >= playCount }
+                        .sumOf { songs[key(provider.id, it.id)]?.sizeBytes ?: estimateSize(it, variant) }
+                    if (coveredBytes >= budgetBytes) break
+                }
+                addCandidate(song)
+                fetched++
+            }
+        }
+
+        // Played lately, even if not often.
+        if (SongListSort.RECENTLY_PLAYED in provider.supportedSongSort) {
+            val recentSongs = songPager(provider, SongListSort.RECENTLY_PLAYED)
+            var fetched = 0
+            while (fetched++ < MAX_RECENT_SONGS) {
+                val song = recentSongs.next(provider) ?: break
+                // Sorted by last play: the first song played too long ago ends the list.
+                if (!song.isRecent(now)) break
+                addCandidate(song)
+            }
+        }
+
+        val sorted = scores.entries
+            .filter { it.value > 0 }
+            .map { Scored(it.key, it.value) }
+            .sortedByDescending { it.score }
+        return SongCandidates(candidates, sorted)
+    }
+
+    /** The albums played the most and the ones played lately, by [ListeningScore], highest first. */
+    private suspend fun albumCandidates(provider: MediaProvider, now: Long): List<Scored<MediaModel.Album>> {
+        val albums = LinkedHashMap<String, MediaModel.Album>()
+
+        suspend fun collect(sort: AlbumListSort, keep: (MediaModel.Album) -> Boolean) {
+            if (sort !in provider.supportedAlbumSort) return
+            val pager = Pager<MediaModel.Album>(ALBUM_PAGE_SIZE, { it.id }) { start ->
+                provider.getAlbumList(
+                    MediaQuery.AlbumListQuery(sortBy = sort, sortOrder = SortOrder.DESC, limit = ALBUM_PAGE_SIZE, startIndex = start)
+                )
+            }
+            var fetched = 0
+            while (fetched++ < MAX_ALBUM_CANDIDATES) {
+                val album = pager.next(provider)?.takeIf(keep) ?: break
+                albums.putIfAbsent(album.id, album)
+            }
+        }
+        collect(AlbumListSort.PLAY_COUNT) { (it.playCount ?: 0.0) > 0.0 }
+        collect(AlbumListSort.RECENTLY_PLAYED) { (it.playCount ?: 0.0) > 0.0 && it.lastPlayedAt.isRecent(now) }
+
+        return albums.values
+            .map { Scored(it, ListeningScore.of(it.playCount, it.lastPlayedAt, now)) }
+            .sortedByDescending { it.score }
+    }
+
+    /** The artists played the most, by [ListeningScore], highest first. */
+    private suspend fun artistCandidates(provider: MediaProvider, now: Long): List<Scored<MediaModel.Artist>> {
+        if (AlbumArtistListSort.PLAY_COUNT !in provider.supportedAlbumArtistSort) return emptyList()
+        val pager = Pager<MediaModel.Artist>(ARTIST_PAGE_SIZE, { it.id }) { start ->
+            provider.getAlbumArtistList(
+                MediaQuery.AlbumArtistListQuery(
+                    sortBy = AlbumArtistListSort.PLAY_COUNT,
+                    sortOrder = SortOrder.DESC,
+                    limit = ARTIST_PAGE_SIZE,
+                    startIndex = start
+                )
+            )
+        }
+        val topArtists = mutableListOf<MediaModel.Artist>()
+        while (topArtists.size < MAX_ARTIST_CANDIDATES) {
+            val artist = pager.next(provider) ?: break
+            if ((artist.playCount ?: 0.0) <= 0.0) break
+            topArtists += artist
+        }
+        return topArtists
+            .map { Scored(it, ListeningScore.of(it.playCount, it.lastPlayedAt, now)) }
+            .sortedByDescending { it.score }
+    }
+
+    private fun songPager(provider: MediaProvider, sort: SongListSort) =
+        Pager<MediaModel.Song>(SONG_PAGE_SIZE, { it.id }) { start ->
+            provider.getSongList(
+                MediaQuery.SongListQuery(sortBy = sort, sortOrder = SortOrder.DESC, limit = SONG_PAGE_SIZE, startIndex = start)
+            )
+        }
 
     /** Drops the cached songs that are no longer ranked, and stores the new ranks. */
     private suspend fun applyRanking(provider: MediaProvider, ranking: Map<String, MediaModel.Song>) {
@@ -425,14 +537,28 @@ class SmartCacheManager @Inject constructor(
         val missing = ranking.values.withIndex().filter { (_, song) -> !songs.containsKey(key(provider.id, song.id)) }
         setPhase(SmartCachePhase.DOWNLOADING, total = missing.size)
 
-        missing.forEachIndexed { done, (rank, song) ->
-            currentCoroutineContext().ensureActive()
+        // Space taken by the downloads in progress, not counted by usedBytes() yet.
+        val budgetLock = Any()
+        var reservedBytes = 0L
+
+        // Taken in ranking order, so the most listened songs are still downloaded first.
+        forEachParallel(missing, SONG_DOWNLOAD_PARALLELISM) { (rank, song) ->
             val estimate = estimateSize(song, variant)
-            if (usedBytes() + estimate <= maxBytes) {
-                if (songsDir.usableSpace < estimate + MIN_FREE_SPACE_BYTES) throw RefreshException(SmartCacheError.NoSpace)
-                downloadSong(provider, song, rank, variant)
+            val inProgressBytes = synchronized(budgetLock) {
+                if (usedBytes() + reservedBytes + estimate > maxBytes) null
+                else reservedBytes.also { reservedBytes += estimate }
             }
-            _state.update { it.copy(progress = done + 1) }
+            if (inProgressBytes != null) {
+                try {
+                    if (songsDir.usableSpace < inProgressBytes + estimate + MIN_FREE_SPACE_BYTES) {
+                        throw RefreshException(SmartCacheError.NoSpace)
+                    }
+                    downloadSong(provider, song, rank, variant)
+                } finally {
+                    synchronized(budgetLock) { reservedBytes -= estimate }
+                }
+            }
+            _state.update { it.copy(progress = it.progress + 1) }
         }
     }
 
@@ -478,22 +604,37 @@ class SmartCacheManager @Inject constructor(
     }
 
     /** Downloads the cover of a song if not cached yet, and returns its key. */
-    private suspend fun cacheArtwork(provider: MediaProvider, imageId: String): String? {
+    private suspend fun cacheArtwork(provider: MediaProvider, imageId: String): String? =
         // Same URL as the one shown by the player, see MediaModel.Song.toMediaItem.
-        val url = provider.getImageUrl(imageId, LibraryType.SONG, 600)
+        cacheArtwork(provider.getImageUrl(imageId, LibraryType.SONG, 600))
+
+    /** Downloads the image at [url] if not cached yet, and returns its key. */
+    private suspend fun cacheArtwork(url: String): String? {
+        if (!url.startsWith("http")) return null
         val key = artworkKey(url)
         if (artworks.containsKey(key)) return key
 
-        val fileName = UUID.randomUUID().toString()
-        val file = File(artworksDir, fileName)
-        val size = download(url, file, image = true) ?: return null
+        // The songs of an album share their cover: download it once, the others wait for it.
+        val pending = CompletableDeferred<String?>()
+        artworkDownloads.putIfAbsent(key, pending)?.let { return it.await() }
+        var result: String? = null
+        try {
+            // Another download may have finished just before.
+            if (artworks.containsKey(key)) return key.also { result = it }
 
-        val artwork = CachedArtwork(key, fileName, size)
-        mutex.withLock {
-            database.putCachedArtwork(artwork)
-            artworks[key] = artwork
+            val fileName = UUID.randomUUID().toString()
+            val size = download(url, File(artworksDir, fileName), image = true) ?: return null
+            val artwork = CachedArtwork(key, fileName, size)
+            mutex.withLock {
+                database.putCachedArtwork(artwork)
+                artworks[key] = artwork
+            }
+            result = key
+            return key
+        } finally {
+            pending.complete(result)
+            artworkDownloads.remove(key, pending)
         }
-        return key
     }
 
     /** Downloads [url] into [target], returning its size, or null (and no file) if it failed. */
@@ -542,12 +683,138 @@ class SmartCacheManager @Inject constructor(
 
     //endregion
 
+    //region Artists and playlists
+
+    /**
+     * Saves the artists of the cached songs and the playlists holding cached songs, with their
+     * pictures, and drops the ones no cached song needs anymore.
+     */
+    private suspend fun cacheArtistsAndPlaylists(provider: MediaProvider) {
+        val cachedSongs = songs.values.filter { it.providerId == provider.id }
+        val songArtists = cachedSongs
+            .flatMap { it.song.artistsToCache() }
+            .filter { it.id.isNotBlank() }
+            .distinctBy { it.id }
+        val playlistList = if (ProviderFeature.PLAYLISTS in provider.featureFlags) fetchPlaylists(provider) else emptyList()
+        setPhase(SmartCachePhase.LIBRARY, total = songArtists.size + playlistList.size)
+
+        val cachedSongIds = cachedSongs.mapTo(HashSet()) { it.songId }
+        val tasks = songArtists.map { artist -> suspend { cacheArtist(provider, artist) } } +
+            playlistList.map { playlist -> suspend { cachePlaylist(provider, playlist, cachedSongIds) } }
+        forEachParallel(tasks, METADATA_PARALLELISM) { task ->
+            task()
+            _state.update { it.copy(progress = it.progress + 1) }
+        }
+
+        // Playlists deleted on the provider, or without cached songs anymore.
+        val listedIds = playlistList.mapTo(HashSet()) { it.id }
+        mutex.withLock {
+            val removed = playlists.values.filter { it.providerId == provider.id && it.playlistId !in listedIds }
+            database.deleteCachedPlaylists(removed)
+            removed.forEach { playlists.remove(key(it.providerId, it.playlistId)) }
+            deleteUnusedLibraryLocked()
+            deleteUnusedArtworksLocked()
+        }
+        updateUsage()
+    }
+
+    /** Saves [songArtist] with its details, biography, similar artists and pictures. */
+    private suspend fun cacheArtist(provider: MediaProvider, songArtist: MediaModel.Artist) {
+        val previous = artists[key(provider.id, songArtist.id)]?.artist
+        val (detail, info) = coroutineScope {
+            val detail = async { fetchOrNull(provider) { it.getAlbumArtistDetail(songArtist.id).artist } }
+            val info = async { fetchOrNull(provider) { it.getAlbumArtistInfo(songArtist.id) } }
+            detail.await() to info.await()
+        }
+
+        val base = detail ?: previous ?: songArtist
+        val artist = base.copy(
+            biography = info?.biography?.takeIf { it.isNotBlank() } ?: base.biography ?: previous?.biography,
+            imageUrl = base.imageUrl ?: info?.imageUrl ?: previous?.imageUrl,
+            similarArtists = info?.similarArtists ?: base.similarArtists.ifEmpty { previous?.similarArtists.orEmpty() },
+        )
+
+        // Every URL the screens may show it with, see ArtistCard and ArtistDetailsScreen.
+        val urls = listOfNotNull(
+            artist.imageUrl,
+            info?.imageUrl,
+            artist.imageId?.let { provider.getImageUrl(it, LibraryType.ALBUM_ARTIST, 600) },
+        ).distinctBy { artworkKey(it) }
+        val artworkKeys = coroutineScope { urls.map { async { cacheArtwork(it) } }.awaitAll() }.filterNotNull()
+
+        val cached = CachedArtist(provider.id, artist, artworkKeys)
+        mutex.withLock {
+            database.putCachedArtists(listOf(cached))
+            artists[key(provider.id, artist.id)] = cached
+        }
+        publishLibrary(listOf(cached), emptyList())
+    }
+
+    /** Saves [playlist] if it holds cached songs, or drops it if not anymore. */
+    private suspend fun cachePlaylist(provider: MediaProvider, playlist: MediaModel.Playlist, cachedSongIds: Set<String>) {
+        val playlistKey = key(provider.id, playlist.id)
+        val playlistSongs = fetchOrNull(provider) { it.getPlaylistSongList(playlist.id) } ?: return
+        if (playlistSongs.none { it.id in cachedSongIds }) {
+            mutex.withLock {
+                playlists.remove(playlistKey)?.let { database.deleteCachedPlaylists(listOf(it)) }
+            }
+            return
+        }
+
+        val urls = listOfNotNull(
+            playlist.imageUrl,
+            playlist.imageId?.let { provider.getImageUrl(it, LibraryType.PLAYLIST) },
+        ).distinctBy { artworkKey(it) }
+        val artworkKeys = coroutineScope { urls.map { async { cacheArtwork(it) } }.awaitAll() }.filterNotNull()
+
+        val cached = CachedPlaylist(provider.id, playlist, playlistSongs.map { it.id }, artworkKeys)
+        mutex.withLock {
+            database.putCachedPlaylists(listOf(cached))
+            playlists[playlistKey] = cached
+        }
+        publishLibrary(emptyList(), listOf(cached))
+    }
+
+    private suspend fun fetchPlaylists(provider: MediaProvider): List<MediaModel.Playlist> {
+        val pager = Pager<MediaModel.Playlist>(PLAYLIST_PAGE_SIZE, { it.id }) { start ->
+            provider.getPlaylistList(
+                MediaQuery.PlaylistListQuery(
+                    sortBy = PlaylistListSort.NAME,
+                    sortOrder = SortOrder.ASC,
+                    limit = PLAYLIST_PAGE_SIZE,
+                    startIndex = start
+                )
+            )
+        }
+        return buildList { while (true) add(pager.next(provider) ?: break) }
+    }
+
+    /** Drops the artists and playlists without cached songs anymore. */
+    private fun deleteUnusedLibraryLocked() {
+        val songIds = songs.keys
+        val artistIds = songs.values.flatMapTo(HashSet()) { cached ->
+            cached.song.artistsToCache().map { key(cached.providerId, it.id) }
+        }
+
+        val unusedArtists = artists.filterKeys { it !in artistIds }.values.toList()
+        database.deleteCachedArtists(unusedArtists)
+        unusedArtists.forEach { artists.remove(key(it.providerId, it.artistId)) }
+
+        val unusedPlaylists = playlists.values.filter { cached ->
+            cached.songIds.none { key(cached.providerId, it) in songIds }
+        }
+        database.deleteCachedPlaylists(unusedPlaylists)
+        unusedPlaylists.forEach { playlists.remove(key(it.providerId, it.playlistId)) }
+    }
+
+    //endregion
+
     //region Pre-fetched tracks
 
     /**
      * Offers a track the player pre-fetched (fully downloaded, in RAM) to the smart cache.
-     * It is kept if the cache has room for it, or if it was played more than the least played
-     * cached songs, which are then dropped to make room. [write] copies the track to a stream.
+     * It is kept if the cache has room for it, or if its [ListeningScore] is higher than the one of
+     * the cached songs listened to the least lately, which are then dropped to make room. [write] copies the track to a stream.
      */
     fun offerPrefetchedTrack(uri: Uri, variant: StreamVariant, sizeBytes: Long, write: (OutputStream) -> Unit) {
         // A refresh decides what to keep on its own.
@@ -590,10 +857,11 @@ class SmartCacheManager @Inject constructor(
                 return
             }
 
-        val playCounts = database.getAppPlayCounts(providerId)
-        val plays = playScore(song, playCounts)
+        val now = System.currentTimeMillis()
+        val appScores = database.getAppPlayScores(providerId, now)
+        val score = listeningScore(song, appScores, now)
         // Cheap check first, to avoid writing the file for nothing. Done again below, under the lock.
-        if (evictionsFor(providerId, plays, sizeBytes, maxBytes, playCounts) == null) return
+        if (evictionsFor(providerId, score, sizeBytes, maxBytes, appScores, now) == null) return
         if (songsDir.usableSpace < sizeBytes + MIN_FREE_SPACE_BYTES) return
 
         val fileName = UUID.randomUUID().toString()
@@ -614,7 +882,7 @@ class SmartCacheManager @Inject constructor(
 
         val added: CachedSong? = mutex.withLock {
             val evicted = if (songs.containsKey(key(providerId, songId)) || refreshJob?.isActive == true) null
-                else evictionsFor(providerId, plays, sizeBytes, maxBytes, playCounts)
+                else evictionsFor(providerId, score, sizeBytes, maxBytes, appScores, now)
             if (evicted == null) {
                 deleteUnusedArtworksLocked()
                 return@withLock null
@@ -629,12 +897,12 @@ class SmartCacheManager @Inject constructor(
                 bitrate = variant.bitrate,
                 format = variant.format,
                 artworkKey = artworkKey,
-                rank = rankFor(providerId, plays, playCounts),
+                rank = rankFor(providerId, score, appScores, now),
                 cachedAt = System.currentTimeMillis(),
             )
             database.putCachedSong(cached)
             songs[key(cached)] = cached
-            Log.d(TAG, "Kept pre-fetched track $songId ($plays plays), dropped ${evicted.size} songs")
+            Log.d(TAG, "Kept pre-fetched track $songId (score $score), dropped ${evicted.size} songs")
             cached
         }
 
@@ -647,26 +915,27 @@ class SmartCacheManager @Inject constructor(
     }
 
     /**
-     * The cached songs to drop so a song played [plays] times fits, least played first:
-     * none if there is room, null if it can't fit without dropping songs played as much or more.
+     * The cached songs to drop so a song with a [ListeningScore] of [score] fits, lowest score first:
+     * none if there is room, null if it can't fit without dropping songs scoring as much or more.
      */
     private fun evictionsFor(
         providerId: String,
-        plays: Int,
+        score: Double,
         sizeBytes: Long,
         maxBytes: Long,
-        playCounts: Map<String, Int>
+        appScores: Map<String, Double>,
+        now: Long
     ): List<CachedSong>? {
         var freeBytes = maxBytes - usedBytes()
         if (freeBytes >= sizeBytes) return emptyList()
 
         val evicted = mutableListOf<CachedSong>()
-        val lessPlayed = songs.values
+        val lowerScored = songs.values
             .filter { it.providerId == providerId }
-            .map { it to playScore(it.song, playCounts) }
-            .filter { (_, cachedPlays) -> cachedPlays < plays }
-            .sortedWith(compareBy<Pair<CachedSong, Int>> { it.second }.thenByDescending { it.first.rank })
-        for ((cached, _) in lessPlayed) {
+            .map { it to listeningScore(it.song, appScores, now) }
+            .filter { (_, cachedScore) -> cachedScore < score }
+            .sortedWith(compareBy<Pair<CachedSong, Double>> { it.second }.thenByDescending { it.first.rank })
+        for ((cached, _) in lowerScored) {
             evicted += cached
             freeBytes += cached.sizeBytes
             if (freeBytes >= sizeBytes) return evicted
@@ -674,10 +943,10 @@ class SmartCacheManager @Inject constructor(
         return null
     }
 
-    /** Places a song played [plays] times just before the cached songs played less. */
-    private fun rankFor(providerId: String, plays: Int, playCounts: Map<String, Int>): Int {
+    /** Places a song with a [ListeningScore] of [score] just before the cached songs scoring less. */
+    private fun rankFor(providerId: String, score: Double, appScores: Map<String, Double>, now: Long): Int {
         val providerSongs = songs.values.filter { it.providerId == providerId }
-        return providerSongs.filter { playScore(it.song, playCounts) < plays }.minOfOrNull { it.rank }
+        return providerSongs.filter { listeningScore(it.song, appScores, now) < score }.minOfOrNull { it.rank }
             ?: providerSongs.maxOfOrNull { it.rank + 1 }
             ?: 0
     }
@@ -717,8 +986,10 @@ class SmartCacheManager @Inject constructor(
     suspend fun clear() {
         loaded.await()
         mutex.withLock {
-            if (songs.isEmpty() && artworks.isEmpty()) return@withLock
+            if (songs.isEmpty() && artworks.isEmpty() && artists.isEmpty() && playlists.isEmpty()) return@withLock
             deleteSongsLocked(songs.values.toList())
+            deleteUnusedLibraryLocked()
+            deleteUnusedArtworksLocked()
         }
         updateUsage()
     }
@@ -731,12 +1002,15 @@ class SmartCacheManager @Inject constructor(
             File(songsDir, it.fileName).delete()
         }
 
+        deleteUnusedLibraryLocked()
         deleteUnusedArtworksLocked()
     }
 
-    /** Covers are shared by the songs of an album, only drop the ones no song uses anymore. */
+    /** Covers are shared by the songs of an album, only drop the ones no song, artist or playlist uses anymore. */
     private fun deleteUnusedArtworksLocked() {
         val usedArtworks = songs.values.mapNotNullTo(HashSet()) { it.artworkKey }
+        artists.values.flatMapTo(usedArtworks) { it.artworkKeys }
+        playlists.values.flatMapTo(usedArtworks) { it.artworkKeys }
         val unusedArtworks = artworks.keys.filter { it !in usedArtworks }
         database.deleteCachedArtworks(unusedArtworks)
         unusedArtworks.forEach { key ->
@@ -771,7 +1045,13 @@ class SmartCacheManager @Inject constructor(
 
         cachedSongs.forEach { songs[key(it)] = it }
         cachedArtworks.forEach { artworks[it.key] = it }
+        database.getCachedArtists().forEach { artists[key(it.providerId, it.artistId)] = it }
+        database.getCachedPlaylists().forEach { playlists[key(it.providerId, it.playlistId)] = it }
+        deleteUnusedLibraryLocked()
+        deleteUnusedArtworksLocked()
+
         publishToLibraryCache(cachedSongs)
+        publishLibrary(artists.values, playlists.values)
 
         _state.update {
             it.copy(lastRefresh = prefs.getLong(LAST_REFRESH_KEY, 0).takeIf { time -> time > 0 })
@@ -805,6 +1085,29 @@ class SmartCacheManager @Inject constructor(
         }
     }
 
+    /** Makes the cached artists (with their biography) and playlists (with their cached songs) browsable offline. */
+    private fun publishLibrary(cachedArtists: Collection<CachedArtist>, cachedPlaylists: Collection<CachedPlaylist>) {
+        cachedArtists.groupBy { it.providerId }.forEach { (providerId, providerArtists) ->
+            libraryCache.putArtists(providerId, providerArtists.map { it.artist })
+            providerArtists.forEach { cached ->
+                val artist = cached.artist
+                libraryCache.putArtistInfo(
+                    providerId,
+                    artist.id,
+                    AlbumArtistInfo(artist.biography, artist.imageUrl, artist.similarArtists.ifEmpty { null })
+                )
+            }
+        }
+        cachedPlaylists.groupBy { it.providerId }.forEach { (providerId, providerPlaylists) ->
+            libraryCache.putPlaylists(providerId, providerPlaylists.map { it.playlist })
+            providerPlaylists.forEach { cached ->
+                // Only the cached songs can be played offline.
+                val playlistSongs = cached.songIds.mapNotNull { songs[key(providerId, it)]?.song }
+                libraryCache.putPlaylistSongs(providerId, cached.playlistId, playlistSongs)
+            }
+        }
+    }
+
     private suspend fun resolveSong(provider: MediaProvider, songId: String): MediaModel.Song? =
         songs[key(provider.id, songId)]?.song
             ?: libraryCache.getSong(provider.id, songId)
@@ -835,6 +1138,24 @@ class SmartCacheManager @Inject constructor(
 
     private fun setPhase(phase: SmartCachePhase, total: Int = 0) {
         _state.update { it.copy(phase = phase, progress = 0, total = total) }
+    }
+
+    /**
+     * Runs [block] on [items], [parallelism] at a time, taking them in order.
+     * The first failure cancels the others and is rethrown.
+     */
+    private suspend fun <T : Any> forEachParallel(items: Collection<T>, parallelism: Int, block: suspend (T) -> Unit) {
+        val queue = ConcurrentLinkedQueue(items)
+        coroutineScope {
+            repeat(minOf(parallelism, items.size)) {
+                launch {
+                    while (true) {
+                        ensureActive()
+                        block(queue.poll() ?: break)
+                    }
+                }
+            }
+        }
     }
 
     /** Iterates over a paginated provider list. */
@@ -881,14 +1202,36 @@ class SmartCacheManager @Inject constructor(
         private const val SONG_PAGE_SIZE = 200
         private const val ALBUM_PAGE_SIZE = 100
         private const val ARTIST_PAGE_SIZE = 100
+        private const val PLAYLIST_PAGE_SIZE = 100
         private const val MAX_CONSECUTIVE_MISSES = 50
+
+        /** Songs downloaded at once: each one may be transcoded by the server. */
+        private const val SONG_DOWNLOAD_PARALLELISM = 4
+        /** Albums, artists and playlists fetched at once, small requests. */
+        private const val METADATA_PARALLELISM = 6
+        private const val MAX_TOP_SONGS = 5000
+        private const val MAX_RECENT_SONGS = 2000
+        private const val MAX_ALBUM_CANDIDATES = 500
+        private const val MAX_ARTIST_CANDIDATES = 200
+
+        /** A single play older than this scores below [ListeningScore.RECENT_MIN_SCORE]. */
+        private val RECENT_WINDOW_MS = ListeningScore.HALF_LIFE_MS
 
         private fun key(providerId: String, songId: String) = "$providerId/$songId"
         private fun key(cached: CachedSong) = key(cached.providerId, cached.songId)
 
-        /** How many times a song was played: on the provider, or in the app if more (e.g. not scrobbled yet). */
-        private fun playScore(song: MediaModel.Song, appPlayCounts: Map<String, Int>): Int =
-            maxOf(song.playCount ?: 0, appPlayCounts[song.id] ?: 0)
+        /** The artists shown for a song, kept along with it. */
+        private fun MediaModel.Song.artistsToCache(): List<MediaModel.Artist> = albumArtists + artists
+
+        /** A song's [ListeningScore]: from its plays on the provider, or in the app if more (e.g. not scrobbled yet). */
+        private fun listeningScore(song: MediaModel.Song, appScores: Map<String, Double>, now: Long): Double =
+            maxOf(ListeningScore.of(song.playCount, song.lastPlayedAt, now), appScores[song.id] ?: 0.0)
+
+        /** Played recently enough for a play to still count, see [ListeningScore.RECENT_MIN_SCORE]. */
+        private fun String?.isRecent(now: Long): Boolean =
+            parseDateMillis(this)?.let { now - it <= RECENT_WINDOW_MS } == true
+
+        private fun MediaModel.Song.isRecent(now: Long) = (playCount ?: 0) > 0 && lastPlayedAt.isRecent(now)
 
         /** The format doesn't matter when the original file is streamed. */
         private fun StreamVariant.sameQualityAs(other: StreamVariant): Boolean =

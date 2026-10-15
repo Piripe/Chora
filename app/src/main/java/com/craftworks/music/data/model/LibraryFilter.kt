@@ -354,7 +354,7 @@ private object LibraryFilterValues {
     private fun genres(genres: List<MediaModel.Genre>) =
         FilterValue.Text(genres.map { it.name }.filter { it.isNotEmpty() }, genres.mapNotNull { it.id })
     private fun number(value: kotlin.Number?) = FilterValue.Number(value?.toDouble())
-    private fun date(value: String?) = FilterValue.Date(parseDate(value))
+    private fun date(value: String?) = FilterValue.Date(parseDateMillis(value))
     private val none = FilterValue.Text(emptyList())
 
     fun song(song: MediaModel.Song, field: FilterField): FilterValue = when (field) {
@@ -426,14 +426,14 @@ private object LibraryFilterValues {
         FilterField.LAST_PLAYED -> date(artist.lastPlayedAt)
         else -> none
     }
+}
 
-    /** Providers return ISO dates (Navidrome, Subsonic) or epoch seconds (local MediaStore). */
-    private fun parseDate(value: String?): Long? {
-        if (value.isNullOrBlank()) return null
-        value.toLongOrNull()?.let { return if (it < 100_000_000_000L) it * 1000 else it }
-        return try { Instant.parse(value).toEpochMilli() } catch (_: Exception) { null }
-            ?: try { OffsetDateTime.parse(value).toInstant().toEpochMilli() } catch (_: Exception) { null }
-            ?: try { LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
-            ?: try { LocalDate.parse(value.take(10)).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
-    }
+/** Providers return ISO dates (Navidrome, Subsonic) or epoch seconds (local MediaStore). */
+fun parseDateMillis(value: String?): Long? {
+    if (value.isNullOrBlank()) return null
+    value.toLongOrNull()?.let { return if (it < 100_000_000_000L) it * 1000 else it }
+    return try { Instant.parse(value).toEpochMilli() } catch (_: Exception) { null }
+        ?: try { OffsetDateTime.parse(value).toInstant().toEpochMilli() } catch (_: Exception) { null }
+        ?: try { LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
+        ?: try { LocalDate.parse(value.take(10)).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
 }

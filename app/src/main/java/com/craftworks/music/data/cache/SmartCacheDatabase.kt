@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.craftworks.music.data.model.MediaModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,11 +34,29 @@ data class CachedSong(
 
 data class CachedArtwork(val key: String, val fileName: String, val sizeBytes: Long)
 
+/**
+ * An artist of the cached songs, with its biography and similar artists, so it can be browsed and
+ * searched offline. [artworkKeys] are its pictures in `cached_artworks`.
+ */
+data class CachedArtist(val providerId: String, val artist: MediaModel.Artist, val artworkKeys: List<String>) {
+    val artistId: String get() = artist.id
+}
+
+/** A playlist with cached songs. [songIds] are all its songs, cached or not, in order. */
+data class CachedPlaylist(
+    val providerId: String,
+    val playlist: MediaModel.Playlist,
+    val songIds: List<String>,
+    val artworkKeys: List<String>,
+) {
+    val playlistId: String get() = playlist.id
+}
+
 /** A scrobble that couldn't be sent to the provider, to be sent once back online. */
 data class PendingScrobble(val id: Long, val providerId: String, val songId: String, val playedAt: Long)
 
 /**
- * Stores the smart cache metadata (cached songs and covers), how many times each song was played
+ * Stores the smart cache metadata (cached songs, their artists and playlists, and covers), how many times each song was played
  * in the app, and the scrobbles waiting to be sent to the provider.
  */
 @Singleton
@@ -80,6 +101,8 @@ class SmartCacheDatabase @Inject constructor(
             """.trimIndent()
         )
 
+        createLibraryTables(db)
+
         db.execSQL(
             """
             CREATE TABLE app_plays (
@@ -87,6 +110,7 @@ class SmartCacheDatabase @Inject constructor(
                 song_id TEXT NOT NULL,
                 play_count INTEGER NOT NULL,
                 last_played_at INTEGER NOT NULL,
+                score REAL NOT NULL DEFAULT 0,
                 PRIMARY KEY (provider_id, song_id)
             )
             """.trimIndent()
@@ -106,6 +130,38 @@ class SmartCacheDatabase @Inject constructor(
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Append schema migrations here when DATABASE_VERSION is bumped.
+        if (oldVersion < 2) {
+            // The older plays aren't dated, they are all counted at the last one.
+            db.execSQL("ALTER TABLE app_plays ADD COLUMN score REAL NOT NULL DEFAULT 0")
+            db.execSQL("UPDATE app_plays SET score = play_count")
+        }
+        if (oldVersion < 3) createLibraryTables(db)
+    }
+
+    private fun createLibraryTables(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE cached_artists (
+                provider_id TEXT NOT NULL,
+                artist_id TEXT NOT NULL,
+                metadata TEXT NOT NULL,
+                artwork_keys TEXT NOT NULL,
+                PRIMARY KEY (provider_id, artist_id)
+            )
+            """.trimIndent()
+        )
+        db.execSQL(
+            """
+            CREATE TABLE cached_playlists (
+                provider_id TEXT NOT NULL,
+                playlist_id TEXT NOT NULL,
+                metadata TEXT NOT NULL,
+                song_ids TEXT NOT NULL,
+                artwork_keys TEXT NOT NULL,
+                PRIMARY KEY (provider_id, playlist_id)
+            )
+            """.trimIndent()
+        )
     }
 
     //region Cached songs
@@ -138,6 +194,78 @@ class SmartCacheDatabase @Inject constructor(
     fun deleteCachedSongs(songs: List<CachedSong>) = transaction {
         songs.forEach {
             delete("cached_songs", "provider_id = ? AND song_id = ?", arrayOf(it.providerId, it.songId))
+        }
+    }
+
+    //endregion
+
+    //region Artists and playlists
+
+    fun getCachedArtists(): List<CachedArtist> =
+        readableDatabase.query("cached_artists", null, null, null, null, null, null).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    val artist = cursor.decode(MediaModel.Artist.serializer(), "metadata") ?: continue
+                    add(
+                        CachedArtist(
+                            providerId = cursor.getString(cursor.getColumnIndexOrThrow("provider_id")),
+                            artist = artist,
+                            artworkKeys = cursor.decode(stringList, "artwork_keys").orEmpty(),
+                        )
+                    )
+                }
+            }
+        }
+
+    fun getCachedPlaylists(): List<CachedPlaylist> =
+        readableDatabase.query("cached_playlists", null, null, null, null, null, null).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    val playlist = cursor.decode(MediaModel.Playlist.serializer(), "metadata") ?: continue
+                    add(
+                        CachedPlaylist(
+                            providerId = cursor.getString(cursor.getColumnIndexOrThrow("provider_id")),
+                            playlist = playlist,
+                            songIds = cursor.decode(stringList, "song_ids").orEmpty(),
+                            artworkKeys = cursor.decode(stringList, "artwork_keys").orEmpty(),
+                        )
+                    )
+                }
+            }
+        }
+
+    fun putCachedArtists(artists: List<CachedArtist>) = transaction {
+        artists.forEach { cached ->
+            insertWithOnConflict("cached_artists", null, ContentValues().apply {
+                put("provider_id", cached.providerId)
+                put("artist_id", cached.artistId)
+                put("metadata", json.encodeToString(MediaModel.Artist.serializer(), cached.artist))
+                put("artwork_keys", json.encodeToString(stringList, cached.artworkKeys))
+            }, SQLiteDatabase.CONFLICT_REPLACE)
+        }
+    }
+
+    fun putCachedPlaylists(playlists: List<CachedPlaylist>) = transaction {
+        playlists.forEach { cached ->
+            insertWithOnConflict("cached_playlists", null, ContentValues().apply {
+                put("provider_id", cached.providerId)
+                put("playlist_id", cached.playlistId)
+                put("metadata", json.encodeToString(MediaModel.Playlist.serializer(), cached.playlist))
+                put("song_ids", json.encodeToString(stringList, cached.songIds))
+                put("artwork_keys", json.encodeToString(stringList, cached.artworkKeys))
+            }, SQLiteDatabase.CONFLICT_REPLACE)
+        }
+    }
+
+    fun deleteCachedArtists(artists: List<CachedArtist>) = transaction {
+        artists.forEach {
+            delete("cached_artists", "provider_id = ? AND artist_id = ?", arrayOf(it.providerId, it.artistId))
+        }
+    }
+
+    fun deleteCachedPlaylists(playlists: List<CachedPlaylist>) = transaction {
+        playlists.forEach {
+            delete("cached_playlists", "provider_id = ? AND playlist_id = ?", arrayOf(it.providerId, it.playlistId))
         }
     }
 
@@ -181,36 +309,41 @@ class SmartCacheDatabase @Inject constructor(
 
     //region App plays
 
-    // No UPSERT: it needs SQLite 3.24, which older Android versions don't ship.
+    /** Counts a play, and adds it to the song's [ListeningScore] after wearing down the older plays. */
     fun recordAppPlay(providerId: String, songId: String, playedAt: Long) = transaction {
-        execSQL(
-            "UPDATE app_plays SET play_count = play_count + 1, last_played_at = ? WHERE provider_id = ? AND song_id = ?",
-            arrayOf<Any>(playedAt, providerId, songId)
-        )
-        insertWithOnConflict("app_plays", null, ContentValues().apply {
-            put("provider_id", providerId)
-            put("song_id", songId)
-            put("play_count", 1)
-            put("last_played_at", playedAt)
-        }, SQLiteDatabase.CONFLICT_IGNORE)
+        val args = arrayOf(providerId, songId)
+        val previous = rawQuery(
+            "SELECT score, last_played_at FROM app_plays WHERE provider_id = ? AND song_id = ?", args
+        ).use { cursor -> if (cursor.moveToFirst()) cursor.getDouble(0) to cursor.getLong(1) else null }
+
+        if (previous == null) {
+            insert("app_plays", null, ContentValues().apply {
+                put("provider_id", providerId)
+                put("song_id", songId)
+                put("play_count", 1)
+                put("last_played_at", playedAt)
+                put("score", 1.0)
+            })
+        } else {
+            val (score, lastPlayedAt) = previous
+            execSQL(
+                "UPDATE app_plays SET play_count = play_count + 1, last_played_at = ?, score = ? WHERE provider_id = ? AND song_id = ?",
+                arrayOf<Any>(maxOf(playedAt, lastPlayedAt), ListeningScore.decay(score, playedAt - lastPlayedAt) + 1, providerId, songId)
+            )
+        }
     }
 
-    /** The ids of the songs played the most in the app on [providerId], most played first. */
-    fun getMostPlayedSongIds(providerId: String): List<String> =
+    /** The [ListeningScore] at [now] of each song played in the app on [providerId]. */
+    fun getAppPlayScores(providerId: String, now: Long): Map<String, Double> =
         readableDatabase.query(
-            "app_plays", arrayOf("song_id"), "provider_id = ?", arrayOf(providerId),
-            null, null, "play_count DESC, last_played_at DESC"
-        ).use { cursor ->
-            buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
-        }
-
-    /** How many times each song of [providerId] was played in the app. */
-    fun getAppPlayCounts(providerId: String): Map<String, Int> =
-        readableDatabase.query(
-            "app_plays", arrayOf("song_id", "play_count"), "provider_id = ?", arrayOf(providerId),
+            "app_plays", arrayOf("song_id", "score", "last_played_at"), "provider_id = ?", arrayOf(providerId),
             null, null, null
         ).use { cursor ->
-            buildMap { while (cursor.moveToNext()) put(cursor.getString(0), cursor.getInt(1)) }
+            buildMap {
+                while (cursor.moveToNext()) {
+                    put(cursor.getString(0), ListeningScore.decay(cursor.getDouble(1), now - cursor.getLong(2)))
+                }
+            }
         }
 
     //endregion
@@ -263,6 +396,13 @@ class SmartCacheDatabase @Inject constructor(
         }
     }
 
+    private fun <T> Cursor.decode(serializer: KSerializer<T>, column: String): T? = try {
+        json.decodeFromString(serializer, getString(getColumnIndexOrThrow(column)))
+    } catch (e: Exception) {
+        Log.w(TAG, "Can't read $column", e)
+        null
+    }
+
     private fun CachedSong.toContentValues() = ContentValues().apply {
         put("provider_id", providerId)
         put("song_id", song.id)
@@ -305,6 +445,8 @@ class SmartCacheDatabase @Inject constructor(
     companion object {
         private const val TAG = "SmartCacheDatabase"
         private const val DATABASE_NAME = "smart_cache.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 3
+
+        private val stringList = ListSerializer(String.serializer())
     }
 }

@@ -14,6 +14,7 @@ data class GainInfo(
     val track: Float? = null
 )
 
+@Serializable
 data class PlaylistRules(
     val limit: Int? = null,
     val limitPercent: Int? = null,
