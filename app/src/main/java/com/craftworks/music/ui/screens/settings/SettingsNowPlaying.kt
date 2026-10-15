@@ -196,7 +196,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                     SettingsDialogButton(
                         stringResource(R.string.now_playing_buttons),
                         buttonsSummary,
-                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.now_playing_buttons_description),
                         toggleEvent = { showButtonsDialog = true }
                     )

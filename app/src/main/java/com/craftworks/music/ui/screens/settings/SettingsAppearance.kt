@@ -489,7 +489,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_album_details_action_buttons),
                         albumDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
-                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showAlbumDetailsActionButtonsDialog = true
@@ -500,7 +500,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_artist_details_action_buttons),
                         artistDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
-                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showArtistDetailsActionButtonsDialog = true
@@ -511,7 +511,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         stringResource(R.string.appearance_playlist_details_action_buttons),
                         playlistDetailsButtons.filter { !it.inMenu }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
-                        ImageVector.vectorResource(R.drawable.action_key_24px),
+                        ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
                         toggleEvent = {
                             showPlaylistDetailsActionButtonsDialog = true
