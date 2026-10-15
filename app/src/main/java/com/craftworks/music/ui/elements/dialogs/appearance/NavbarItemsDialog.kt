@@ -155,6 +155,11 @@ fun NavbarItemsDialog(setShowDialog: (Boolean) -> Unit) {
                                     "Playlists",
                                     R.drawable.placeholder,
                                     Screen.Playlists
+                                ), BottomNavItem(
+                                    "Folders",
+                                    R.drawable.rounded_folder_24,
+                                    Screen.Folders,
+                                    false
                                 )
                             ) //endregion
                         )

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.craftworks.music.R
 import com.craftworks.music.data.BottomNavItem
+import com.craftworks.music.data.model.FolderViewMode
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.dataStore
 import com.craftworks.music.ui.elements.ActionButton
@@ -50,6 +51,8 @@ class AppearanceSettingsManager @Inject constructor(
         private val NP_BACKGROUND_KEY = stringPreferencesKey("np_background_type")
         private val QUEUE_ADVANCED = booleanPreferencesKey("queue_advanced")
         private val FILTER_ADVANCED = booleanPreferencesKey("filter_advanced")
+        private val FOLDER_ICONS_ONLY = booleanPreferencesKey("folder_icons_only")
+        private val FOLDER_VIEW_MODE = stringPreferencesKey("folder_view_mode")
         private val NP_TITLE_ALIGNMENT = stringPreferencesKey("np_title_alignment")
         private val NP_LYRICS_ALIGNMENT = stringPreferencesKey("np_lyrics_alignment")
         private val SHOW_NAVIDROME_KEY = booleanPreferencesKey("show_navidrome_logo")
@@ -199,7 +202,8 @@ class AppearanceSettingsManager @Inject constructor(
             BottomNavItem(context.getString(R.string.nav_songs), R.drawable.round_music_note_24, Screen.Songs),
             BottomNavItem(context.getString(R.string.nav_artists), R.drawable.rounded_artist_24, Screen.Artists),
             BottomNavItem(context.getString(R.string.nav_radios), R.drawable.rounded_radio, Screen.Radios),
-            BottomNavItem(context.getString(R.string.nav_playlists), R.drawable.placeholder, Screen.Playlists)
+            BottomNavItem(context.getString(R.string.nav_playlists), R.drawable.placeholder, Screen.Playlists),
+            BottomNavItem(context.getString(R.string.nav_folders), R.drawable.rounded_folder_24, Screen.Folders, false)
         )
         try {
             // Only the order and enabled state are meaningful in the stored items: resource ids
@@ -211,6 +215,8 @@ class AppearanceSettingsManager @Inject constructor(
                         item.copy(title = it.title, icon = it.icon)
                     } ?: item
                 }
+                // Items added after the list was saved go at the end, with their default state.
+                ?.let { items -> items + defaultValue.filter { default -> items.none { it.screenRoute == default.screenRoute } } }
                 ?: defaultValue
         } catch (e: Exception) {
             println(e.message)
@@ -307,6 +313,31 @@ class AppearanceSettingsManager @Inject constructor(
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
                 preferences[FILTER_ADVANCED] = useAdvancedFilter
+            }
+        }
+    }
+
+    /** Shows a folder icon for every folder in the folder view, instead of the cover of its content. */
+    val folderIconsOnly: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[FOLDER_ICONS_ONLY] ?: false
+    }
+
+    suspend fun setFolderIconsOnly(folderIconsOnly: Boolean) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FOLDER_ICONS_ONLY] = folderIconsOnly
+            }
+        }
+    }
+
+    val folderViewMode: Flow<FolderViewMode> = context.dataStore.data.map { preferences ->
+        FolderViewMode.entries.firstOrNull { it.name == preferences[FOLDER_VIEW_MODE] } ?: FolderViewMode.LIST
+    }
+
+    suspend fun setFolderViewMode(mode: FolderViewMode) {
+        withContext(NonCancellable) {
+            context.dataStore.edit { preferences ->
+                preferences[FOLDER_VIEW_MODE] = mode.name
             }
         }
     }

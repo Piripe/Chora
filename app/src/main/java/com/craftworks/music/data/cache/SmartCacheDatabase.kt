@@ -9,6 +9,7 @@ import android.util.Log
 import com.craftworks.music.data.model.MediaModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -56,6 +57,16 @@ data class CachedPlaylist(
     val playlistId: String get() = playlist.id
 }
 
+/** A folder of [CachedSongFolders], see [com.craftworks.music.data.model.MediaModel.Folder]. */
+@Serializable
+data class CachedFolder(val id: String, val name: String, val parentId: String? = null)
+
+/**
+ * The folders holding a cached song, from the one below the root folder to the one holding it,
+ * so the folders of the cached songs can be browsed offline.
+ */
+data class CachedSongFolders(val providerId: String, val songId: String, val folders: List<CachedFolder>)
+
 /** How many times a song was played in the app, and when last ([lastPlayedAt] in epoch milliseconds). */
 data class AppPlay(val providerId: String, val songId: String, val playCount: Int, val lastPlayedAt: Long)
 
@@ -63,7 +74,7 @@ data class AppPlay(val providerId: String, val songId: String, val playCount: In
 data class PendingScrobble(val id: Long, val providerId: String, val songId: String, val playedAt: Long)
 
 /**
- * Stores the smart cache and downloads metadata (cached songs, their artists and playlists, and covers), how many times each song was played
+ * Stores the smart cache and downloads metadata (cached songs, their artists, playlists and folders, and covers), how many times each song was played
  * in the app, and the scrobbles waiting to be sent to the provider.
  */
 @Singleton
@@ -110,6 +121,7 @@ class SmartCacheDatabase @Inject constructor(
         )
 
         createLibraryTables(db)
+        createSongFoldersTable(db)
 
         db.execSQL(
             """
@@ -145,6 +157,7 @@ class SmartCacheDatabase @Inject constructor(
         }
         if (oldVersion < 3) createLibraryTables(db)
         if (oldVersion < 4) db.execSQL("ALTER TABLE cached_songs ADD COLUMN manual INTEGER NOT NULL DEFAULT 0")
+        if (oldVersion < 5) createSongFoldersTable(db)
     }
 
     private fun createLibraryTables(db: SQLiteDatabase) {
@@ -168,6 +181,19 @@ class SmartCacheDatabase @Inject constructor(
                 song_ids TEXT NOT NULL,
                 artwork_keys TEXT NOT NULL,
                 PRIMARY KEY (provider_id, playlist_id)
+            )
+            """.trimIndent()
+        )
+    }
+
+    private fun createSongFoldersTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE cached_song_folders (
+                provider_id TEXT NOT NULL,
+                song_id TEXT NOT NULL,
+                folders TEXT NOT NULL,
+                PRIMARY KEY (provider_id, song_id)
             )
             """.trimIndent()
         )
@@ -275,6 +301,42 @@ class SmartCacheDatabase @Inject constructor(
     fun deleteCachedPlaylists(playlists: List<CachedPlaylist>) = transaction {
         playlists.forEach {
             delete("cached_playlists", "provider_id = ? AND playlist_id = ?", arrayOf(it.providerId, it.playlistId))
+        }
+    }
+
+    //endregion
+
+    //region Song folders
+
+    fun getCachedSongFolders(): List<CachedSongFolders> =
+        readableDatabase.query("cached_song_folders", null, null, null, null, null, null).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    val folders = cursor.decode(folderList, "folders") ?: continue
+                    add(
+                        CachedSongFolders(
+                            providerId = cursor.getString(cursor.getColumnIndexOrThrow("provider_id")),
+                            songId = cursor.getString(cursor.getColumnIndexOrThrow("song_id")),
+                            folders = folders,
+                        )
+                    )
+                }
+            }
+        }
+
+    fun putCachedSongFolders(songFolders: List<CachedSongFolders>) = transaction {
+        songFolders.forEach { cached ->
+            insertWithOnConflict("cached_song_folders", null, ContentValues().apply {
+                put("provider_id", cached.providerId)
+                put("song_id", cached.songId)
+                put("folders", json.encodeToString(folderList, cached.folders))
+            }, SQLiteDatabase.CONFLICT_REPLACE)
+        }
+    }
+
+    fun deleteCachedSongFolders(songFolders: List<CachedSongFolders>) = transaction {
+        songFolders.forEach {
+            delete("cached_song_folders", "provider_id = ? AND song_id = ?", arrayOf(it.providerId, it.songId))
         }
     }
 
@@ -475,8 +537,9 @@ class SmartCacheDatabase @Inject constructor(
     companion object {
         private const val TAG = "SmartCacheDatabase"
         private const val DATABASE_NAME = "smart_cache.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
 
         private val stringList = ListSerializer(String.serializer())
+        private val folderList = ListSerializer(CachedFolder.serializer())
     }
 }

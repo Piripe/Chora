@@ -34,4 +34,12 @@
 
     <!-- Album Details -->
     <string name="album_details_disc">Disco %s</string>
+
+    <string name="folder_empty">Esta carpeta está vacía</string>
+    <string name="folder_up">Carpeta superior</string>
+    <string name="folder_view_mode">Modo de visualización</string>
+    <string name="folder_view_list">Lista</string>
+    <string name="folder_view_compact">Compacto</string>
+    <string name="folder_view_grid">Cuadrícula</string>
+    <string name="folder_view_tree">Vista de árbol</string>
 </resources>

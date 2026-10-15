@@ -118,6 +118,7 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
         ProviderFeature.RATINGS,
         ProviderFeature.FILTER_BY_ID,
         ProviderFeature.SHARING,
+        ProviderFeature.FOLDERS,
         ProviderFeature.RADIO
     )
 

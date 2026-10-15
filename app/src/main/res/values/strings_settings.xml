@@ -24,6 +24,8 @@
         <string name="appearance_advanced_queue_description">Multi-select, sorting and bulk actions in the play queue</string>
         <string name="appearance_advanced_filter">Use Advanced Filter</string>
         <string name="appearance_advanced_filter_description">More sort and filter options for songs, albums and artists</string>
+        <string name="appearance_folder_icons_only">Folder icons only</string>
+        <string name="appearance_folder_icons_only_description">Show a folder icon instead of the cover of the folder\'s content</string>
         <string name="appearance_now_playing_lyrics_alignment">Now Playing Lyrics Alignment</string>
             <string name="alignment_setting_left">Left</string>
             <string name="alignment_setting_center">Center</string>

@@ -12,5 +12,7 @@ enum class ProviderFeature {
      * [com.craftworks.music.data.providers.media.MediaProvider.getAlbumRadio] and
      * [com.craftworks.music.data.providers.media.MediaProvider.getArtistRadio].
      */
-    RADIO
+    RADIO,
+    /** The library can be browsed by its folders, see [com.craftworks.music.data.providers.media.MediaProvider.getFolder]. */
+    FOLDERS
 }

@@ -420,7 +420,7 @@ fun TvSideNavigation(
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
-    val (home, albums, songs, artists, radios, playlists, settings) = remember { FocusRequester.createRefs() }
+    val (home, albums, songs, artists, radios, playlists, folders, settings) = remember { FocusRequester.createRefs() }
     val currentRoute by navController.currentBackStackEntryFlow.collectAsStateWithLifecycle(initialValue = null)
 
     val orderedNavItems = AppearanceSettingsManager(context).bottomNavItemsFlow.collectAsState(
@@ -443,6 +443,9 @@ fun TvSideNavigation(
             BottomNavItem(
                 stringResource((R.string.nav_playlists)), R.drawable.placeholder, Screen.Playlists
             ),
+            BottomNavItem(
+                stringResource((R.string.nav_folders)), R.drawable.rounded_folder_24, Screen.Folders, false
+            ),
         )
     ).value
 
@@ -463,6 +466,7 @@ fun TvSideNavigation(
                                 Screen.Artists -> artists
                                 Screen.Radios -> radios
                                 Screen.Playlists -> playlists
+                                Screen.Folders -> folders
                                 Screen.Settings -> settings
                                 else -> FocusRequester.Default
                             }
@@ -511,6 +515,7 @@ fun TvSideNavigation(
                                     Screen.Artists -> artists
                                     Screen.Radios -> radios
                                     Screen.Playlists -> playlists
+                                    Screen.Folders -> folders
                                     Screen.Settings -> settings
                                     else -> FocusRequester.Default
                                 }
@@ -665,6 +670,8 @@ fun AnimatedBottomNavBar(
                 stringResource(R.string.nav_radios), R.drawable.rounded_radio, Screen.Radios
             ), BottomNavItem(
                 stringResource(R.string.nav_playlists), R.drawable.placeholder, Screen.Playlists
+            ), BottomNavItem(
+                stringResource(R.string.nav_folders), R.drawable.rounded_folder_24, Screen.Folders, false
             )
         )
     ).value
@@ -673,6 +680,10 @@ fun AnimatedBottomNavBar(
         currentProvider?.featureFlags?.contains(ProviderFeature.INTERNET_RADIO) ?: false
     orderedNavItems.first {it.screenRoute == Screen.Playlists}.enabled =
         currentProvider?.featureFlags?.contains(ProviderFeature.PLAYLISTS) ?: false
+    // Folders are disabled by default: only shown when the user enabled them.
+    orderedNavItems.firstOrNull { it.screenRoute == Screen.Folders }?.let {
+        it.enabled = it.enabled && currentProvider?.featureFlags?.contains(ProviderFeature.FOLDERS) == true
+    }
 
     if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
         val expanded by remember { derivedStateOf { scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded } }

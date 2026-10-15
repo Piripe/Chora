@@ -24,6 +24,8 @@
     <string name="appearance_advanced_queue_description">Sélection multiple, tri et actions groupées dans la file d\'attente</string>
     <string name="appearance_advanced_filter">Filtres avancés</string>
     <string name="appearance_advanced_filter_description">Plus d\'options de tri et de filtre pour les titres, albums et artistes</string>
+    <string name="appearance_folder_icons_only">Icônes de dossier uniquement</string>
+    <string name="appearance_folder_icons_only_description">Afficher une icône de dossier au lieu de la pochette de son contenu</string>
     <string name="appearance_now_playing_lyrics_alignment">Alignement des paroles</string>
     <string name="alignment_setting_left">Gauche</string>
     <string name="alignment_setting_center">Centre</string>

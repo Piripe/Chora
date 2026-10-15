@@ -213,6 +213,11 @@ interface SubsonicService {
         @Query("id") id: String,
     ): SubsonicResponse
 
+    @GET("rest/getIndexes.view")
+    suspend fun getIndexes(
+        @Query("musicFolderId") musicFolderId: Int? = null,
+    ): SubsonicResponse
+
     @GET("rest/getMusicDirectory.view")
     suspend fun getMusicDirectory(
         @Query("id") id: String,

@@ -32,4 +32,13 @@
 
     // Album Details
     <string name="album_details_disc">Disc %s</string>
+
+    // Folders
+    <string name="folder_empty">This folder is empty</string>
+    <string name="folder_up">Parent folder</string>
+    <string name="folder_view_mode">Display mode</string>
+    <string name="folder_view_list">List</string>
+    <string name="folder_view_compact">Compact</string>
+    <string name="folder_view_grid">Grid</string>
+    <string name="folder_view_tree">Tree view</string>
 </resources>

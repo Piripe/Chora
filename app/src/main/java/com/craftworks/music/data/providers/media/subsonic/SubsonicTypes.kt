@@ -80,6 +80,25 @@ data class SubsonicBody(
 
     // Shares
     val shares: SubsonicShares? = null,
+
+    // Folders
+    val indexes: SubsonicIndexes? = null,
+    val directory: SubsonicDirectory? = null,
+)
+
+/** Top-level folders of a music folder ([index] entries are folders despite their "artist" name) and its loose files. */
+@Serializable
+data class SubsonicIndexes(
+    val index: List<SubsonicArtistIndex>? = null,
+    val child: List<SubsonicSong>? = null
+)
+
+@Serializable
+data class SubsonicDirectory(
+    val id: String,
+    val parent: String? = null,
+    val name: String = "",
+    val child: List<SubsonicSong>? = null
 )
 
 @Serializable
@@ -232,7 +251,8 @@ data class SubsonicSong(
             trackSubtitle = null,
             updatedAt = null,
             userFavorite = !this.starred.isNullOrEmpty(),
-            userRating = this.userRating
+            userRating = this.userRating,
+            parentId = this.parent
         )
     }
 }

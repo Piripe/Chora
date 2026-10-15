@@ -102,6 +102,35 @@ fun TvArtistDialog(
     )
 }
 
+/**
+ * The long press dialog of a folder, also used for the actions of the folder screen on the listed content.
+ * [getSongs] returns the songs the actions apply to, by default those of [folder] and its subfolders.
+ */
+@Composable
+fun TvFolderDialog(
+    folder: MediaModel.Folder,
+    title: String,
+    onDismissRequest: () -> Unit,
+    viewModel: MediaCardMenuViewModel = hiltViewModel(),
+    getSongs: suspend () -> List<MediaItem> = { viewModel.getFolderSongs(folder) }
+) {
+    // Servers can't favorite, share or make a radio from a folder.
+    TvMediaCardDialog(
+        provider = folder.getProvider(),
+        providerId = folder.providerId,
+        id = folder.id,
+        title = title,
+        subtitle = "",
+        imageUrl = folder.imageUrl?.let { Uri.parse(it) },
+        libraryType = null,
+        initiallyStarred = false,
+        getSongs = getSongs,
+        getRadio = null,
+        onDismissRequest = onDismissRequest,
+        viewModel = viewModel
+    )
+}
+
 @Composable
 private fun TvMediaCardDialog(
     provider: MediaProvider?,
@@ -110,10 +139,12 @@ private fun TvMediaCardDialog(
     title: String,
     subtitle: String,
     imageUrl: Uri?,
-    libraryType: LibraryType,
+    /** The type to favorite and share the item as, null when it can't be. */
+    libraryType: LibraryType?,
     initiallyStarred: Boolean,
     getSongs: suspend () -> List<MediaItem>,
-    getRadio: suspend () -> List<MediaItem>,
+    /** Returns the radio of the item, null when it has none. */
+    getRadio: (suspend () -> List<MediaItem>)?,
     onDismissRequest: () -> Unit,
     viewModel: MediaCardMenuViewModel
 ) {
@@ -209,7 +240,7 @@ private fun TvMediaCardDialog(
                             headlineContent = { Text(stringResource(R.string.action_add_to_queue)) },
                             onClick = { withSongs { songs, controller -> SongHelper.enqueue(songs, controller) } }
                         )
-                        if (features?.contains(ProviderFeature.RADIO) == true) {
+                        if (getRadio != null && features?.contains(ProviderFeature.RADIO) == true) {
                             ListItem(
                                 selected = false,
                                 headlineContent = { Text(stringResource(R.string.action_start_radio)) },
@@ -219,7 +250,7 @@ private fun TvMediaCardDialog(
                                 }
                             )
                         }
-                        if (features?.contains(ProviderFeature.FAVORITES) == true) {
+                        if (libraryType != null && features?.contains(ProviderFeature.FAVORITES) == true) {
                             ListItem(
                                 selected = false,
                                 headlineContent = {
@@ -227,7 +258,7 @@ private fun TvMediaCardDialog(
                                 },
                                 onClick = {
                                     isStarred = !isStarred
-                                    viewModel.setStarred(id, libraryType, isStarred)
+                                    viewModel.setStarred(id, libraryType!!, isStarred)
                                 }
                             )
                         }
@@ -245,7 +276,7 @@ private fun TvMediaCardDialog(
                                 onClick = { dialogMenu = CardDialogMenu.DOWNLOAD }
                             )
                         }
-                        if (features?.contains(ProviderFeature.SHARING) == true) {
+                        if (libraryType != null && features?.contains(ProviderFeature.SHARING) == true) {
                             ListItem(
                                 selected = false,
                                 headlineContent = { Text(stringResource(R.string.action_share)) },

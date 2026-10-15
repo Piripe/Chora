@@ -77,6 +77,34 @@ fun ArtistCardMenu(
     )
 }
 
+/**
+ * The long press menu of a folder, also used for the actions of the folder screen on the listed content.
+ * [getSongs] returns the songs the actions apply to, by default those of [folder] and its subfolders.
+ */
+@Composable
+fun FolderCardMenu(
+    folder: MediaModel.Folder,
+    title: String,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    viewModel: MediaCardMenuViewModel = hiltViewModel(),
+    getSongs: suspend () -> List<MediaItem> = { viewModel.getFolderSongs(folder) }
+) {
+    // Servers can't favorite, share or make a radio from a folder.
+    MediaCardMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        provider = folder.getProvider(),
+        id = folder.id,
+        title = title,
+        libraryType = null,
+        initiallyStarred = false,
+        getSongs = getSongs,
+        getRadio = null,
+        viewModel = viewModel
+    )
+}
+
 /** The media controller shared by the app, read when an action runs so the cards don't need it passed down. */
 fun currentMediaController(context: Context): MediaController? =
     MediaControllerManager.getInstance(context).controller.value
@@ -88,10 +116,12 @@ private fun MediaCardMenu(
     provider: MediaProvider?,
     id: String,
     title: String,
-    libraryType: LibraryType,
+    /** The type to favorite and share the item as, null when it can't be. */
+    libraryType: LibraryType?,
     initiallyStarred: Boolean,
     getSongs: suspend () -> List<MediaItem>,
-    getRadio: suspend () -> List<MediaItem>,
+    /** Returns the radio of the item, null when it has none. */
+    getRadio: (suspend () -> List<MediaItem>)?,
     viewModel: MediaCardMenuViewModel
 ) {
     val context = LocalContext.current
@@ -125,16 +155,16 @@ private fun MediaCardMenu(
         MenuSheetItem(ImageVector.vectorResource(R.drawable.outline_queue_add_24), stringResource(R.string.action_add_to_queue)) {
             withSongs { songs, controller -> SongHelper.enqueue(songs, controller) }
         }
-        if (features?.contains(ProviderFeature.RADIO) == true) {
+        if (getRadio != null && features?.contains(ProviderFeature.RADIO) == true) {
             MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_sensors_24), stringResource(R.string.action_start_radio)) {
                 onDismissRequest()
                 viewModel.playMix(getRadio) { currentMediaController(context) }
             }
         }
-        val canFavorite = features?.contains(ProviderFeature.FAVORITES) == true
+        val canFavorite = libraryType != null && features?.contains(ProviderFeature.FAVORITES) == true
         val canAddToPlaylist = features?.contains(ProviderFeature.PLAYLISTS) == true
         val canDownload = features?.contains(ProviderFeature.DOWNLOADS) == true
-        val canShare = features?.contains(ProviderFeature.SHARING) == true
+        val canShare = libraryType != null && features?.contains(ProviderFeature.SHARING) == true
         if (canFavorite || canAddToPlaylist || canDownload || canShare) HorizontalDivider()
         if (canFavorite) {
             MenuSheetItem(
@@ -142,7 +172,7 @@ private fun MediaCardMenu(
                 stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
             ) {
                 isStarred = !isStarred
-                viewModel.setStarred(id, libraryType, isStarred)
+                viewModel.setStarred(id, libraryType!!, isStarred)
                 onDismissRequest()
             }
         }

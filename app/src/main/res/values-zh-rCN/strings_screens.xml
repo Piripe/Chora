@@ -30,4 +30,12 @@
 
     <!-- Album Details -->
     <string name="album_details_disc">第 %s 张碟</string>
+
+    <string name="folder_empty">此文件夹为空</string>
+    <string name="folder_up">上级文件夹</string>
+    <string name="folder_view_mode">显示模式</string>
+    <string name="folder_view_list">列表</string>
+    <string name="folder_view_compact">紧凑</string>
+    <string name="folder_view_grid">网格</string>
+    <string name="folder_view_tree">树状视图</string>
 </resources>

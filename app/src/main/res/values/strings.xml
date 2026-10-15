@@ -8,6 +8,7 @@
     <string name="nav_artists">Artists</string>
     <string name="nav_radios">Radios</string>
     <string name="nav_playlists">Playlists</string>
+    <string name="nav_folders">Folders</string>
     <string name="nav_playing">Playing</string>
     <string name="nav_search">Search</string>
 

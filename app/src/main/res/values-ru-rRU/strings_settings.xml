@@ -24,6 +24,8 @@
     <string name="appearance_advanced_queue_description">Множественный выбор, сортировка и групповые действия в очереди</string>
     <string name="appearance_advanced_filter">Расширенные фильтры</string>
     <string name="appearance_advanced_filter_description">Больше вариантов сортировки и фильтрации треков, альбомов и исполнителей</string>
+    <string name="appearance_folder_icons_only">Только значки папок</string>
+    <string name="appearance_folder_icons_only_description">Показывать значок папки вместо обложки её содержимого</string>
     <string name="appearance_now_playing_lyrics_alignment">Выравнивание текста песни</string>
     <string name="alignment_setting_left">По левому краю</string>
     <string name="alignment_setting_center">По центру</string>

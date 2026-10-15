@@ -32,4 +32,12 @@
 
     <!-- Album Details -->
     <string name="album_details_disc">CD %s</string>
+
+    <string name="folder_empty">Dieser Ordner ist leer</string>
+    <string name="folder_up">Übergeordneter Ordner</string>
+    <string name="folder_view_mode">Anzeigemodus</string>
+    <string name="folder_view_list">Liste</string>
+    <string name="folder_view_compact">Kompakt</string>
+    <string name="folder_view_grid">Raster</string>
+    <string name="folder_view_tree">Baumansicht</string>
 </resources>

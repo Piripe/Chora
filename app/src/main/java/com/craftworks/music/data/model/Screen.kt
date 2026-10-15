@@ -37,6 +37,8 @@ sealed interface Screen {
     @Serializable
     data class PlaylistDetails(val playlistId: String, val imageUri: String) : Screen
     @Serializable
+    object Folders : Screen
+    @Serializable
     object Settings : Screen
     @Serializable
     object SettingsList : Screen

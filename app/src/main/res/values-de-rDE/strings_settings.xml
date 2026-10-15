@@ -24,6 +24,8 @@
     <string name="appearance_advanced_queue_description">Mehrfachauswahl, Sortierung und Sammelaktionen in der Warteschlange</string>
     <string name="appearance_advanced_filter">Erweiterte Filter</string>
     <string name="appearance_advanced_filter_description">Mehr Sortier- und Filteroptionen für Titel, Alben und Künstler</string>
+    <string name="appearance_folder_icons_only">Nur Ordnersymbole</string>
+    <string name="appearance_folder_icons_only_description">Ein Ordnersymbol statt des Covers des Ordnerinhalts anzeigen</string>
     <string name="appearance_now_playing_lyrics_alignment">Ausrichtung des Songtexts</string>
     <string name="alignment_setting_left">Links</string>
     <string name="alignment_setting_center">Mittig</string>

@@ -339,6 +339,20 @@ fun TvS_AppearanceScreen() {
                         }
                     }
                 )
+
+                // Folder icons in the folder view
+                val folderIconsOnly by AppearanceSettingsManager(context).folderIconsOnly.collectAsState(false)
+                SettingsSwitchItem(
+                    title = stringResource(R.string.appearance_folder_icons_only),
+                    description = stringResource(R.string.appearance_folder_icons_only_description),
+                    icon = ImageVector.vectorResource(R.drawable.rounded_folder_24),
+                    checked = folderIconsOnly,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            AppearanceSettingsManager(context).setFolderIconsOnly(it)
+                        }
+                    }
+                )
             }
         }
 

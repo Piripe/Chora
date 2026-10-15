@@ -7,6 +7,7 @@
     <string name="nav_artists">Artisti</string>
     <string name="nav_radios">Radio</string>
     <string name="nav_playlists">Playlist</string>
+    <string name="nav_folders">Cartelle</string>
     <string name="nav_playing">In riproduzione</string>
     <string name="nav_search">Cerca</string>
 

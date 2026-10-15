@@ -24,6 +24,8 @@
     <string name="appearance_advanced_queue_description">Selezione multipla, ordinamento e azioni di gruppo nella coda</string>
     <string name="appearance_advanced_filter">Filtri avanzati</string>
     <string name="appearance_advanced_filter_description">Più opzioni di ordinamento e filtro per brani, album e artisti</string>
+    <string name="appearance_folder_icons_only">Solo icone cartella</string>
+    <string name="appearance_folder_icons_only_description">Mostra un\'icona di cartella invece della copertina del suo contenuto</string>
     <string name="appearance_now_playing_lyrics_alignment">Allineamento del testo</string>
     <string name="alignment_setting_left">Sinistra</string>
     <string name="alignment_setting_center">Centro</string>

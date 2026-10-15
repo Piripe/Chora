@@ -34,4 +34,12 @@
 
     <!-- Album Details -->
     <string name="album_details_disc">Disque %s</string>
+
+    <string name="folder_empty">Ce dossier est vide</string>
+    <string name="folder_up">Dossier parent</string>
+    <string name="folder_view_mode">Mode d\'affichage</string>
+    <string name="folder_view_list">Liste</string>
+    <string name="folder_view_compact">Compact</string>
+    <string name="folder_view_grid">Grille</string>
+    <string name="folder_view_tree">Arborescence</string>
 </resources>

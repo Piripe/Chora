@@ -321,6 +321,21 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                             }
                         }
                     )
+
+                    //Folder icons
+                    val folderIconsOnly =
+                        AppearanceSettingsManager(context).folderIconsOnly.collectAsState(false)
+                    SettingsSwitch(
+                        folderIconsOnly.value,
+                        stringResource(R.string.appearance_folder_icons_only),
+                        ImageVector.vectorResource(R.drawable.rounded_folder_24),
+                        settingsDescription = stringResource(R.string.appearance_folder_icons_only_description),
+                        toggleEvent = {
+                            coroutineScope.launch {
+                                AppearanceSettingsManager(context).setFolderIconsOnly(!folderIconsOnly.value)
+                            }
+                        }
+                    )
                 }
 
                 Column(

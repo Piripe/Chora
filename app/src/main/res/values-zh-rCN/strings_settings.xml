@@ -24,6 +24,8 @@
     <string name="appearance_advanced_queue_description">在播放队列中多选、排序和批量操作</string>
     <string name="appearance_advanced_filter">使用高级筛选</string>
     <string name="appearance_advanced_filter_description">为歌曲、专辑和艺人提供更多排序和筛选选项</string>
+    <string name="appearance_folder_icons_only">仅显示文件夹图标</string>
+    <string name="appearance_folder_icons_only_description">显示文件夹图标，而不是其内容的封面</string>
     <string name="appearance_now_playing_lyrics_alignment">歌词对齐方式</string>
     <string name="alignment_setting_left">左对齐</string>
     <string name="alignment_setting_center">居中</string>

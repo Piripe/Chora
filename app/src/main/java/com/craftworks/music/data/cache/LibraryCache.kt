@@ -18,7 +18,8 @@ import javax.inject.Singleton
  * Nothing is persisted: the cache only lives as long as the app process. It is filled by the
  * repositories on every successful request, and is used to answer the same queries when the
  * provider can't be reached, so already visited parts of the library can still be browsed offline.
- * At startup, it is also filled with the songs of the [com.craftworks.music.managers.SmartCacheManager].
+ * At startup, it is also filled with the songs of the [com.craftworks.music.managers.SmartCacheManager],
+ * and their artists, playlists and folders.
  */
 @Singleton
 class LibraryCache @Inject constructor() {
@@ -31,6 +32,10 @@ class LibraryCache @Inject constructor() {
         val playlists = LinkedHashMap<String, MediaModel.Playlist>()
         val playlistSongs = HashMap<String, List<String>>()
         val appPlays = HashMap<String, AppPlay>()
+        /** The folders opened while online, with their content. */
+        val folders = HashMap<String, MediaModel.Folder>()
+        /** The folders holding the cached songs (song ID to its folders), see [CachedSongFolders]. */
+        val songFolders = HashMap<String, List<CachedFolder>>()
     }
 
     /** When something was last played and added (epoch milliseconds), and how many times it was played. */
@@ -98,6 +103,15 @@ class LibraryCache @Inject constructor() {
         playlistSongs[playlistId] = songs.map { it.id }
     }
 
+    fun putFolder(providerId: String, folder: MediaModel.Folder) = withCache(providerId) {
+        folders[folder.id] = folder
+        folder.children?.songs?.forEach { songs[it.id] = it }
+    }
+
+    fun putSongFolders(providerId: String, songFolders: Map<String, List<CachedFolder>>) = withCache(providerId) {
+        this.songFolders.putAll(songFolders)
+    }
+
     /** Plays made in the app, so the songs played offline (not known by the provider yet) count too. */
     fun putAppPlays(plays: List<AppPlay>) = plays.forEach { play ->
         withCache(play.providerId) { mergeAppPlay(play) }
@@ -134,6 +148,75 @@ class LibraryCache @Inject constructor() {
 
     fun getPlaylistSongs(providerId: String, playlistId: String): List<MediaModel.Song> = withCache(providerId) {
         playlistSongs[playlistId].orEmpty().mapNotNull { songs[it] }
+    }
+
+    /**
+     * The folder with [folderId] and its content: as it was opened online, or else rebuilt from the
+     * folders of the cached songs (only showing them). Null when the folder is unknown.
+     */
+    fun getFolder(providerId: String, folderId: String): MediaModel.Folder? = withCache(providerId) {
+        folders[folderId]?.let { return@withCache it }
+
+        var found = folderId == MediaModel.Folder.ROOT_ID
+        var self: CachedFolder? = null
+        val subfolders = LinkedHashMap<String, CachedFolder>()
+        // A folder shows the artwork of its first song.
+        val subfolderImages = HashMap<String, String>()
+        val folderSongs = mutableListOf<MediaModel.Song>()
+        songFolders.forEach { (songId, path) ->
+            val index = if (folderId == MediaModel.Folder.ROOT_ID) -1 else path.indexOfFirst { it.id == folderId }
+            if (folderId != MediaModel.Folder.ROOT_ID && index < 0) return@forEach
+            found = true
+            if (index >= 0) self = path[index]
+            val song = songs[songId]
+            val child = path.getOrNull(index + 1)
+            if (child == null) {
+                if (song != null) folderSongs += song
+            } else {
+                subfolders.putIfAbsent(child.id, child)
+                song?.imageId?.let { subfolderImages.putIfAbsent(child.id, it) }
+            }
+        }
+        if (!found) return@withCache null
+
+        val providerType = folderSongs.firstOrNull()?.providerType
+            ?: songs.values.firstOrNull()?.providerType
+            ?: return@withCache null
+        MediaModel.Folder(
+            id = folderId,
+            providerId = providerId,
+            providerType = providerType,
+            name = self?.name ?: "",
+            parentId = self?.parentId,
+            children = MediaModel.Folder.Children(
+                folders = subfolders.values.sortedBy { it.name.lowercase() }.map {
+                    MediaModel.Folder(
+                        id = it.id,
+                        providerId = providerId,
+                        providerType = providerType,
+                        imageId = subfolderImages[it.id],
+                        name = it.name,
+                        parentId = it.parentId
+                    )
+                },
+                songs = folderSongs.sortedWith(compareBy({ it.discNumber }, { it.trackNumber }, { it.name.lowercase() }))
+            )
+        )
+    }
+
+    /** The songs of the folder with [folderId] and of its subfolders, see [getFolder]. */
+    fun getFolderSongs(providerId: String, folderId: String, limit: Int = 2000): List<MediaModel.Song> {
+        val folderSongs = mutableListOf<MediaModel.Song>()
+        fun collect(id: String) {
+            val folder = getFolder(providerId, id) ?: return
+            for (subfolder in folder.children?.folders.orEmpty()) {
+                if (folderSongs.size >= limit) return
+                collect(subfolder.id)
+            }
+            folderSongs += folder.children?.songs.orEmpty()
+        }
+        collect(folderId)
+        return folderSongs.take(limit)
     }
 
     fun getSong(providerId: String, songId: String): MediaModel.Song? = withCache(providerId) {

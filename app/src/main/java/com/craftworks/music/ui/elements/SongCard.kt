@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -79,7 +80,9 @@ fun HorizontalSongCard(
     extraMenuItems: (@Composable (onDismiss: () -> Unit) -> Unit)? = null,
     viewModel: SongsScreenViewModel = hiltViewModel(),
     mixViewModel: MediaCardMenuViewModel = hiltViewModel(),
-    mediaController: MediaController?
+    mediaController: MediaController?,
+    /** A smaller row and cover, for dense lists. */
+    compact: Boolean = false
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
@@ -113,7 +116,7 @@ fun HorizontalSongCard(
     ) {
         Row(
             modifier = Modifier
-                .height(72.dp), verticalAlignment = Alignment.CenterVertically
+                .height(if (compact) 56.dp else 72.dp), verticalAlignment = Alignment.CenterVertically
         ) {
             if (showTrackNumber) {
                 Box(
@@ -133,29 +136,43 @@ fun HorizontalSongCard(
                 }
             }
             else {
+                // Servers don't all serve the cover art for every kind of ID: try the cover art ID of the song,
+                // then its album, then the song itself, until one loads.
+                val provider = song.mediaMetadata.getProvider()
+                val artworkIds = remember(song.mediaMetadata) {
+                    val extras = song.mediaMetadata.extras
+                    listOfNotNull(
+                        extras?.getString("imageId")?.let { it to LibraryType.SONG },
+                        extras?.getString("albumId")?.let { it to LibraryType.ALBUM },
+                        song.mediaMetadata.id?.let { it to LibraryType.SONG },
+                    ).filter { it.first.isNotEmpty() }.distinctBy { it.first }
+                }
+                var artworkIndex by remember(artworkIds) { mutableIntStateOf(0) }
+                val (imageId, imageType) = artworkIds.getOrNull(artworkIndex) ?: ("" to LibraryType.SONG)
                 SubcomposeAsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(song.mediaMetadata.getProvider()?.getImageUrl(
-                            id = song.mediaMetadata.id ?: "",
-                            itemType = LibraryType.SONG,
+                        .data(provider?.getImageUrl(
+                            id = imageId,
+                            itemType = imageType,
                             size = 128
                         ))
                         .crossfade(true)
-                        .diskCacheKey(song.mediaMetadata.id)
+                        .diskCacheKey("song-art-$imageId")
                         .diskCachePolicy(CachePolicy.ENABLED)
-                        .placeholderMemoryCacheKey(song.mediaMetadata.id)
+                        .placeholderMemoryCacheKey("song-art-$imageId")
                         .build(),
+                    onError = { if (artworkIndex < artworkIds.lastIndex) artworkIndex++ },
                     contentDescription = "Album Image",
                     contentScale = ContentScale.FillHeight,
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(if (compact) 48.dp else 64.dp)
                         .padding(4.dp, 0.dp, 0.dp, 0.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(if (compact) 8.dp else 12.dp))
 
             Column(
                 Modifier

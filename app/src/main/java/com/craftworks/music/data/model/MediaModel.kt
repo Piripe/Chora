@@ -160,6 +160,11 @@ abstract class MediaModel
             val folders: List<Folder>,
             val songs: List<Song>
         )
+
+        companion object {
+            /** ID of the top-level folder, holding the libraries (or the content of the only library). */
+            const val ROOT_ID = ""
+        }
     }
 
     @Serializable
@@ -314,7 +319,9 @@ abstract class MediaModel
         val trackSubtitle: String? = null,
         val updatedAt: String? = null,
         val userFavorite: Boolean? = null,
-        val userRating: Int? = null
+        val userRating: Int? = null,
+        /** ID of the folder holding the song, when the provider gives it (Subsonic API). */
+        val parentId: String? = null
     ) : MediaModel() {
         fun toMediaItem(): MediaItem {
             return toMediaItem(getProvider())

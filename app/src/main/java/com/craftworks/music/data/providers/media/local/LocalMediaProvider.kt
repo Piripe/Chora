@@ -39,6 +39,7 @@ import com.craftworks.music.utils.SimilarSongs
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.io.File
 import java.util.EnumSet
 
 @Serializable
@@ -74,7 +75,8 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
     @Transient
     override val featureFlags: EnumSet<ProviderFeature> = EnumSet.of(
         ProviderFeature.OFFLINE_PLAYBACK,
-        ProviderFeature.RADIO
+        ProviderFeature.RADIO,
+        ProviderFeature.FOLDERS
     )
 
     @Transient
@@ -311,8 +313,101 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         TODO("Not yet implemented")
     }
 
+    /** The directories of the enabled libraries, found in the paths of [songs]. */
+    private fun libraryRoots(songs: List<MediaModel.Song>): List<String> =
+        // Libraries may be stored as a part of a path ("Music"), the matching directories are the library roots.
+        data.libraries.filter { it.second }
+            .map { it.first.name.trimEnd('/') }
+            .filter { it.isNotEmpty() }
+            .flatMap { library ->
+                songs.mapNotNull { song ->
+                    val path = song.path!!
+                    var index = path.indexOf(library)
+                    while (index >= 0 && path.getOrNull(index + library.length) != '/')
+                        index = path.indexOf(library, index + 1)
+                    if (index >= 0) path.substring(0, index + library.length) else null
+                }
+            }
+            .distinct()
+            .sortedBy { File(it).name.lowercase() }
+
+    override suspend fun getFolderSongs(id: String, limit: Int): List<MediaModel.Song> {
+        val songs = getAllLocalSongs().filter { !it.path.isNullOrEmpty() }
+        val directories = if (id == MediaModel.Folder.ROOT_ID) libraryRoots(songs) else listOf(id)
+        // Same order as the folder screen: in each folder, its subfolders then its files, by name.
+        val byFolderOrder = Comparator<MediaModel.Song> { a, b ->
+            val aParts = a.path!!.split('/')
+            val bParts = b.path!!.split('/')
+            val common = aParts.zip(bParts).indexOfFirst { (x, y) -> x != y }.takeIf { it >= 0 }
+                ?: return@Comparator aParts.size - bParts.size
+            val aIsFolder = common < aParts.size - 1
+            val bIsFolder = common < bParts.size - 1
+            when {
+                aIsFolder != bIsFolder -> if (aIsFolder) -1 else 1
+                else -> aParts[common].lowercase().compareTo(bParts[common].lowercase())
+            }
+        }
+        return directories.flatMap { directory -> songs.filter { it.path!!.startsWith("$directory/") }.sortedWith(byFolderOrder) }
+            .distinctBy { it.id }
+            .take(limit)
+    }
+
     override suspend fun getFolder(query: MediaQuery.FolderQuery): MediaModel.Folder {
-        TODO("Not yet implemented")
+        // MediaStore has no folders: they are rebuilt from the paths of the songs. Folder IDs are their absolute paths.
+        val songs = getAllLocalSongs().filter { !it.path.isNullOrEmpty() }
+
+        val roots = libraryRoots(songs)
+
+        // A folder shows the artwork of its first song.
+        fun folder(path: String, parentId: String?, content: List<MediaModel.Song>, children: MediaModel.Folder.Children? = null) = MediaModel.Folder(
+            id = path,
+            providerId = id,
+            providerType = ProviderType.LOCAL_FOLDER,
+            children = children,
+            imageId = content.firstOrNull()?.imageId,
+            name = File(path).name,
+            parentId = parentId
+        )
+
+        // With several libraries, the root lists them. With only one, the root shows its content directly.
+        if (query.id == MediaModel.Folder.ROOT_ID && roots.size != 1) {
+            return MediaModel.Folder(
+                id = MediaModel.Folder.ROOT_ID,
+                providerId = id,
+                providerType = ProviderType.LOCAL_FOLDER,
+                name = "",
+                children = MediaModel.Folder.Children(
+                    folders = roots.map { root ->
+                        folder(root, MediaModel.Folder.ROOT_ID, songs.filter { it.path!!.startsWith("$root/") })
+                    },
+                    songs = emptyList()
+                )
+            )
+        }
+
+        val directory = if (query.id == MediaModel.Folder.ROOT_ID) roots.first() else query.id
+        val parentId = when {
+            query.id == MediaModel.Folder.ROOT_ID -> null
+            directory in roots -> MediaModel.Folder.ROOT_ID
+            else -> File(directory).parent
+        }
+
+        val content = songs.filter { it.path!!.startsWith("$directory/") }
+        val (nested, files) = content.partition { it.path!!.removePrefix("$directory/").contains('/') }
+        val subfolders = nested
+            .groupBy { "$directory/" + it.path!!.removePrefix("$directory/").substringBefore('/') }
+            .toList()
+            .sortedBy { File(it.first).name.lowercase() }
+
+        return folder(
+            directory,
+            parentId,
+            content,
+            MediaModel.Folder.Children(
+                folders = subfolders.map { (path, songs) -> folder(path, directory, songs) },
+                songs = files.sortedBy { File(it.path!!).name.lowercase() }
+            )
+        ).copy(id = query.id)
     }
 
     override suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre> {

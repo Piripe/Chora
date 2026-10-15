@@ -52,6 +52,7 @@ import com.craftworks.music.ui.playing.NowPlayingViewModel
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.screens.AlbumDetails
 import com.craftworks.music.ui.screens.AlbumScreen
+import com.craftworks.music.ui.screens.FoldersScreen
 import com.craftworks.music.ui.screens.ArtistDetails
 import com.craftworks.music.ui.screens.ArtistsScreen
 import com.craftworks.music.ui.screens.HomeListsScreen
@@ -73,6 +74,7 @@ import com.craftworks.music.ui.screens.tv.TvAlbumDetails
 import com.craftworks.music.ui.screens.tv.TvAlbumScreen
 import com.craftworks.music.ui.screens.tv.TvArtistDetailsScreen
 import com.craftworks.music.ui.screens.tv.TvArtistScreen
+import com.craftworks.music.ui.screens.tv.TvFoldersScreen
 import com.craftworks.music.ui.screens.tv.TvHomeScreen
 import com.craftworks.music.ui.screens.tv.TvPlaylistDetails
 import com.craftworks.music.ui.screens.tv.TvPlaylistScreen
@@ -90,6 +92,7 @@ import com.craftworks.music.ui.screens.tv.settings.TvS_ProviderScreen
 import com.craftworks.music.ui.viewmodels.AlbumScreenViewModel
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.ui.viewmodels.ArtistsScreenViewModel
+import com.craftworks.music.ui.viewmodels.FoldersScreenViewModel
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.ui.viewmodels.RadioScreenViewModel
@@ -347,6 +350,19 @@ fun SetupNavGraph(
                             PlaylistDetails(playlistId, imageUri, navController, mediaController, viewModel)
                     }
                 }
+            }
+
+            composable<Screen.Folders> { backStackEntry ->
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry<Screen.MainGraph>()
+                }
+                val viewModel: FoldersScreenViewModel = hiltViewModel(parentEntry)
+                if (isTv)
+                    TvSideNavigation(navController, mediaController) {
+                        TvFoldersScreen(mediaController, navController, viewModel, hiltViewModel(parentEntry))
+                    }
+                else
+                    FoldersScreen(mediaController, viewModel, hiltViewModel(parentEntry))
             }
 
             //Settings

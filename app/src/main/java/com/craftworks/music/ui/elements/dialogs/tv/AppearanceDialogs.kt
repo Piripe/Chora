@@ -294,6 +294,8 @@ fun NavbarItemsDialog(setShowDialog: (Boolean) -> Unit) {
                             "Radios", R.drawable.rounded_radio, Screen.Radios
                         ), BottomNavItem(
                             "Playlists", R.drawable.placeholder, Screen.Playlists
+                        ), BottomNavItem(
+                            "Folders", R.drawable.rounded_folder_24, Screen.Folders, false
                         )
                     )
                 )

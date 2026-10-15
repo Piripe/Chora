@@ -12,6 +12,7 @@ import com.craftworks.music.data.model.LibraryType
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.repository.AlbumRepository
 import com.craftworks.music.data.repository.ArtistRepository
+import com.craftworks.music.data.repository.FolderRepository
 import com.craftworks.music.data.repository.MixRepository
 import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
@@ -32,6 +33,7 @@ class MediaCardMenuViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val albumRepository: AlbumRepository,
     private val artistRepository: ArtistRepository,
+    private val folderRepository: FolderRepository,
     private val mixRepository: MixRepository,
     private val songRepository: SongRepository,
     private val starredRepository: StarredRepository,
@@ -50,6 +52,10 @@ class MediaCardMenuViewModel @Inject constructor(
             album.mediaMetadata.extras?.getString("id")?.let { getAlbumSongs(it) } ?: emptyList()
         }
     }
+
+    /** The songs of the folder and of its subfolders. */
+    suspend fun getFolderSongs(folder: MediaModel.Folder): List<MediaItem> =
+        folderRepository.getFolderSongs(folder)
 
     /** Songs similar to the album, see [MixRepository.getAlbumRadio]. */
     suspend fun getAlbumRadio(album: MediaItem): List<MediaItem> =

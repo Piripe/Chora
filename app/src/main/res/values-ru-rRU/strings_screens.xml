@@ -36,4 +36,12 @@
 
     <!-- Album Details -->
     <string name="album_details_disc">Диск %s</string>
+
+    <string name="folder_empty">Эта папка пуста</string>
+    <string name="folder_up">Родительская папка</string>
+    <string name="folder_view_mode">Режим отображения</string>
+    <string name="folder_view_list">Список</string>
+    <string name="folder_view_compact">Компактный</string>
+    <string name="folder_view_grid">Сетка</string>
+    <string name="folder_view_tree">Дерево</string>
 </resources>

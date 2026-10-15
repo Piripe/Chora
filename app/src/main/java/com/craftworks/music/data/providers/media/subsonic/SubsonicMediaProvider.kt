@@ -44,6 +44,13 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.SIMPLE
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -53,6 +60,7 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.Year
 import java.util.EnumSet
+import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -62,6 +70,13 @@ import javax.net.ssl.X509TrustManager
 open class SubsonicMediaProvider : MediaProvider() {
     lateinit var providerData: SubsonicProviderData
     companion object {
+        /** Prefix of the folder IDs standing for a whole library (music folder) in [getFolder]. */
+        private const val LIBRARY_FOLDER_PREFIX = "library:"
+        /** Requests made at once when looking for the folders of songs. */
+        private const val FOLDER_LOOKUP_PARALLELISM = 6
+        /** Guards against folders being their own parent. */
+        private const val MAX_FOLDER_DEPTH = 64
+
         private val ALBUM_ARTIST_SORT_BINDING = mapOf<AlbumArtistListSort, (MediaModel.Artist) -> Comparable<*>?>(
             AlbumArtistListSort.ALBUM_COUNT to { it.albumCount },
             AlbumArtistListSort.NAME to { it.name },
@@ -91,6 +106,7 @@ open class SubsonicMediaProvider : MediaProvider() {
         ProviderFeature.PLAYLISTS,
         ProviderFeature.RATINGS,
         ProviderFeature.SHARING,
+        ProviderFeature.FOLDERS,
         ProviderFeature.RADIO
     )
 
@@ -466,7 +482,149 @@ open class SubsonicMediaProvider : MediaProvider() {
     }
 
     override suspend fun getFolder(query: MediaQuery.FolderQuery): MediaModel.Folder {
-        TODO("Not yet implemented")
+        val libraries = query.musicFolderId ?: data.libraries.filter { it.second }.map { it.first.id }
+        val libraryNames = data.libraries.associate { it.first.id to it.first.name }
+
+        // With several libraries, the root lists them. With only one, the root shows its content directly.
+        if (query.id == MediaModel.Folder.ROOT_ID && libraries.size != 1) {
+            return MediaModel.Folder(
+                id = MediaModel.Folder.ROOT_ID,
+                providerId = this.id,
+                providerType = ProviderType.SUBSONIC,
+                name = "",
+                children = MediaModel.Folder.Children(
+                    folders = libraries.map {
+                        MediaModel.Folder(
+                            id = LIBRARY_FOLDER_PREFIX + it,
+                            providerId = this.id,
+                            providerType = ProviderType.SUBSONIC,
+                            name = libraryNames[it] ?: it,
+                            parentId = MediaModel.Folder.ROOT_ID
+                        )
+                    },
+                    songs = emptyList()
+                )
+            )
+        }
+
+        // The top of a library is listed by getIndexes, the folders below by getMusicDirectory.
+        if (query.id == MediaModel.Folder.ROOT_ID || query.id.startsWith(LIBRARY_FOLDER_PREFIX)) {
+            val libraryId = query.id.removePrefix(LIBRARY_FOLDER_PREFIX).ifEmpty { libraries.first() }
+            val indexes = service.getIndexes(libraryId.toIntOrNull()).subsonicResponse.indexes
+            return MediaModel.Folder(
+                id = query.id,
+                providerId = this.id,
+                providerType = ProviderType.SUBSONIC,
+                name = libraryNames[libraryId] ?: "",
+                parentId = MediaModel.Folder.ROOT_ID.takeIf { query.id != MediaModel.Folder.ROOT_ID },
+                children = MediaModel.Folder.Children(
+                    folders = indexes?.index.orEmpty().flatMap { it.artist }.map {
+                        MediaModel.Folder(
+                            id = it.id,
+                            providerId = this.id,
+                            providerType = ProviderType.SUBSONIC,
+                            imageId = it.coverArt,
+                            name = it.name,
+                            parentId = query.id
+                        )
+                    },
+                    songs = indexes?.child.orEmpty()
+                        .filter { it.isDir != true && it.isVideo != true }
+                        .map { it.toMediaModel(this.id) }
+                )
+            )
+        }
+
+        val directory = service.getMusicDirectory(query.id).subsonicResponse.directory
+            ?: throw Exception("Folder ${query.id} not found")
+        val (folders, files) = directory.child.orEmpty().partition { it.isDir == true }
+        return MediaModel.Folder(
+            id = directory.id,
+            providerId = this.id,
+            providerType = ProviderType.SUBSONIC,
+            name = directory.name,
+            parentId = directory.parent,
+            children = MediaModel.Folder.Children(
+                folders = folders.map {
+                    MediaModel.Folder(
+                        id = it.id,
+                        providerId = this.id,
+                        providerType = ProviderType.SUBSONIC,
+                        imageId = it.imageUrl?.takeIf { id -> id.isNotEmpty() },
+                        name = it.title,
+                        parentId = directory.id
+                    )
+                },
+                songs = files.filter { it.isVideo != true }.map { it.toMediaModel(this.id) }
+            )
+        )
+    }
+
+    override suspend fun getSongFolders(songs: List<MediaModel.Song>): Map<String, List<MediaModel.Folder>> = coroutineScope {
+        val providerId = id
+        val libraries = data.libraries.filter { it.second }.map { it.first }
+        // The top-level folders of each library: going up from a song stops there.
+        val topLevelFolders = HashMap<String, MusicFolder>()
+        libraries.forEach { library ->
+            service.getIndexes(library.id.toIntOrNull()).subsonicResponse.indexes?.index.orEmpty()
+                .flatMap { it.artist }
+                .forEach { topLevelFolders[it.id] = library }
+        }
+
+        val semaphore = Semaphore(FOLDER_LOOKUP_PARALLELISM)
+        suspend fun <T> request(block: suspend () -> T?): T? = semaphore.withPermit {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+        }
+        // Songs of a folder share its parents: each folder is only requested once.
+        val directories = ConcurrentHashMap<String, Deferred<SubsonicDirectory?>>()
+        fun directory(id: String) = directories.computeIfAbsent(id) {
+            async { request { service.getMusicDirectory(id).subsonicResponse.directory?.copy(child = null) } }
+        }
+
+        songs.map { song ->
+            async {
+                val parentId = song.parentId
+                    ?: request { service.getSong(song.id).subsonicResponse.song?.parent }
+                    ?: return@async null
+                // From the song's folder up to the top-level folder of its library.
+                val chain = ArrayDeque<SubsonicDirectory>()
+                var folderId: String? = parentId
+                var library: MusicFolder? = null
+                while (folderId != null && library == null && chain.size < MAX_FOLDER_DEPTH) {
+                    val folder = directory(folderId).await() ?: return@async null
+                    chain.addFirst(folder)
+                    library = topLevelFolders[folder.id]
+                    folderId = folder.parent?.takeIf { it.isNotEmpty() }
+                }
+                if (library == null) return@async null
+
+                // With several libraries, the root lists them, see getFolder.
+                val libraryFolder = if (libraries.size > 1) MediaModel.Folder(
+                    id = LIBRARY_FOLDER_PREFIX + library.id,
+                    providerId = providerId,
+                    providerType = ProviderType.SUBSONIC,
+                    name = library.name,
+                    parentId = MediaModel.Folder.ROOT_ID
+                ) else null
+                var parent = libraryFolder?.id ?: MediaModel.Folder.ROOT_ID
+                val path = listOfNotNull(libraryFolder) + chain.map { folder ->
+                    MediaModel.Folder(
+                        id = folder.id,
+                        providerId = providerId,
+                        providerType = ProviderType.SUBSONIC,
+                        name = folder.name,
+                        parentId = parent
+                    ).also { parent = it.id }
+                }
+                song.id to path
+            }
+        }.awaitAll().filterNotNull().toMap()
     }
 
     override suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre> {

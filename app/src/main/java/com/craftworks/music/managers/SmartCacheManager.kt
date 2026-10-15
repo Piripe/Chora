@@ -9,8 +9,10 @@ import androidx.core.content.edit
 import com.craftworks.music.R
 import com.craftworks.music.data.cache.CachedArtist
 import com.craftworks.music.data.cache.CachedArtwork
+import com.craftworks.music.data.cache.CachedFolder
 import com.craftworks.music.data.cache.CachedPlaylist
 import com.craftworks.music.data.cache.CachedSong
+import com.craftworks.music.data.cache.CachedSongFolders
 import com.craftworks.music.data.cache.LibraryCache
 import com.craftworks.music.data.cache.ListeningScore
 import com.craftworks.music.data.cache.SmartCacheDatabase
@@ -162,6 +164,7 @@ class SmartCacheManager @Inject constructor(
     private val artworks = ConcurrentHashMap<String, CachedArtwork>()
     private val artists = ConcurrentHashMap<String, CachedArtist>()
     private val playlists = ConcurrentHashMap<String, CachedPlaylist>()
+    private val songFolders = ConcurrentHashMap<String, CachedSongFolders>()
     private val artworkDownloads = ConcurrentHashMap<String, CompletableDeferred<String?>>()
 
     /** Guards every change to the cache content (database, files and the maps above). */
@@ -292,6 +295,7 @@ class SmartCacheManager @Inject constructor(
         applyRanking(provider, ranking)
         downloadSongs(provider, ranking, maxBytes, variant)
         cacheArtistsAndPlaylists(provider)
+        cacheSongFolders(provider)
         trimToSize(maxBytes)
     }
 
@@ -847,7 +851,45 @@ class SmartCacheManager @Inject constructor(
         return buildList { while (true) add(pager.next(provider) ?: break) }
     }
 
-    /** Drops the artists and playlists without cached songs anymore. */
+    /**
+     * Saves the folders holding the cached songs of [provider] not known yet, so they can be browsed offline.
+     * Songs whose folders can't be found are tried again on the next refresh.
+     */
+    private suspend fun cacheSongFolders(provider: MediaProvider) {
+        if (ProviderFeature.FOLDERS !in provider.featureFlags) return
+        val missing = songs.values
+            .filter { it.providerId == provider.id && !songFolders.containsKey(key(it)) }
+            .map { it.song }
+        if (missing.isEmpty()) return
+
+        val found = try {
+            provider.getSongFolders(missing)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Can't get the folders of the cached songs", e)
+            return
+        }
+        val cached = found.map { (songId, folders) ->
+            CachedSongFolders(provider.id, songId, folders.map { CachedFolder(it.id, it.name, it.parentId) })
+        }
+        mutex.withLock {
+            // Without the songs dropped meanwhile.
+            val kept = cached.filter { songs.containsKey(key(it.providerId, it.songId)) }
+            database.putCachedSongFolders(kept)
+            kept.forEach { songFolders[key(it.providerId, it.songId)] = it }
+        }
+        publishFolders(cached)
+    }
+
+    /** Makes the folders of the cached songs browsable offline. */
+    private fun publishFolders(cached: Collection<CachedSongFolders>) {
+        cached.groupBy { it.providerId }.forEach { (providerId, providerFolders) ->
+            libraryCache.putSongFolders(providerId, providerFolders.associate { it.songId to it.folders })
+        }
+    }
+
+    /** Drops the artists, playlists and folders without cached songs anymore. */
     private fun deleteUnusedLibraryLocked() {
         val songIds = songs.keys
         val artistIds = songs.values.flatMapTo(HashSet()) { cached ->
@@ -863,6 +905,10 @@ class SmartCacheManager @Inject constructor(
         }
         database.deleteCachedPlaylists(unusedPlaylists)
         unusedPlaylists.forEach { playlists.remove(key(it.providerId, it.playlistId)) }
+
+        val unusedFolders = songFolders.filterKeys { it !in songIds }.values.toList()
+        database.deleteCachedSongFolders(unusedFolders)
+        unusedFolders.forEach { songFolders.remove(key(it.providerId, it.songId)) }
     }
 
     //endregion
@@ -1117,6 +1163,7 @@ class SmartCacheManager @Inject constructor(
                 .filter { it.id.isNotBlank() && !artists.containsKey(key(provider.id, it.id)) }
                 .distinctBy { it.id }
             forEachParallel(songArtists, METADATA_PARALLELISM) { cacheArtist(provider, it) }
+            cacheSongFolders(provider)
 
             request.playlistId?.let { playlistId ->
                 // From the list, like a refresh: not every provider implements getPlaylistDetail.
@@ -1305,11 +1352,13 @@ class SmartCacheManager @Inject constructor(
         cachedArtworks.forEach { artworks[it.key] = it }
         database.getCachedArtists().forEach { artists[key(it.providerId, it.artistId)] = it }
         database.getCachedPlaylists().forEach { playlists[key(it.providerId, it.playlistId)] = it }
+        database.getCachedSongFolders().forEach { songFolders[key(it.providerId, it.songId)] = it }
         deleteUnusedLibraryLocked()
         deleteUnusedArtworksLocked()
 
         publishToLibraryCache(cachedSongs)
         publishLibrary(artists.values, playlists.values)
+        publishFolders(songFolders.values)
         libraryCache.putAppPlays(database.getAppPlays())
 
         _state.update {

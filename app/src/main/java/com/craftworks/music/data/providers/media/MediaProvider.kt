@@ -25,6 +25,7 @@ import com.craftworks.music.data.model.ScrobbleEvent
 import com.craftworks.music.data.model.ScrobbleMediaType
 import com.craftworks.music.data.model.SearchResponse
 import com.craftworks.music.data.model.SongListSort
+import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.TagListResponse
 import com.craftworks.music.data.model.User
 import com.craftworks.music.data.model.UserInfoResponse
@@ -91,6 +92,30 @@ abstract class MediaProvider {
     abstract suspend fun getArtistRadio(artistId: String, count: Int? = null): List<MediaModel.Song>
     abstract suspend fun getDownloadUrl(id: String): String
     abstract suspend fun getFolder(query: MediaQuery.FolderQuery): MediaModel.Folder
+    /**
+     * The songs of the folder with [id] and of its subfolders, in the order they are listed (subfolders first),
+     * stopping once [limit] songs are found. Only called when [featureFlags] has [ProviderFeature.FOLDERS].
+     */
+    open suspend fun getFolderSongs(id: String, limit: Int = 2000): List<MediaModel.Song> {
+        val songs = mutableListOf<MediaModel.Song>()
+        suspend fun collect(folderId: String) {
+            val folder = getFolder(MediaQuery.FolderQuery(SongListSort.NAME, SortOrder.ASC, id = folderId))
+            for (subfolder in folder.children?.folders.orEmpty()) {
+                if (songs.size >= limit) return
+                collect(subfolder.id)
+            }
+            songs += folder.children?.songs.orEmpty()
+        }
+        collect(id)
+        return songs.take(limit)
+    }
+    /**
+     * The folders holding each of [songs] (by song ID), from the one below the root folder
+     * ([MediaModel.Folder.ROOT_ID]) to the one holding the song, so they can be browsed offline.
+     * Folders only have their ID and name. Songs whose folders can't be found are left out.
+     * Only called when [featureFlags] has [ProviderFeature.FOLDERS], for providers that need the network.
+     */
+    open suspend fun getSongFolders(songs: List<MediaModel.Song>): Map<String, List<MediaModel.Folder>> = emptyMap()
     abstract suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre>
     abstract suspend fun getImageRequest(id: String, itemType: LibraryType, size: Int? = null, baseUrl: String? = null): ImageRequest?
     abstract fun getImageUrl(id: String, itemType: LibraryType? = null, size: Int? = null): String
