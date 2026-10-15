@@ -119,7 +119,7 @@ fun NowPlayingMiniPlayer(
                     textAlign = TextAlign.Start,
                     modifier = Modifier.weight(1f)
                 )
-                if (metadata?.recordingYear != 0 && metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION) {
+                if ((metadata?.recordingYear ?: 0) != 0 && metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION) {
                     Text(
                         text = " • " + metadata?.recordingYear.toString(),
                         style = MaterialTheme.typography.bodyMedium,

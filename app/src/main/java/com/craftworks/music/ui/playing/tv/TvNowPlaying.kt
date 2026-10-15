@@ -216,9 +216,9 @@ fun TvNowPlaying(
                             )
                         },
                         subtitle = {
-                            if (metadata?.albumTitle != null && metadata.recordingYear != null) {
+                            if (metadata?.albumTitle != null) {
                                 Text(
-                                    text = metadata.albumTitle.toString() + if (metadata.recordingYear != 0) " • " + metadata.recordingYear else "",
+                                    text = metadata.albumTitle.toString() + if ((metadata.recordingYear ?: 0) != 0) " • " + metadata.recordingYear else "",
                                     color = iconTextColor,
                                     maxLines = 1,
                                     modifier = Modifier

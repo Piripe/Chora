@@ -830,7 +830,7 @@ private enum class QueueSelectByField(@StringRes val label: Int, val value: (Med
     ALBUM(R.string.sort_by_album, { it.albumTitle?.toString() }),
     ARTIST(R.string.sort_by_artist, { it.artist?.toString() }),
     ALBUM_ARTIST(R.string.sort_by_album_artist, { it.albumArtist?.toString() }),
-    YEAR(R.string.sort_by_year, { (it.releaseYear ?: it.recordingYear)?.toString() }),
+    YEAR(R.string.sort_by_year, { (it.releaseYear ?: it.recordingYear)?.takeIf { year -> year != 0 }?.toString() }),
 }
 
 /** Lists the distinct values of a field in the queue, picking one selects every matching item. */

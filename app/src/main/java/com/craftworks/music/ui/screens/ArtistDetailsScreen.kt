@@ -175,7 +175,7 @@ fun ArtistDetails(
         ) {
             // Group songs by their source (Local or Navidrome)
             val groupedAlbums =
-                artistAlbums.groupBy { it.mediaMetadata.recordingYear }
+                artistAlbums.groupBy { it.mediaMetadata.recordingYear?.takeIf { year -> year != 0 } }
                     .toSortedMap(compareByDescending { it })
 
             // Header
@@ -351,7 +351,8 @@ fun ArtistDetails(
             }
 
             groupedAlbums.forEach { (groupName, albumsInGroup) ->
-                item(span = { GridItemSpan(maxLineSpan) }) {
+                // Albums without a year are listed last, without a header
+                if (groupName != null) item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = groupName.toString(),
                         style = MaterialTheme.typography.titleMedium,

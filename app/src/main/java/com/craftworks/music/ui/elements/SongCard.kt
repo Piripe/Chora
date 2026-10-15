@@ -167,7 +167,7 @@ fun HorizontalSongCard(
                 }
 
                 Text(
-                    text = song.mediaMetadata.artist.toString() + if (song.mediaMetadata.recordingYear != 0) " • " + song.mediaMetadata.recordingYear else "",
+                    text = song.mediaMetadata.artist.toString() + if ((song.mediaMetadata.recordingYear ?: 0) != 0) " • " + song.mediaMetadata.recordingYear else "",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
                     modifier = Modifier,
