@@ -121,7 +121,12 @@ abstract class MediaProvider {
     abstract suspend fun search(query: MediaQuery.SearchQuery): SearchResponse
     abstract suspend fun setPlaylistSongs(id: String, songIds: List<String>)
     abstract suspend fun setRating(ids: List<String>, rating: Int, type: LibraryType): Boolean
-    abstract suspend fun shareItem(description: String, downloadable: Boolean, expires: Long, resourceIds: String, resourceType: String): String?
+    /**
+     * Creates a public link to the items with [ids] (songs, or an album, playlist or artist) and returns its URL.
+     * [expires] is when the link stops working, in ms since the epoch, null for never.
+     * Only called when [featureFlags] has [ProviderFeature.SHARING].
+     */
+    abstract suspend fun shareItem(ids: List<String>, description: String? = null, expires: Long? = null): String?
     abstract suspend fun updateInternetRadioStation(id: String, name: String, streamUrl: String, homepageUrl: String? = null): Boolean
     abstract suspend fun updatePlaylist(id: String, name: String, comment: String? = null, ownerId: String? = null, public: Boolean? = null, queryBuilderRules: PlaylistRules? = null, sync: Boolean? = null): Boolean
 }

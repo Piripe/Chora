@@ -63,6 +63,7 @@ import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import com.craftworks.music.utils.StringUtils
 
@@ -81,6 +82,7 @@ fun HorizontalSongCard(
     var showAddSongToPlaylistDialog by remember { mutableStateOf(false) }
     var showSongRatingDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     val isStarred by remember(song.mediaMetadata) { viewModel.songStarredFlow(song.mediaMetadata) }
         .collectAsStateWithLifecycle(viewModel.isSongStarred(song.mediaMetadata))
@@ -358,6 +360,23 @@ fun HorizontalSongCard(
                             }
                         )
                     }
+                    if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.SHARING) == true) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(stringResource(R.string.action_share))
+                            },
+                            onClick = {
+                                showShareDialog = true
+                                expanded = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_share_24),
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
 
                     extraMenuItems { expanded = false }
                 }
@@ -375,6 +394,14 @@ fun HorizontalSongCard(
         DownloadTargetDialog(
             onDismissRequest = { showDownloadDialog = false },
             onSelect = { viewModel.downloadSong(song, it) }
+        )
+    }
+    if (showShareDialog) {
+        ShareDialog(
+            provider = song.mediaMetadata.getProvider(),
+            ids = listOfNotNull(song.mediaMetadata.id),
+            title = song.mediaMetadata.title.toString(),
+            onDismissRequest = { showShareDialog = false }
         )
     }
     if (showSongRatingDialog) {

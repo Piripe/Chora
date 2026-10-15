@@ -483,6 +483,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         ActionButtonType.PLAY_NEXT to stringResource(R.string.action_play_next),
                         ActionButtonType.ADD_TO_PLAYLIST to stringResource(R.string.action_add_to_playlist),
                         ActionButtonType.DOWNLOAD to stringResource(R.string.action_download),
+                        ActionButtonType.SHARE to stringResource(R.string.action_share),
                     )
 
                     SettingsDialogButton(
@@ -545,6 +546,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     ActionButtonType.PLAY_NEXT,
                     ActionButtonType.ADD_TO_PLAYLIST,
                     ActionButtonType.DOWNLOAD,
+                    ActionButtonType.SHARE,
                 ),
                 onSet = {
                     runBlocking {
@@ -567,6 +569,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     ActionButtonType.PLAY_NEXT,
                     ActionButtonType.ADD_TO_PLAYLIST,
                     ActionButtonType.DOWNLOAD,
+                    ActionButtonType.SHARE,
                 ),
                 onSet = {
                     runBlocking {
@@ -587,6 +590,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     ActionButtonType.ADD_TO_QUEUE,
                     ActionButtonType.PLAY_NEXT,
                     ActionButtonType.DOWNLOAD,
+                    ActionButtonType.SHARE,
                 ),
                 onSet = {
                     runBlocking {

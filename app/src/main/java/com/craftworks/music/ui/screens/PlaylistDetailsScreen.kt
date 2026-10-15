@@ -69,6 +69,7 @@ import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.utils.StringUtils
@@ -113,6 +114,7 @@ fun PlaylistDetails(
 
     var showLoading by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(isLoading) {
         if (isLoading) {
@@ -258,6 +260,9 @@ fun PlaylistDetails(
                                     ActionButtonType.DOWNLOAD to {
                                         showDownloadDialog = true
                                     },
+                                    ActionButtonType.SHARE to {
+                                        showShareDialog = true
+                                    },
                                 )
 
                                 SongListActionButtons(
@@ -314,6 +319,15 @@ fun PlaylistDetails(
                 )
             }
         }
+    }
+
+    if (showShareDialog) {
+        ShareDialog(
+            provider = playlistMetadata?.getProvider(),
+            ids = listOfNotNull(playlistMetadata?.id),
+            title = playlistMetadata?.title?.toString() ?: "",
+            onDismissRequest = { showShareDialog = false }
+        )
     }
 
     if (showDownloadDialog) {

@@ -73,6 +73,22 @@ data class SubsonicBody(
 
     // Lyrics
     val lyricsList: SubsonicLyricsList? = null,
+
+    // Shares
+    val shares: SubsonicShares? = null,
+)
+
+@Serializable
+data class SubsonicShares(
+    val share: List<SubsonicShare>? = null
+)
+
+@Serializable
+data class SubsonicShare(
+    val id: String,
+    val url: String,
+    val description: String? = null,
+    val expires: String? = null
 )
 
 @Serializable

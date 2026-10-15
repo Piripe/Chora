@@ -19,6 +19,20 @@
     <string name="download_target_device">Save To The Device</string>
         <string name="download_target_device_description">Save the files in the Music folder, named after the download templates</string>
 
+    // Share
+    <string name="share_title">Share</string>
+    <string name="share_description">Description</string>
+    <string name="share_expires">Link expires</string>
+        <string name="share_expires_never">Never</string>
+        <string name="share_expires_day">In 1 day</string>
+        <string name="share_expires_week">In 1 week</string>
+        <string name="share_expires_month">In 1 month</string>
+        <string name="share_expires_year">In 1 year</string>
+    <string name="share_create_link">Create Link</string>
+    <string name="share_copy_link">Copy Link</string>
+    <string name="share_link_copied">Link copied</string>
+    <string name="share_error">Couldn\'t create the link. Sharing may be disabled on the server.</string>
+
     // Playlists
     <string name="button_new_playlist">New Playlist</string>
     <string name="playlist_delete_playlist">Delete Playlist</string>

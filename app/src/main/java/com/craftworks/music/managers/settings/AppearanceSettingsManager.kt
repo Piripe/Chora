@@ -410,7 +410,8 @@ class AppearanceSettingsManager @Inject constructor(
             ActionButton(ActionButtonType.SEPARATOR,true),
             ActionButton(ActionButtonType.FAVORITE,true),
             ActionButton(ActionButtonType.ADD_TO_PLAYLIST,true),
-            ActionButton(ActionButtonType.DOWNLOAD,true)
+            ActionButton(ActionButtonType.DOWNLOAD,true),
+            ActionButton(ActionButtonType.SHARE,true)
         )
     }
 
@@ -431,7 +432,8 @@ class AppearanceSettingsManager @Inject constructor(
             ActionButton(ActionButtonType.SEPARATOR,true),
             ActionButton(ActionButtonType.FAVORITE,true),
             ActionButton(ActionButtonType.ADD_TO_PLAYLIST,true),
-            ActionButton(ActionButtonType.DOWNLOAD,true)
+            ActionButton(ActionButtonType.DOWNLOAD,true),
+            ActionButton(ActionButtonType.SHARE,true)
         )
     }
 
@@ -450,7 +452,8 @@ class AppearanceSettingsManager @Inject constructor(
             ActionButton(ActionButtonType.ADD_TO_QUEUE,true),
             ActionButton(ActionButtonType.PLAY_NEXT,true),
             ActionButton(ActionButtonType.SEPARATOR,true),
-            ActionButton(ActionButtonType.DOWNLOAD,true)
+            ActionButton(ActionButtonType.DOWNLOAD,true),
+            ActionButton(ActionButtonType.SHARE,true)
         )
     }
 

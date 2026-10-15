@@ -75,6 +75,7 @@ import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
 import com.craftworks.music.utils.StringUtils
@@ -102,6 +103,7 @@ fun AlbumDetails(
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -320,6 +322,9 @@ fun AlbumDetails(
                                     ActionButtonType.DOWNLOAD to {
                                         showDownloadDialog = true
                                     },
+                                    ActionButtonType.SHARE to {
+                                        showShareDialog = true
+                                    },
                                 )
 
                                 SongListActionButtons(
@@ -429,6 +434,15 @@ fun AlbumDetails(
                 onDismissRequest = { showDownloadDialog = false },
                 // The first item is the album itself.
                 onSelect = { viewModel.downloadAlbum(currentAlbum.drop(1), it) }
+            )
+        }
+        if (showShareDialog) {
+            val album = currentAlbum.firstOrNull()?.mediaMetadata
+            ShareDialog(
+                provider = album?.getProvider(),
+                ids = listOfNotNull(album?.id),
+                title = album?.title?.toString() ?: "",
+                onDismissRequest = { showShareDialog = false }
             )
         }
     }

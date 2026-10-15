@@ -532,14 +532,10 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
     }
 
     override suspend fun shareItem(
-        description: String,
-        downloadable: Boolean,
-        expires: Long,
-        resourceIds: String,
-        resourceType: String
-    ): String? {
-        TODO("Not yet implemented")
-    }
+        ids: List<String>,
+        description: String?,
+        expires: Long?
+    ): String? = null
 
     override suspend fun updateInternetRadioStation(
         id: String,

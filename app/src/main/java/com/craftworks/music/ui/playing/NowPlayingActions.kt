@@ -19,7 +19,7 @@ import java.util.EnumSet
 @Serializable
 enum class NowPlayingAction {
     PLAY_PAUSE, PREVIOUS, NEXT, SHUFFLE, REPEAT, SEEK_BACK, SEEK_FORWARD,
-    LYRICS, QUEUE, SLEEP_TIMER, DOWNLOAD,
+    LYRICS, QUEUE, SLEEP_TIMER, DOWNLOAD, SHARE,
     FAVORITE, RATING, ADD_TO_PLAYLIST, GO_TO_ARTIST, GO_TO_ALBUM,
     MENU
 }
@@ -89,6 +89,7 @@ val defaultNowPlayingMenuItems: List<NowPlayingMenuItem> = listOf(
     NowPlayingAction.GO_TO_ARTIST,
     NowPlayingAction.GO_TO_ALBUM,
     NowPlayingAction.DOWNLOAD,
+    NowPlayingAction.SHARE,
     NowPlayingAction.LYRICS,
     NowPlayingAction.QUEUE,
     NowPlayingAction.SLEEP_TIMER,
@@ -140,6 +141,7 @@ data class NowPlayingActionContext(
         NowPlayingAction.SEEK_BACK, NowPlayingAction.SEEK_FORWARD -> !isRadio
         NowPlayingAction.LYRICS -> hasLyrics
         NowPlayingAction.DOWNLOAD -> !isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true
+        NowPlayingAction.SHARE -> !isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true
         NowPlayingAction.FAVORITE -> !isRadio && providerFeatures?.contains(ProviderFeature.FAVORITES) == true
         NowPlayingAction.RATING -> !isRadio && providerFeatures?.contains(ProviderFeature.RATINGS) == true
         NowPlayingAction.ADD_TO_PLAYLIST -> !isRadio && providerFeatures?.contains(ProviderFeature.PLAYLISTS) == true
@@ -163,6 +165,7 @@ fun nowPlayingActionLabel(action: NowPlayingAction): String = when (action) {
     NowPlayingAction.QUEUE -> stringResource(R.string.action_queue)
     NowPlayingAction.SLEEP_TIMER -> stringResource(R.string.action_sleep_timer)
     NowPlayingAction.DOWNLOAD -> stringResource(R.string.action_download)
+    NowPlayingAction.SHARE -> stringResource(R.string.action_share)
     NowPlayingAction.FAVORITE -> stringResource(R.string.action_favorite)
     NowPlayingAction.RATING -> stringResource(R.string.action_set_rating)
     NowPlayingAction.ADD_TO_PLAYLIST -> stringResource(R.string.action_add_to_playlist)
@@ -187,6 +190,7 @@ fun nowPlayingActionIcon(action: NowPlayingAction, active: Boolean = false): Ima
     NowPlayingAction.QUEUE -> ImageVector.vectorResource(R.drawable.rounded_queue_music_24)
     NowPlayingAction.SLEEP_TIMER -> ImageVector.vectorResource(R.drawable.rounded_timer_24)
     NowPlayingAction.DOWNLOAD -> ImageVector.vectorResource(R.drawable.rounded_download_24)
+    NowPlayingAction.SHARE -> ImageVector.vectorResource(R.drawable.rounded_share_24)
     NowPlayingAction.FAVORITE ->
         ImageVector.vectorResource(if (active) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24)
     NowPlayingAction.RATING ->

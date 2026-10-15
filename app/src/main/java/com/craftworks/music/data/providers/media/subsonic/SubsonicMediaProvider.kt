@@ -89,7 +89,8 @@ open class SubsonicMediaProvider : MediaProvider() {
         ProviderFeature.FAVORITES,
         ProviderFeature.INTERNET_RADIO,
         ProviderFeature.PLAYLISTS,
-        ProviderFeature.RATINGS
+        ProviderFeature.RATINGS,
+        ProviderFeature.SHARING
     )
 
     @Transient
@@ -778,13 +779,13 @@ open class SubsonicMediaProvider : MediaProvider() {
     }
 
     override suspend fun shareItem(
-        description: String,
-        downloadable: Boolean,
-        expires: Long,
-        resourceIds: String,
-        resourceType: String
+        ids: List<String>,
+        description: String?,
+        expires: Long?
     ): String? {
-        TODO("Not yet implemented")
+        val response = service.createShare(ids, description, expires).subsonicResponse
+        response.error?.let { throw IllegalStateException(it.message) }
+        return response.shares?.share?.firstOrNull()?.url
     }
 
     override suspend fun updateInternetRadioStation(

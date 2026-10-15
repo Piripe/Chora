@@ -37,6 +37,7 @@
     <string name="action_next">Next</string>
     <string name="action_skip_for_now">Skip for now</string>
     <string name="action_download">Download</string>
+    <string name="action_share">Share</string>
     <string name="action_more">More</string>
 
     // Now playing

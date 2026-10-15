@@ -116,7 +116,8 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
         ProviderFeature.INTERNET_RADIO,
         ProviderFeature.PLAYLISTS,
         ProviderFeature.RATINGS,
-        ProviderFeature.FILTER_BY_ID
+        ProviderFeature.FILTER_BY_ID,
+        ProviderFeature.SHARING
     )
 
     @Transient

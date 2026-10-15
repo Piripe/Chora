@@ -78,6 +78,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
@@ -87,11 +88,14 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
@@ -650,7 +654,25 @@ fun QueueItemMenu(
     val isStarred by remember(metadata) { viewModel.songStarredFlow(metadata) }
         .collectAsStateWithLifecycle(viewModel.isSongStarred(metadata))
 
-    Dialog(onDismissRequest = { onDialogDismiss() }) {
+    val isRadio = metadata.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION
+    val providerFeatures = metadata.getProvider()?.featureFlags
+    // The menu is replaced by these dialogs, closing them closes the menu.
+    var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
+
+    if (showDownloadDialog) {
+        DownloadTargetDialog(
+            onDismissRequest = onDialogDismiss,
+            onSelect = { viewModel.downloadSong(metadata, it) }
+        )
+    } else if (showShareDialog) {
+        ShareDialog(
+            provider = metadata.getProvider(),
+            ids = listOfNotNull(metadata.id),
+            title = metadata.title.toString(),
+            onDismissRequest = onDialogDismiss
+        )
+    } else Dialog(onDismissRequest = { onDialogDismiss() }) {
         Surface(
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -702,6 +724,16 @@ fun QueueItemMenu(
                     ) {
                         viewModel.toggleSongStar(metadata)
                         onDialogDismiss()
+                    }
+                    if (!isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true) {
+                        QueueMenuButton(R.drawable.rounded_download_24, R.string.action_download) {
+                            showDownloadDialog = true
+                        }
+                    }
+                    if (!isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true) {
+                        QueueMenuButton(R.drawable.rounded_share_24, R.string.action_share) {
+                            showShareDialog = true
+                        }
                     }
                 }
             }

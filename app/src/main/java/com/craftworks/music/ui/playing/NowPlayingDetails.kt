@@ -34,6 +34,7 @@ private val actionsClosingMenu = setOf(
     NowPlayingAction.QUEUE,
     NowPlayingAction.SLEEP_TIMER,
     NowPlayingAction.DOWNLOAD,
+    NowPlayingAction.SHARE,
     NowPlayingAction.RATING,
     NowPlayingAction.ADD_TO_PLAYLIST,
     NowPlayingAction.GO_TO_ARTIST,

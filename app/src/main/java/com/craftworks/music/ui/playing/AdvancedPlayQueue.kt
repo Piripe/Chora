@@ -99,14 +99,18 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.LibraryType
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.getProvider
 import com.craftworks.music.data.model.id
+import com.craftworks.music.data.model.providerId
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
+import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.SortDialog
 import com.craftworks.music.utils.StringUtils
 import sh.calvin.reorderable.ReorderableItem
@@ -154,6 +158,9 @@ fun AdvancedPlayQueueContent(
     var showSelectByDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var addToPlaylistSongsOverride by remember { mutableStateOf<List<MediaItem>?>(null) }
+    // The selected songs to download or share, the dialog is shown while set
+    var songsToDownload by remember { mutableStateOf<List<MediaMetadata>?>(null) }
+    var songsToShare by remember { mutableStateOf<List<MediaMetadata>?>(null) }
 
     DisposableEffect(mediaController) {
         fun syncList() {
@@ -214,6 +221,13 @@ fun AdvancedPlayQueueContent(
     }
 
     val selectedCount = if (groupDragItems.isNotEmpty()) groupDragItems.size else selectedIndices.size
+
+    // The selected songs (not radios) whose provider supports [feature], in queue order
+    fun selectedSongsWith(feature: ProviderFeature): List<MediaMetadata> =
+        selectedIndices.map { currentList[it].mediaItem.mediaMetadata }.filter {
+            it.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION &&
+                it.getProvider()?.featureFlags?.contains(feature) == true
+        }
 
     fun exitSelection() {
         selectionMode = false
@@ -330,6 +344,14 @@ fun AdvancedPlayQueueContent(
                         selectedIndices.map { currentList[it].mediaItem.mediaMetadata },
                         starred
                     )
+                },
+                canDownload = { selectedSongsWith(ProviderFeature.DOWNLOADS).isNotEmpty() },
+                onDownload = { songsToDownload = selectedSongsWith(ProviderFeature.DOWNLOADS) },
+                canShare = { selectedSongsWith(ProviderFeature.SHARING).isNotEmpty() },
+                onShare = {
+                    // A link is created on one server: keep the songs of the first one's provider
+                    val songs = selectedSongsWith(ProviderFeature.SHARING)
+                    songsToShare = songs.filter { it.providerId == songs.firstOrNull()?.providerId }
                 }
             )
         } else {
@@ -556,6 +578,23 @@ fun AdvancedPlayQueueContent(
         )
     }
 
+    songsToDownload?.let { songs ->
+        DownloadTargetDialog(
+            onDismissRequest = { songsToDownload = null },
+            onSelect = { viewModel.downloadSongs(songs, it) }
+        )
+    }
+
+    songsToShare?.let { songs ->
+        ShareDialog(
+            provider = songs.firstOrNull()?.getProvider(),
+            ids = songs.mapNotNull { it.id },
+            title = songs.singleOrNull()?.title?.toString()
+                ?: stringResource(R.string.add_to_playlist_songs, songs.size),
+            onDismissRequest = { songsToShare = null }
+        )
+    }
+
     if (showAddToPlaylistDialog) {
         AddToPlaylist(
             onDismissRequest = {
@@ -727,6 +766,10 @@ private fun QueueSelectionTopBar(
     onAddToPlaylist: () -> Unit,
     isSelectionStarred: () -> Boolean,
     onSetStarred: (Boolean) -> Unit,
+    canDownload: () -> Boolean,
+    onDownload: () -> Unit,
+    canShare: () -> Boolean,
+    onShare: () -> Unit,
 ) {
     val hasSelection = selectedCount > 0
     var selectionMenuExpanded by remember { mutableStateOf(false) }
@@ -820,6 +863,18 @@ private fun QueueSelectionTopBar(
                 ) {
                     onSetStarred(!starred)
                     actionsMenuExpanded = false
+                }
+                if (canDownload()) {
+                    QueueDropdownItem(R.drawable.rounded_download_24, R.string.action_download) {
+                        onDownload()
+                        actionsMenuExpanded = false
+                    }
+                }
+                if (canShare()) {
+                    QueueDropdownItem(R.drawable.rounded_share_24, R.string.action_share) {
+                        onShare()
+                        actionsMenuExpanded = false
+                    }
                 }
             }
         }

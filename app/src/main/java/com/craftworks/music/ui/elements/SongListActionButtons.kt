@@ -353,10 +353,13 @@ fun getActionButtonIconText(type: ActionButtonType): Pair<ImageVector, String> =
 
     ActionButtonType.DOWNLOAD -> ImageVector.vectorResource(R.drawable.rounded_download_24) to
             stringResource(R.string.action_download)
+
+    ActionButtonType.SHARE -> ImageVector.vectorResource(R.drawable.rounded_share_24) to
+            stringResource(R.string.action_share)
 }
 
 enum class ActionButtonType {
-    SHUFFLE, FAVORITE, PLAY_NEXT, ADD_TO_QUEUE, ADD_TO_PLAYLIST, DOWNLOAD, SEPARATOR
+    SHUFFLE, FAVORITE, PLAY_NEXT, ADD_TO_QUEUE, ADD_TO_PLAYLIST, DOWNLOAD, SHARE, SEPARATOR
 }
 
 @Serializable
@@ -371,6 +374,7 @@ data class ActionButton(
             ActionButtonType.FAVORITE -> flags.contains(ProviderFeature.FAVORITES)
             ActionButtonType.ADD_TO_PLAYLIST -> flags.contains(ProviderFeature.PLAYLISTS)
             ActionButtonType.DOWNLOAD -> flags.contains(ProviderFeature.DOWNLOADS)
+            ActionButtonType.SHARE -> flags.contains(ProviderFeature.SHARING)
             else -> true
         }
 }

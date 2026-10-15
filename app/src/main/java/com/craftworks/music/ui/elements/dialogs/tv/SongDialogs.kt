@@ -65,9 +65,12 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.craftworks.music.R
 import com.craftworks.music.data.model.DownloadTarget
+import com.craftworks.music.data.model.ProviderFeature
+import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 
-private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING, DOWNLOAD }
+private enum class DialogMenu { MAIN, ADD_TO_PLAYLIST, NEW_PLAYLIST, SET_RATING, DOWNLOAD, SHARE }
 
 @Preview(
     showBackground = false, showSystemUi = true, device = "id:tv_1080p",
@@ -170,6 +173,16 @@ fun SongDialog(
                             }
                         )
 
+                        if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.SHARING) == true) {
+                            ListItem(
+                                selected = false,
+                                headlineContent = { Text(stringResource(R.string.action_share)) },
+                                onClick = {
+                                    dialogMenu = DialogMenu.SHARE
+                                }
+                            )
+                        }
+
                         ListItem(
                             selected = false,
                             headlineContent = {
@@ -216,6 +229,15 @@ fun SongDialog(
                                 }
                             )
                         }
+                    }
+
+                    DialogMenu.SHARE -> {
+                        TvShareMenu(
+                            provider = song.mediaMetadata.getProvider(),
+                            ids = listOfNotNull(song.mediaMetadata.id),
+                            title = song.mediaMetadata.title.toString(),
+                            onDismiss = { setShowDialog(false) }
+                        )
                     }
 
                     DialogMenu.SET_RATING -> {

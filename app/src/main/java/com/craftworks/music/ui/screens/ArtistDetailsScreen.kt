@@ -78,6 +78,7 @@ import com.craftworks.music.ui.elements.AlbumCard
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.utils.bleedHorizontal
@@ -107,6 +108,7 @@ fun ArtistDetails(
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     var showArtistBiographyDialog by remember { mutableStateOf(false) }
     var addToPlaylistSongs by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
 
@@ -313,6 +315,9 @@ fun ArtistDetails(
                                     ActionButtonType.DOWNLOAD to {
                                         showDownloadDialog = true
                                     },
+                                    ActionButtonType.SHARE to {
+                                        showShareDialog = true
+                                    },
                                 )
 
                                 SongListActionButtons(
@@ -403,6 +408,15 @@ fun ArtistDetails(
             onSelect = { target ->
                 coroutineScope.launch { viewModel.downloadArtist(getArtistSongs(), target) }
             }
+        )
+    }
+
+    if (showShareDialog) {
+        ShareDialog(
+            provider = artist?.getProvider(),
+            ids = listOfNotNull(artist?.id),
+            title = artist?.name ?: "",
+            onDismissRequest = { showShareDialog = false }
         )
     }
 

@@ -182,10 +182,13 @@ class NowPlayingViewModel @Inject constructor (
         } ?: listOf()
     }
 
-    fun downloadSong(metadata: MediaMetadata, target: DownloadTarget) {
-        if (target == DownloadTarget.APP) return songRepository.downloadInApp(listOf(metadata))
+    fun downloadSong(metadata: MediaMetadata, target: DownloadTarget) = downloadSongs(listOf(metadata), target)
+
+    fun downloadSongs(metadata: List<MediaMetadata>, target: DownloadTarget) {
+        if (target == DownloadTarget.APP) return songRepository.downloadInApp(metadata)
         viewModelScope.launch {
-            songRepository.downloadSong(metadata, miscSettingsManager.downloadTemplateFlow.first())
+            val template = miscSettingsManager.downloadTemplateFlow.first()
+            metadata.forEach { songRepository.downloadSong(it, template) }
         }
     }
 

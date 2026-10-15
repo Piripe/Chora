@@ -41,11 +41,13 @@ import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.getProvider
+import com.craftworks.music.data.model.id
 import com.craftworks.music.data.repository.LyricsState
 import com.craftworks.music.managers.settings.OLEDProtectionMode
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
+import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.RatingDialog
 import com.craftworks.music.ui.playing.tv.TvNowPlaying
 import kotlinx.coroutines.flow.flowOf
@@ -81,6 +83,7 @@ fun NowPlayingContent(
     var showRatingDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     val sleepTimerOpen by viewModel.sleepTimerDialogOpen.collectAsStateWithLifecycle()
     val sleepTimerMinutes by ChoraMediaLibraryService.getInstance()?.sleepTimerRemainingTime
         ?.collectAsStateWithLifecycle(initialValue = 0)
@@ -159,6 +162,7 @@ fun NowPlayingContent(
             NowPlayingAction.QUEUE -> viewModel.setPlayQueueOpen(!playQueueOpen)
             NowPlayingAction.SLEEP_TIMER -> viewModel.setSleepTimerDialogOpen(true)
             NowPlayingAction.DOWNLOAD -> metadata?.let { showDownloadDialog = true }
+            NowPlayingAction.SHARE -> metadata?.let { showShareDialog = true }
             NowPlayingAction.FAVORITE -> metadata?.let { viewModel.toggleSongStar(it) }
             NowPlayingAction.RATING -> showRatingDialog = true
             NowPlayingAction.ADD_TO_PLAYLIST -> showAddToPlaylistDialog = true
@@ -320,6 +324,15 @@ fun NowPlayingContent(
             DownloadTargetDialog(
                 onDismissRequest = { showDownloadDialog = false },
                 onSelect = { viewModel.downloadSong(song, it) }
+            )
+        }
+    if (showShareDialog)
+        metadata?.let { song ->
+            ShareDialog(
+                provider = song.getProvider(),
+                ids = listOfNotNull(song.id),
+                title = song.title.toString(),
+                onDismissRequest = { showShareDialog = false }
             )
         }
 }
