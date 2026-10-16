@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +36,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -75,6 +80,7 @@ import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.AlbumCard
+import com.craftworks.music.ui.elements.ArtistCard
 import com.craftworks.music.ui.elements.DetailsLoadingIndicator
 import com.craftworks.music.ui.elements.ExpressiveDetailsHeader
 import com.craftworks.music.ui.elements.ExpressiveGroupTitle
@@ -85,6 +91,7 @@ import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.cardImageUrl
 import com.craftworks.music.ui.elements.gridVerticalSpacing
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
@@ -110,6 +117,7 @@ fun ArtistDetails(
 
     val artist = viewModel.selectedArtist.collectAsStateWithLifecycle().value
     val artistAlbums = viewModel.artistAlbums.collectAsStateWithLifecycle().value
+    val appearsOn = viewModel.appearsOn.collectAsStateWithLifecycle().value
     val actionButtons = viewModel.actionButtons.collectAsStateWithLifecycle(emptyList()).value
     val context = LocalContext.current
     val imageFadingEdge = Brush.verticalGradient(listOf(Color.Red.copy(0.75f), Color.Transparent))
@@ -239,6 +247,33 @@ fun ArtistDetails(
                     isStarred = isStarred
                 )
             }
+        }
+
+        val albumCard = @Composable { album: MediaItem ->
+            AlbumCard(
+                album = album,
+                onClick = {
+                    navHostController.navigate(
+                        Screen.AlbumDetails(
+                            album.mediaMetadata.id ?: "",
+                            album.mediaMetadata.artworkUri.toString()
+                        )
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onPlay = {
+                    coroutineScope.launch {
+                        val mediaItems = viewModel.getAlbum(album.mediaMetadata.id ?: "")
+                        if (mediaItems.isNotEmpty())
+                            SongHelper.play(
+                                mediaItems = mediaItems.subList(1, mediaItems.size),
+                                index = 0,
+                                mediaController = mediaController
+                            )
+                    }
+                }
+            )
         }
 
         LazyVerticalGrid(
@@ -375,21 +410,7 @@ fun ArtistDetails(
 
             /* Discography header */
             item(span = { GridItemSpan(maxLineSpan) }) {
-                if (expressive)
-                    Text(
-                        text = stringResource(R.string.artist_details_discography),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.headlineSmallEmphasized,
-                        modifier = Modifier.padding(top = 12.dp, start = 4.dp)
-                    )
-                else
-                    Text(
-                        text = stringResource(R.string.artist_details_discography),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(top = 6.dp)
-                    )
+                ArtistSectionTitle(stringResource(R.string.artist_details_discography), expressive)
             }
 
             groupedAlbums.forEach { (groupName, albumsInGroup) ->
@@ -406,30 +427,42 @@ fun ArtistDetails(
                     )
                 }
                 itemsIndexed(albumsInGroup) { index, album ->
-                    AlbumCard(
-                        album = album,
-                        onClick = {
-                            navHostController.navigate(
-                                Screen.AlbumDetails(
-                                    album.mediaMetadata.id ?: "",
-                                    album.mediaMetadata.artworkUri.toString()
-                                )
-                            ) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onPlay = {
-                            coroutineScope.launch {
-                                val mediaItems = viewModel.getAlbum(album.mediaMetadata.id ?: "")
-                                if (mediaItems.isNotEmpty())
-                                    SongHelper.play(
-                                        mediaItems = mediaItems.subList(1, mediaItems.size),
-                                        index = 0,
-                                        mediaController = mediaController
+                    albumCard(album)
+                }
+            }
+
+            if (appearsOn.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ArtistSectionTitle(stringResource(R.string.artist_details_appears_on), expressive)
+                }
+                items(appearsOn, key = { "appears_on_${it.mediaId}" }) { album ->
+                    albumCard(album)
+                }
+            }
+
+            val relatedArtists = artist?.similarArtists.orEmpty()
+            if (relatedArtists.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ArtistSectionTitle(stringResource(R.string.artist_details_related_artists), expressive)
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        // The row scrolls up to the screen edges, under the padding of the grid.
+                        modifier = Modifier.bleedHorizontal(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(relatedArtists) { relatedArtist ->
+                            Box(Modifier.width(112.dp)) {
+                                ArtistCard(relatedArtist) {
+                                    // Not single top: it would replace this artist instead of opening on top of it.
+                                    navHostController.navigate(
+                                        Screen.ArtistDetails(relatedArtist.id, relatedArtist.cardImageUrl())
                                     )
+                                }
                             }
                         }
-                    )
+                    }
                 }
             }
         }
@@ -492,4 +525,25 @@ fun ArtistDetails(
             }
         )
     }
+}
+
+/** Title of a section of the artist details (discography, appears on, related artists). */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ArtistSectionTitle(text: String, expressive: Boolean) {
+    if (expressive)
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onBackground,
+            style = MaterialTheme.typography.headlineSmallEmphasized,
+            modifier = Modifier.padding(top = 12.dp, start = 4.dp)
+        )
+    else
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = 6.dp)
+        )
 }

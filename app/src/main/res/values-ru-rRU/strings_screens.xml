@@ -51,6 +51,8 @@
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Дискография</string>
+    <string name="artist_details_appears_on">Участвует в</string>
+    <string name="artist_details_related_artists">Похожие исполнители</string>
 
     <!-- Album Details -->
     <string name="album_details_disc">Диск %s</string>

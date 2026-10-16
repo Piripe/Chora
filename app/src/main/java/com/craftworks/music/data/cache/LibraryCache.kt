@@ -256,6 +256,18 @@ class LibraryCache @Inject constructor() {
             .sortedBy { it.name.lowercase() }
     }
 
+    /** Cached albums holding a song of the artist with [artistId], or where the artist is a participant. */
+    fun getArtistAppearances(providerId: String, artistId: String): List<MediaModel.Album> = withCache(providerId) {
+        val songAlbumIds = songs.values
+            .filter { song -> song.artists.any { it.id == artistId } }
+            .mapTo(HashSet()) { it.albumId }
+        albums.values
+            .filter { album ->
+                album.id in songAlbumIds || album.participants.values.any { artists -> artists.any { it.id == artistId } }
+            }
+            .sortedBy { it.name.lowercase() }
+    }
+
     fun getArtistDetail(providerId: String, artistId: String): AlbumArtistDetailResponse? {
         val artist = withCache(providerId) { artists[artistId] }
         val albums = getArtistAlbums(providerId, artistId)

@@ -76,6 +76,8 @@ open class SubsonicMediaProvider : MediaProvider() {
         private const val FOLDER_LOOKUP_PARALLELISM = 6
         /** Guards against folders being their own parent. */
         private const val MAX_FOLDER_DEPTH = 64
+        /** Songs searched by artist name when looking for the albums an artist appears on. */
+        private const val APPEARANCES_SONG_SEARCH_COUNT = 500
 
         private val ALBUM_ARTIST_SORT_BINDING = mapOf<AlbumArtistListSort, (MediaModel.Artist) -> Comparable<*>?>(
             AlbumArtistListSort.ALBUM_COUNT to { it.albumCount },
@@ -558,6 +560,37 @@ open class SubsonicMediaProvider : MediaProvider() {
                 songs = files.filter { it.isVideo != true }.map { it.toMediaModel(this.id) }
             )
         )
+    }
+
+    // The Subsonic API has no song filter by artist: search the songs by the artist name and keep theirs.
+    override suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> = coroutineScope {
+        val albumIds = service.search3(
+            query = artistName,
+            artistCount = 0,
+            albumCount = 0,
+            songCount = APPEARANCES_SONG_SEARCH_COUNT,
+            musicFolderId = data.libraries.filter { it.second }.map { it.first.id.toInt() },
+        ).subsonicResponse.searchResult3?.song.orEmpty()
+            .map { it.toMediaModel(this@SubsonicMediaProvider.id) }
+            .filter { song -> song.artists.any { it.id == artistId } }
+            .map { it.albumId }
+            .filter { it.isNotEmpty() }
+            .distinct()
+
+        val semaphore = Semaphore(FOLDER_LOOKUP_PARALLELISM)
+        albumIds.map { albumId ->
+            async {
+                semaphore.withPermit {
+                    try {
+                        getAlbumDetail(albumId).copy(songs = emptyList())
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }
+        }.awaitAll().filterNotNull()
     }
 
     override suspend fun getSongFolders(songs: List<MediaModel.Song>): Map<String, List<MediaModel.Folder>> = coroutineScope {

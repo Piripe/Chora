@@ -127,11 +127,12 @@ fun AlbumScreen(
                         headerText = stringResource(R.string.nav_albums),
                         scrollBehavior = scrollBehavior,
                         onSearch = { query -> viewModel.search(query) },
-                        searchResults = {
+                        searchResults = { closeSearch ->
                             AlbumGrid(
                                 searchResults,
                                 mediaController,
                                 onAlbumSelected = { album ->
+                                    closeSearch()
                                     navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
                                         launchSingleTop = true
                                     }

@@ -43,6 +43,8 @@
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Diskografie</string>
+    <string name="artist_details_appears_on">Enthalten auf</string>
+    <string name="artist_details_related_artists">Ähnliche Künstler</string>
 
     <!-- Album Details -->
     <string name="album_details_disc">CD %s</string>

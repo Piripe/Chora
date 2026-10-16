@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -62,7 +64,9 @@ import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.SongHelper
+import com.craftworks.music.ui.elements.cardImageUrl
 import com.craftworks.music.ui.elements.tv.TvAlbumCard
+import com.craftworks.music.ui.elements.tv.TvArtistCard
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import kotlinx.coroutines.launch
@@ -85,6 +89,7 @@ fun TvArtistDetailsScreen(
     val showLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val artist = viewModel.selectedArtist.collectAsStateWithLifecycle().value
     val artistAlbums = viewModel.artistAlbums.collectAsStateWithLifecycle().value
+    val appearsOn = viewModel.appearsOn.collectAsStateWithLifecycle().value
 
     AnimatedVisibility(
         visible = showLoading || artist == null,
@@ -295,6 +300,57 @@ fun TvArtistDetailsScreen(
                     )
                 }
             }
+
+            if (appearsOn.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    TvArtistSectionTitle(stringResource(R.string.artist_details_appears_on))
+                }
+                items(appearsOn) { album ->
+                    TvAlbumCard(
+                        album = album,
+                        onClick = {
+                            navHostController.navigate(Screen.AlbumDetails(album.mediaMetadata.id?:"", album.mediaMetadata.artworkUri.toString())) {
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
+            }
+
+            val relatedArtists = artist?.similarArtists.orEmpty()
+            if (relatedArtists.isNotEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    TvArtistSectionTitle(stringResource(R.string.artist_details_related_artists))
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    LazyRow(
+                        modifier = Modifier.focusGroup(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(relatedArtists) { relatedArtist ->
+                            TvArtistCard(
+                                artist = relatedArtist,
+                                onClick = {
+                                    // Not single top: it would replace this artist instead of opening on top of it.
+                                    navHostController.navigate(Screen.ArtistDetails(relatedArtist.id, relatedArtist.cardImageUrl()))
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
+}
+
+/** Title of a section of the artist details (appears on, related artists). */
+@Composable
+private fun TvArtistSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        color = MaterialTheme.colorScheme.onBackground,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+    )
 }

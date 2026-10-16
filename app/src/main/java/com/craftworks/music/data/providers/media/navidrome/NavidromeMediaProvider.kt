@@ -8,6 +8,7 @@ import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
+import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.providers.media.subsonic.SubsonicMediaProvider
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
@@ -43,6 +44,10 @@ import javax.net.ssl.X509TrustManager
 class NavidromeMediaProvider : SubsonicMediaProvider() {
 
     companion object {
+        /** Albums requested at once when looking for the albums an artist appears on. */
+        private const val APPEARANCES_PAGE_SIZE = 500
+        private const val MAX_ARTIST_APPEARANCES = 2000
+
         private val ALBUM_ARTIST_SORT_BINDING =
             mapOf(
                 AlbumArtistListSort.ALBUM_COUNT to "albumCount",
@@ -297,6 +302,23 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
             starred = query.favorite,
             year = query.maxYear ?: query.minYear
         ).map { it.toMediaModel(id) }
+    }
+
+    // The album artist_id filter matches every participant of the album, track artists included.
+    override suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> {
+        val albums = mutableListOf<MediaModel.Album>()
+        while (albums.size < MAX_ARTIST_APPEARANCES) {
+            val page = getAlbumList(MediaQuery.AlbumListQuery(
+                AlbumListSort.NAME,
+                SortOrder.ASC,
+                artistIds = listOf(artistId),
+                limit = APPEARANCES_PAGE_SIZE,
+                startIndex = albums.size
+            ))
+            albums += page
+            if (page.size < APPEARANCES_PAGE_SIZE) break
+        }
+        return albums
     }
 
     override suspend fun getArtistList(query: MediaQuery.ArtistListQuery): List<MediaModel.Artist> {

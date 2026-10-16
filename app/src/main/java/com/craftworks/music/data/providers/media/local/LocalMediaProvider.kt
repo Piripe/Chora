@@ -506,6 +506,14 @@ class LocalMediaProvider(var providerData: LocalProviderData) : MediaProvider() 
         return SimilarSongs.pick(songs, songs.filter { it.id == songId }, count ?: 50)
     }
 
+    override suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> {
+        val albumIds = getAllLocalSongs()
+            .filter { song -> song.artists.any { it.id == artistId } }
+            .mapTo(HashSet()) { it.albumId }
+        return LocalUtils.getLocalAlbums(appContext, id, "${MediaStore.Audio.Albums.ALBUM} ASC", data.libraries.filter { it.second }.map { it.first.name })
+            .filter { it.id in albumIds }
+    }
+
     private fun getAllLocalSongs(): List<MediaModel.Song> =
         LocalUtils.getLocalSongs(
             appContext, id, "${MediaStore.Audio.Media.TITLE} ASC",

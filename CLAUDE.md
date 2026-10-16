@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Rules
 
 Keep everything inside this folder and /tmp. Do not make git commit. Do not build, ask the user to test the app instead.
+Always translate the strings in every langs of the app.
 
 ## Project
 

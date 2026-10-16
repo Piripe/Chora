@@ -66,6 +66,15 @@ class ArtistRepository @Inject constructor(
         )?.map { it.toMediaItem() } ?: listOf()
     }
 
+    /** Albums holding at least one song of the artist, see [com.craftworks.music.data.providers.media.MediaProvider.getArtistAppearances]. */
+    suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> = coroutineScope {
+        offlineManager.fetchOrCache(
+            online = { it.getArtistAppearances(artistId, artistName) },
+            onSuccess = { providerId, albums -> libraryCache.addMissingAlbums(providerId, albums) },
+            offline = { providerId -> libraryCache.getArtistAppearances(providerId, artistId) }
+        ) ?: listOf()
+    }
+
     suspend fun getArtistDetail(artistId: String): AlbumArtistDetailResponse? = coroutineScope {
         offlineManager.fetchOrCache(
             online = { it.getAlbumArtistDetail(artistId) },

@@ -47,6 +47,8 @@
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Discografía</string>
+    <string name="artist_details_appears_on">Aparece en</string>
+    <string name="artist_details_related_artists">Artistas relacionados</string>
 
     <!-- Album Details -->
     <string name="album_details_disc">Disco %s</string>

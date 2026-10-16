@@ -1,5 +1,6 @@
 package com.craftworks.music.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -13,6 +14,7 @@ import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -39,6 +41,10 @@ class ArtistDetailsViewModel @Inject constructor(
     private val _artistAlbums = MutableStateFlow<List<MediaItem>>(emptyList())
     val artistAlbums: StateFlow<List<MediaItem>> = _artistAlbums.asStateFlow()
 
+    /** Albums of other artists holding at least one song of the artist. */
+    private val _appearsOn = MutableStateFlow<List<MediaItem>>(emptyList())
+    val appearsOn: StateFlow<List<MediaItem>> = _appearsOn.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -58,6 +64,7 @@ class ArtistDetailsViewModel @Inject constructor(
         if (loadedArtistId != artistId) {
             _selectedArtist.value = initialArtist?.takeIf { it.id == artistId }
             _artistAlbums.value = emptyList()
+            _appearsOn.value = emptyList()
         }
         loadedArtistId = artistId
 
@@ -82,6 +89,10 @@ class ArtistDetailsViewModel @Inject constructor(
                     _artistAlbums.value = artistDetail.albums.map { it.toMediaItem() }
                 }
 
+                _selectedArtist.value?.name?.let { artistName ->
+                    launch { loadAppearances(artistId, artistName) }
+                }
+
                 val artistInfo = infoDeferred.await()
                 _selectedArtist.value = _selectedArtist.value?.copy(
                     biography = artistInfo?.biography ?: _selectedArtist.value?.biography,
@@ -93,6 +104,26 @@ class ArtistDetailsViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    private suspend fun loadAppearances(artistId: String, artistName: String) {
+        val albums = try {
+            artistRepository.getArtistAppearances(artistId, artistName)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("ArtistDetailsViewModel", "Failed to get the albums $artistName appears on", e)
+            return
+        }
+        val ownAlbumIds = _artistAlbums.value.mapTo(HashSet()) { it.mediaId }
+        _appearsOn.value = albums
+            .filter { album ->
+                album.id !in ownAlbumIds && album.artists.none { it.id == artistId }
+                    && album.participants["albumartist"]?.any { it.id == artistId } != true
+            }
+            .distinctBy { it.id }
+            .sortedWith(compareByDescending<MediaModel.Album> { it.releaseYear ?: 0 }.thenBy { it.name.lowercase() })
+            .map { it.toMediaItem() }
     }
 
     suspend fun getAlbum(id: String): List<MediaItem> {

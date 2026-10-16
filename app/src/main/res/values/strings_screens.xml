@@ -43,6 +43,8 @@
 
     // Artist Details
     <string name="artist_details_discography">Discography</string>
+    <string name="artist_details_appears_on">Appears on</string>
+    <string name="artist_details_related_artists">Related artists</string>
 
     // Album Details
     <string name="album_details_disc">Disc %s</string>

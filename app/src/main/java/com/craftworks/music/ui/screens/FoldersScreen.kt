@@ -157,8 +157,11 @@ fun FoldersScreen(
     val currentName = currentFolder?.name?.takeIf { path.size > 1 && it.isNotBlank() } ?: rootName
     val hasContent = folders.isNotEmpty() || songs.isNotEmpty()
 
-    // Opening another folder clears the search.
-    LaunchedEffect(currentFolder?.id) { isSearching = false }
+    // Opening another folder clears the search and shows the top bar again, since a folder too short to scroll can't bring it back.
+    LaunchedEffect(currentFolder?.id) {
+        isSearching = false
+        scrollBehavior.state.heightOffset = 0f
+    }
 
     // Back closes the search, then returns to the previously opened folder before leaving the screen.
     BackHandler(enabled = isSearching || canGoBack) {

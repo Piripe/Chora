@@ -116,6 +116,11 @@ abstract class MediaProvider {
      * Only called when [featureFlags] has [ProviderFeature.FOLDERS], for providers that need the network.
      */
     open suspend fun getSongFolders(songs: List<MediaModel.Song>): Map<String, List<MediaModel.Folder>> = emptyMap()
+    /**
+     * The albums holding at least one song of the artist with [artistId] (named [artistName]), whoever their
+     * album artist is. They may include the artist's own albums, which callers leave out.
+     */
+    open suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> = emptyList()
     abstract suspend fun getGenreList(query: MediaQuery.GenreListQuery): List<MediaModel.Genre>
     abstract suspend fun getImageRequest(id: String, itemType: LibraryType, size: Int? = null, baseUrl: String? = null): ImageRequest?
     abstract fun getImageUrl(id: String, itemType: LibraryType? = null, size: Int? = null): String

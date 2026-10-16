@@ -39,6 +39,8 @@
 
     <!-- Artist Details -->
     <string name="artist_details_discography">作品集</string>
+    <string name="artist_details_appears_on">出现于</string>
+    <string name="artist_details_related_artists">相关艺人</string>
 
     <!-- Album Details -->
     <string name="album_details_disc">第 %s 张碟</string>

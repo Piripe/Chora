@@ -122,10 +122,11 @@ fun ArtistsScreen(
                     headerText = stringResource(R.string.nav_artists),
                     scrollBehavior = scrollBehavior,
                     onSearch = { query -> viewModel.search(query) },
-                    searchResults = {
+                    searchResults = { closeSearch ->
                         ArtistsGrid(
                             artists = searchResults,
                             onArtistSelected = { artist ->
+                                closeSearch()
                                 navHostController.navigate(
                                     Screen.ArtistDetails(
                                         artistId = artist.id,

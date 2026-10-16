@@ -35,7 +35,8 @@ fun TopBarWithSearch(
     headerText: String,
     scrollBehavior: TopAppBarScrollBehavior,
     onSearch: (query: String) -> Unit,
-    searchResults: @Composable () -> Unit,
+    /** The search results. [closeSearch] collapses the search, to call before leaving the screen for a result. */
+    searchResults: @Composable (closeSearch: () -> Unit) -> Unit,
     extraAction: @Composable () -> Unit = {},
 ) {
     val textFieldState = rememberTextFieldState()
@@ -112,6 +113,8 @@ fun TopBarWithSearch(
         inputField = inputField,
         collapsedShape = CircleShape,
     ) {
-        searchResults()
+        // The expanded search is a window over the app: it must be closed right away when opening a result,
+        // or it hides the transition and catches the back gesture when coming back to this screen.
+        searchResults { scope.launch { searchBarState.snapTo(0f) } }
     }
 }
