@@ -18,6 +18,7 @@ import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.dataStore
+import com.craftworks.music.utils.releaseDateMillis
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -112,7 +113,8 @@ class LocalDataSettingsManager @Inject constructor(
                             userFavorite = it.mediaMetadata.extras?.getBoolean("userFavorite") ?: false,
                             imageId = it.mediaMetadata.extras?.getString("imageId"),
                             imageUrl = it.mediaMetadata.artworkUri?.toString(),
-                            releaseYear = it.mediaMetadata.releaseYear,
+                            releaseYear = it.mediaMetadata.recordingYear ?: it.mediaMetadata.releaseYear,
+                            releaseDate = it.mediaMetadata.releaseDateMillis(),
                             format = it.mediaMetadata.extras?.getString("format"),
                             bitRate = it.mediaMetadata.extras?.getLong("bitrate")?.toInt(),
                             explicit = it.mediaMetadata.extras?.getBoolean(METADATA_KEY_IS_EXPLICIT),

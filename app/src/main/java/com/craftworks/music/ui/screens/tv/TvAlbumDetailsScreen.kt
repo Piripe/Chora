@@ -76,6 +76,7 @@ import com.craftworks.music.ui.elements.tv.TvHorizontalSongCard
 import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.StringUtils
+import com.craftworks.music.utils.releaseDateText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -184,14 +185,16 @@ fun TvAlbumDetails(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    // Artist · duration
+                    // Artist · release date · duration
                     Text(
-                        text = (currentAlbum[0].mediaMetadata.artist?.toString() ?: "") +
-                                " · " +
-                                StringUtils.formatSeconds(
-                                    currentAlbum[0].mediaMetadata.durationMs
-                                        ?.div(1000) ?: 0
-                                ),
+                        text = listOfNotNull(
+                            currentAlbum[0].mediaMetadata.artist?.toString(),
+                            releaseDateText(currentAlbum[0].mediaMetadata),
+                            StringUtils.formatSeconds(
+                                currentAlbum[0].mediaMetadata.durationMs
+                                    ?.div(1000) ?: 0
+                            )
+                        ).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,

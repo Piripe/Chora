@@ -94,6 +94,7 @@ import com.craftworks.music.ui.viewmodels.AlbumDetailsViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.StringUtils
 import com.craftworks.music.utils.fadingEdge
+import com.craftworks.music.utils.releaseDateText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -285,7 +286,7 @@ fun AlbumDetails(
                             )
                             Text(
                                 text = listOfNotNull(
-                                    album.recordingYear?.takeIf { it != 0 }?.toString(),
+                                    releaseDateText(album),
                                     pluralStringResource(R.plurals.details_song_count, currentAlbum.size - 1, currentAlbum.size - 1),
                                     StringUtils.formatSeconds(album.durationMs?.div(1000) ?: 0)
                                 ).joinToString(" • "),
@@ -397,7 +398,7 @@ fun AlbumDetails(
                                             }
                                             append(" • ")
                                         }
-                                        currentAlbum[0].mediaMetadata.recordingYear?.takeIf { it != 0 }?.let { append("$it • ") }
+                                        releaseDateText(currentAlbum[0].mediaMetadata)?.let { append("$it • ") }
                                         append(StringUtils.formatSeconds(currentAlbum[0].mediaMetadata.durationMs?.div(1000) ?: 0))
                                     },
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),

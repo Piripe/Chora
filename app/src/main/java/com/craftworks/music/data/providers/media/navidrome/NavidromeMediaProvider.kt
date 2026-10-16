@@ -1,6 +1,8 @@
 package com.craftworks.music.data.providers.media.navidrome
 
+import android.util.Log
 import com.craftworks.music.R
+import com.craftworks.music.data.model.AlbumArtistDetailResponse
 import com.craftworks.music.data.model.AlbumArtistListSort
 import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.ArtistListSort
@@ -25,6 +27,9 @@ import io.ktor.client.plugins.plugin
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Contextual
@@ -303,6 +308,43 @@ class NavidromeMediaProvider : SubsonicMediaProvider() {
             year = query.maxYear ?: query.minYear
         ).map { it.toMediaModel(id) }
     }
+
+    // Album and artist details come from the Subsonic API, whose release date only comes from the RELEASEDATE tag
+    // and doesn't exist for songs: they are completed with the dates of the Navidrome API, see NavidromeAlbum.date.
+    override suspend fun getAlbumDetail(id: String): MediaModel.Album = coroutineScope {
+        val nativeAlbum = async { fetchDates { service.getAlbumList(id = id, end = 1).firstOrNull()?.toMediaModel(this@NavidromeMediaProvider.id) } }
+        val nativeSongs = async { fetchDates { service.getSongList(albumId = listOf(id)).map { it.toMediaModel(this@NavidromeMediaProvider.id) } } }
+        val album = super.getAlbumDetail(id)
+        val songDates = nativeSongs.await()?.associate { it.id to it.releaseDate }.orEmpty()
+        val withDates = nativeAlbum.await()?.let { album.withDatesOf(it) } ?: album
+        withDates.copy(songs = withDates.songs.map { song ->
+            song.copy(releaseDate = songDates[song.id] ?: song.releaseDate ?: withDates.releaseDate)
+        })
+    }
+
+    override suspend fun getAlbumArtistDetail(id: String): AlbumArtistDetailResponse = coroutineScope {
+        val nativeAlbums = async { fetchDates { getArtistAppearances(id, "") } }
+        val detail = super.getAlbumArtistDetail(id)
+        val albumsById = nativeAlbums.await()?.associateBy { it.id }.orEmpty()
+        detail.copy(albums = detail.albums?.map { album -> albumsById[album.id]?.let { album.withDatesOf(it) } ?: album })
+    }
+
+    /** The result of [block], or null if it failed: the dates are only a bonus. */
+    private suspend fun <T> fetchDates(block: suspend () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w("NavidromeMediaProvider", "Failed to get the release dates", e)
+        null
+    }
+
+    private fun MediaModel.Album.withDatesOf(native: MediaModel.Album) = copy(
+        releaseDate = native.releaseDate ?: releaseDate,
+        releaseYear = native.releaseYear ?: releaseYear,
+        originalDate = native.originalDate ?: originalDate,
+        originalYear = native.originalYear ?: originalYear,
+    )
 
     // The album artist_id filter matches every participant of the album, track artists included.
     override suspend fun getArtistAppearances(artistId: String, artistName: String): List<MediaModel.Album> {

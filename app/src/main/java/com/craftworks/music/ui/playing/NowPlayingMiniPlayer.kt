@@ -45,6 +45,7 @@ import coil.request.ImageRequest
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
 import com.craftworks.music.ui.elements.LocalExpressiveDesign
+import com.craftworks.music.utils.releaseDateText
 
 /** Radius of the top corners of the now playing sheet, which holds the mini player. */
 val MiniPlayerCornerRadius = 12.dp
@@ -121,9 +122,10 @@ fun NowPlayingMiniPlayer(
                     textAlign = TextAlign.Start,
                     modifier = Modifier.weight(1f)
                 )
-                if ((metadata?.recordingYear ?: 0) != 0 && metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION) {
+                val releaseDate = releaseDateText(metadata)
+                if (releaseDate != null && metadata?.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION) {
                     Text(
-                        text = " • " + metadata?.recordingYear.toString(),
+                        text = " • $releaseDate",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Light,
                         color = MaterialTheme.colorScheme.onBackground,

@@ -3,6 +3,8 @@ package com.craftworks.music.data.providers.media.navidrome
 import com.craftworks.music.data.model.GainInfo
 import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderType
+import com.craftworks.music.data.model.parseReleaseDate
+import com.craftworks.music.data.model.parseTimestamp
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,6 +29,8 @@ data class NavidromeAlbum(
     val comment: String? = null,
     val compilation: Boolean? = null,
     val createdAt: String? = null,
+    /** The DATE tag. Navidrome only fills [releaseDate] from a RELEASEDATE tag, which most files don't have. */
+    val date: String? = null,
     val duration: Double? = null,
     val explicitStatus: String? = null,
     val externalInfoUpdatedAt: String? = null,
@@ -75,10 +79,15 @@ data class NavidromeAlbum(
             else -> null
         }
 
-        val extractedOriginalYear = this.originalDate?.take(4)?.toIntOrNull()
+        // Navidrome sends empty strings for the dates it doesn't know.
+        val extractedOriginalDate = this.originalDate?.takeIf { it.isNotBlank() }
+        val extractedReleaseDate = this.releaseDate?.takeIf { it.isNotBlank() }
+            ?: this.date?.takeIf { it.isNotBlank() }
+
+        val extractedOriginalYear = extractedOriginalDate?.take(4)?.toIntOrNull()
             ?: this.minOriginalYear
 
-        val extractedReleaseYear = this.releaseDate?.take(4)?.toIntOrNull()
+        val extractedReleaseYear = extractedReleaseDate?.take(4)?.toIntOrNull()
             ?: extractedOriginalYear
             ?: if (this.maxYear > 0) this.maxYear else null
 
@@ -93,18 +102,18 @@ data class NavidromeAlbum(
                 providerId = providerId,
                 providerType = ProviderType.NAVIDROME) } ?: emptyList(),
             comment = this.comment,
-            createdAt = this.createdAt,
+            createdAt = parseTimestamp(this.createdAt),
             durationMs = durationMs,
             explicit = explicit,
             genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
             imageUrl = this.id,
             isCompilation = this.compilation,
-            lastPlayedAt = this.playDate,
+            lastPlayedAt = parseTimestamp(this.playDate),
             mbzId = this.mbzAlbumId,
             mbzReleaseGroupId = this.mbzReleaseGroupId,
             name = this.name,
-            originalDate = this.originalDate,
+            originalDate = parseReleaseDate(extractedOriginalDate),
             originalYear = extractedOriginalYear,
             participants = this.participants?.mapValues { roleParticipants ->
                 roleParticipants.value.map { MediaModel.Artist(
@@ -114,7 +123,7 @@ data class NavidromeAlbum(
                 providerType = ProviderType.NAVIDROME) } } ?: emptyMap(),
             playCount = (this.playCount ?: 0).toDouble(),
             recordLabels = emptyList(),
-            releaseDate = this.releaseDate,
+            releaseDate = parseReleaseDate(extractedReleaseDate),
             releaseType = this.mbzAlbumType,
             releaseTypes = this.mbzAlbumType?.let { listOf(it) } ?: emptyList(),
             releaseYear = extractedReleaseYear,
@@ -123,7 +132,7 @@ data class NavidromeAlbum(
             songs = this.songs?.map { it.toMediaModel(providerId) } ?: emptyList(),
             sortName = this.orderAlbumName,
             tags = this.tags ?: emptyMap(),
-            updatedAt = this.updatedAt,
+            updatedAt = parseTimestamp(this.updatedAt),
             userFavorite = this.starred,
             userRating = this.rating,
             version = null
@@ -183,6 +192,8 @@ data class NavidromeSong(
     val catalogNum: String? = null,
     val channels: Int? = null,
     val comment: String? = null,
+    /** The DATE tag, see [NavidromeAlbum.date]. */
+    val date: String? = null,
     val discSubtitle: String? = null,
     val embedArtPath: String? = null,
     val explicitStatus: String? = null,
@@ -218,11 +229,13 @@ data class NavidromeSong(
             else -> null
         }
 
-        val extractedReleaseYear = this.releaseDate?.take(4)?.toIntOrNull()
+        val knownReleaseDate = this.releaseDate?.takeIf { it.isNotBlank() }
+            ?: this.date?.takeIf { it.isNotBlank() }
+
+        val extractedReleaseYear = knownReleaseDate?.take(4)?.toIntOrNull()
             ?: if (this.year > 0) this.year else null
 
-        val extractedReleaseDate = this.releaseDate
-            ?: if (this.year > 0) this.year.toString() else null
+        val extractedReleaseDate = parseReleaseDate(knownReleaseDate)
 
         val trackSubtitle = this.tags?.get("subtitle")?.joinToString(" · ")
         val trackIsrc = this.tags?.get("isrc")
@@ -247,7 +260,7 @@ data class NavidromeSong(
             channels = this.channels,
             comment = this.comment,
             container = this.suffix,
-            createdAt = this.createdAt,
+            createdAt = parseTimestamp(this.createdAt),
             discNumber = this.discNumber,
             discSubtitle = this.discSubtitle,
             durationMs = durationMs,
@@ -261,7 +274,7 @@ data class NavidromeSong(
             genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
             imageUrl = this.id,
-            lastPlayedAt = this.playDate,
+            lastPlayedAt = parseTimestamp(this.playDate),
             lyrics = this.lyrics,
             mbzRecordingId = this.mbzReleaseTrackId,
             mbzTrackId = this.mbzReleaseTrackId,
@@ -282,7 +295,7 @@ data class NavidromeSong(
             tags = this.tags ?: emptyMap(),
             trackNumber = this.trackNumber,
             trackSubtitle = trackSubtitle,
-            updatedAt = this.updatedAt,
+            updatedAt = parseTimestamp(this.updatedAt),
             userFavorite = this.starred,
             userRating = this.rating
         )
@@ -345,7 +358,7 @@ data class NavidromeArtist(
             durationMs = null,
             genres = this.genres?.map { MediaModel.Genre(name = it.name, id = it.id) } ?: emptyList(),
             imageId = this.id,
-            lastPlayedAt = this.playDate,
+            lastPlayedAt = parseTimestamp(this.playDate),
             playCount = (this.playCount ?: 0).toDouble(),
             songCount = songCount,
             uploadedImage = this.uploadedImage,

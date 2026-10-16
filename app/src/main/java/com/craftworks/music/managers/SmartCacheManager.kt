@@ -28,7 +28,6 @@ import com.craftworks.music.data.model.PlaylistListSort
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
-import com.craftworks.music.data.model.parseDateMillis
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.managers.OfflineManager.Companion.requiresNetwork
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
@@ -1398,6 +1397,7 @@ class SmartCacheManager @Inject constructor(
                     imageId = first.imageId,
                     name = first.album ?: "",
                     releaseYear = first.releaseYear,
+                    releaseDate = first.releaseDate,
                     songs = albumSongs,
                 )
             })
@@ -1548,8 +1548,8 @@ class SmartCacheManager @Inject constructor(
             maxOf(ListeningScore.of(song.playCount, song.lastPlayedAt, now), appScores[song.id] ?: 0.0)
 
         /** Played recently enough for a play to still count, see [ListeningScore.RECENT_MIN_SCORE]. */
-        private fun String?.isRecent(now: Long): Boolean =
-            parseDateMillis(this)?.let { now - it <= RECENT_WINDOW_MS } == true
+        private fun Long?.isRecent(now: Long): Boolean =
+            this?.let { now - it <= RECENT_WINDOW_MS } == true
 
         private fun MediaModel.Song.isRecent(now: Long) = (playCount ?: 0) > 0 && lastPlayedAt.isRecent(now)
 

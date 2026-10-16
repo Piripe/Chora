@@ -75,6 +75,7 @@ import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import com.craftworks.music.utils.StringUtils
+import com.craftworks.music.utils.releaseDateText
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -234,7 +235,7 @@ fun HorizontalSongCard(
                 }
 
                 Text(
-                    text = song.mediaMetadata.artist.toString() + if ((song.mediaMetadata.recordingYear ?: 0) != 0) " • " + song.mediaMetadata.recordingYear else "",
+                    text = listOfNotNull(song.mediaMetadata.artist.toString(), releaseDateText(song.mediaMetadata)).joinToString(" • "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
                     modifier = Modifier,

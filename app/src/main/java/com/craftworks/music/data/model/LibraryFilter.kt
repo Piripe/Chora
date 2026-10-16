@@ -4,10 +4,7 @@ import androidx.annotation.StringRes
 import com.craftworks.music.R
 import com.craftworks.music.data.providers.media.MediaProvider
 import kotlinx.serialization.Serializable
-import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
@@ -354,7 +351,7 @@ private object LibraryFilterValues {
     private fun genres(genres: List<MediaModel.Genre>) =
         FilterValue.Text(genres.map { it.name }.filter { it.isNotEmpty() }, genres.mapNotNull { it.id })
     private fun number(value: kotlin.Number?) = FilterValue.Number(value?.toDouble())
-    private fun date(value: String?) = FilterValue.Date(parseDateMillis(value))
+    private fun date(epochMillis: Long?) = FilterValue.Date(epochMillis)
     private val none = FilterValue.Text(emptyList())
 
     fun song(song: MediaModel.Song, field: FilterField): FilterValue = when (field) {
@@ -426,14 +423,4 @@ private object LibraryFilterValues {
         FilterField.LAST_PLAYED -> date(artist.lastPlayedAt)
         else -> none
     }
-}
-
-/** Providers return ISO dates (Navidrome, Subsonic) or epoch seconds (local MediaStore). */
-fun parseDateMillis(value: String?): Long? {
-    if (value.isNullOrBlank()) return null
-    value.toLongOrNull()?.let { return if (it < 100_000_000_000L) it * 1000 else it }
-    return try { Instant.parse(value).toEpochMilli() } catch (_: Exception) { null }
-        ?: try { OffsetDateTime.parse(value).toInstant().toEpochMilli() } catch (_: Exception) { null }
-        ?: try { LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
-        ?: try { LocalDate.parse(value.take(10)).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() } catch (_: Exception) { null }
 }

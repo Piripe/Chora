@@ -13,6 +13,8 @@ import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.SyncType
 import com.craftworks.music.data.model.SyncedWord
+import com.craftworks.music.data.model.parseTimestamp
+import com.craftworks.music.data.model.releaseDateMillis
 import com.craftworks.music.utils.separateBackgroundLyrics
 import com.craftworks.music.utils.splitMultipleBg
 import kotlinx.serialization.SerialName
@@ -221,7 +223,7 @@ data class SubsonicSong(
             comment = this.comment,
             compilation = null,
             container = this.contentType,
-            createdAt = this.dateAdded,
+            createdAt = parseTimestamp(this.dateAdded),
             discNumber = this.discNumber ?: 1,
             discSubtitle = null,
             durationMs = this.duration * 1000,
@@ -230,7 +232,7 @@ data class SubsonicSong(
             genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: listOf(),
             imageId = this.imageUrl,
             imageUrl = this.imageUrl,
-            lastPlayedAt = this.lastPlayed,
+            lastPlayedAt = parseTimestamp(this.lastPlayed),
             lyrics = null,
             mbzRecordingId = this.musicBrainzId,
             mbzTrackId = null,
@@ -306,29 +308,32 @@ data class SubsonicAlbum(
                     MediaModel.Artist(id = it, providerId = providerId, providerType = ProviderType.SUBSONIC, name = artist ?: "")
                 }),
             comment = null,
-            createdAt = this.created,
+            createdAt = parseTimestamp(this.created),
             durationMs = this.duration * 1000,
             explicit = this.explicitStatus?.let { it == "explicit"},
             genres = this.genres?.map { MediaModel.Genre(name = it.name) } ?: listOf(),
             imageId = this.coverArt,
             imageUrl = this.coverArt,
             isCompilation = this.isCompilation,
-            lastPlayedAt = this.played,
+            lastPlayedAt = parseTimestamp(this.played),
             mbzId = this.musicBrainzId,
             mbzReleaseGroupId = null,
             name = this.name,
-            originalDate = this.originalReleaseDate?.year?.toString(),
+            originalDate = this.originalReleaseDate?.toEpochMillis(),
             originalYear = this.originalReleaseDate?.year ?: this.year,
             participants = mapOf(),
             playCount = this.playCount?.toDouble(),
             recordLabels = this.recordLabels?.map { it.name } ?: listOf(),
-            releaseDate = this.releaseDate?.year?.toString(),
+            releaseDate = this.releaseDate?.toEpochMillis(),
             releaseType = this.releaseTypes?.firstOrNull(),
             releaseTypes = this.releaseTypes ?: listOf(),
             releaseYear = this.year,
             size = null,
             songCount = this.songCount,
-            songs = this.song?.map { it.toMediaModel(providerId) } ?: emptyList(),
+            // Songs have no date in the Subsonic API: they get the one of their album.
+            songs = this.song?.map { song ->
+                song.toMediaModel(providerId).let { it.copy(releaseDate = it.releaseDate ?: this.releaseDate?.toEpochMillis()) }
+            } ?: emptyList(),
             sortName = this.sortName,
             tags = if (!this.moods.isNullOrEmpty()) mapOf("moods" to this.moods) else mapOf(),
             updatedAt = null,
@@ -369,7 +374,10 @@ data class SubsonicItemDate(
     val year: Int? = 0,
     val month: Int? = 0,
     val day: Int? = 0
-)
+) {
+    /** The date as a release date (see [releaseDateMillis]), or null if the day isn't known. */
+    fun toEpochMillis(): Long? = releaseDateMillis(year, month, day)
+}
 
 @Immutable
 @Serializable

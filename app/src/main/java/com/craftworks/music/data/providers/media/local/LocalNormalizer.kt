@@ -1,5 +1,6 @@
 package com.craftworks.music.data.providers.media.local
 
+import com.craftworks.music.data.model.parseTimestamp
 import android.content.Context
 import android.database.Cursor
 import android.provider.MediaStore
@@ -85,7 +86,7 @@ object LocalNormalizer {
             )),
             bitRate = bitrate / 1000,
             format = format.substringAfter("/").uppercase(getDefault()).removePrefix("X-"),
-            createdAt = dateAdded,
+            createdAt = parseTimestamp(dateAdded),
             discNumber = discNumber,
             durationMs = duration,
             genres = listOf(MediaModel.Genre(name = genre)),

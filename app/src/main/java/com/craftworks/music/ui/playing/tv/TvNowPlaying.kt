@@ -78,6 +78,7 @@ import com.craftworks.music.ui.elements.tv.TvHorizontalSongCard
 import com.craftworks.music.ui.playing.LyricsView
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.screens.tv.requestFocusOnFirstGainingVisibility
+import com.craftworks.music.utils.releaseDateText
 import com.gigamole.composefadingedges.marqueeHorizontalFadingEdges
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -218,7 +219,7 @@ fun TvNowPlaying(
                         subtitle = {
                             if (metadata?.albumTitle != null) {
                                 Text(
-                                    text = metadata.albumTitle.toString() + if ((metadata.recordingYear ?: 0) != 0) " • " + metadata.recordingYear else "",
+                                    text = listOfNotNull(metadata.albumTitle.toString(), releaseDateText(metadata)).joinToString(" • "),
                                     color = iconTextColor,
                                     maxLines = 1,
                                     modifier = Modifier

@@ -8,7 +8,7 @@ import com.craftworks.music.data.model.MediaModel
 import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
-import com.craftworks.music.data.model.parseDateMillis
+import com.craftworks.music.data.model.releaseDateMillis
 import kotlinx.coroutines.CompletableDeferred
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -332,7 +332,9 @@ class LibraryCache @Inject constructor() {
                 AlbumListSort.RATING, AlbumListSort.COMMUNITY_RATING, AlbumListSort.CRITIC_RATING -> album.userRating
                 AlbumListSort.RECENTLY_ADDED -> stats[album.id]?.createdAt
                 AlbumListSort.RECENTLY_PLAYED -> stats[album.id]?.lastPlayedAt
+                // Without the day, the album is sorted at the start of its year.
                 AlbumListSort.RELEASE_DATE -> album.releaseDate ?: album.originalDate
+                    ?: (album.releaseYear ?: album.originalYear)?.let { releaseDateMillis(it, 1, 1) }
                 AlbumListSort.SONG_COUNT -> album.songCount
                 AlbumListSort.SORT_NAME -> (album.sortName ?: album.name).lowercase()
                 AlbumListSort.YEAR -> album.releaseYear
@@ -429,7 +431,7 @@ class LibraryCache @Inject constructor() {
                 SongListSort.RATING -> song.userRating
                 SongListSort.RECENTLY_ADDED -> stats[song.id]?.createdAt
                 SongListSort.RECENTLY_PLAYED -> stats[song.id]?.lastPlayedAt
-                SongListSort.RELEASE_DATE -> song.releaseDate
+                SongListSort.RELEASE_DATE -> song.releaseDate ?: song.releaseYear?.let { releaseDateMillis(it, 1, 1) }
                 SongListSort.SORT_NAME -> (song.sortName ?: song.name).lowercase()
                 SongListSort.TRACK_NUMBER -> song.discNumber * 100_000L + song.trackNumber
                 SongListSort.YEAR -> song.releaseYear
@@ -446,9 +448,9 @@ class LibraryCache @Inject constructor() {
     private fun ProviderCache.songStats(song: MediaModel.Song): PlayStats {
         val appPlay = appPlays[song.id]
         return PlayStats(
-            lastPlayedAt = listOfNotNull(parseDateMillis(song.lastPlayedAt), appPlay?.lastPlayedAt).maxOrNull(),
+            lastPlayedAt = listOfNotNull(song.lastPlayedAt, appPlay?.lastPlayedAt).maxOrNull(),
             playCount = maxOf(song.playCount ?: 0, appPlay?.playCount ?: 0).toDouble(),
-            createdAt = parseDateMillis(song.createdAt)
+            createdAt = song.createdAt
         )
     }
 
@@ -462,9 +464,9 @@ class LibraryCache @Inject constructor() {
         return albums.values.associate { album ->
             val songStats = songStatsByAlbum[album.id].orEmpty()
             album.id to PlayStats(
-                lastPlayedAt = (listOfNotNull(parseDateMillis(album.lastPlayedAt)) + songStats.mapNotNull { it.lastPlayedAt }).maxOrNull(),
+                lastPlayedAt = (listOfNotNull(album.lastPlayedAt) + songStats.mapNotNull { it.lastPlayedAt }).maxOrNull(),
                 playCount = maxOf(album.playCount ?: 0.0, songStats.sumOf { it.playCount }),
-                createdAt = parseDateMillis(album.createdAt) ?: songStats.mapNotNull { it.createdAt }.minOrNull()
+                createdAt = album.createdAt ?: songStats.mapNotNull { it.createdAt }.minOrNull()
             )
         }
     }

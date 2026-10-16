@@ -16,6 +16,7 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 
+/** The models shared by every provider. Their dates are epoch milliseconds, see MediaDates.kt. */
 abstract class MediaModel
 {
     abstract val providerId: String
@@ -34,23 +35,23 @@ abstract class MediaModel
         val albumArtistName: String? = "Unknown Artist",
         val artists: List<Artist> = listOf(),
         val comment: String? = null,
-        val createdAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val createdAt: Long? = null,
         val durationMs: Int = 0,
         val explicit: Boolean? = null,
         val genres: List<Genre> = listOf(),
         val imageId: String? = null,
         val imageUrl: String? = null,
         val isCompilation: Boolean? = null,
-        val lastPlayedAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val lastPlayedAt: Long? = null,
         val mbzId: String? = null,
         val mbzReleaseGroupId: String? = null,
         val name: String,
-        val originalDate: String? = null,
+        @Serializable(with = ReleaseDateSerializer::class) val originalDate: Long? = null,
         val originalYear: Int? = null,
         val participants: Map<String, List<Artist>> = mapOf(),
         val playCount: Double? = null,
         val recordLabels: List<String> = listOf(),
-        val releaseDate: String? = null,
+        @Serializable(with = ReleaseDateSerializer::class) val releaseDate: Long? = null,
         val releaseType: String? = null,
         val releaseTypes: List<String> = listOf(),
         val releaseYear: Int? = null,
@@ -59,7 +60,7 @@ abstract class MediaModel
         val songs: List<Song> = listOf(),
         val sortName: String? = null,
         val tags: Map<String, List<String>> = mapOf(),
-        val updatedAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val updatedAt: Long? = null,
         val userFavorite: Boolean? = null,
         val userRating: Int? = null,
         val version: String? = null
@@ -91,7 +92,8 @@ abstract class MediaModel
                             putParcelableArrayList("artists", ArrayList(this@Album.artists))
                             putString("imageId", this@Album.imageId)
                             this@Album.playCount?.let { putDouble("playCount", it) }
-                            putString("lastPlayedAt", this@Album.lastPlayedAt)
+                            this@Album.lastPlayedAt?.let { putLong("lastPlayedAt", it) }
+                            (this@Album.releaseDate ?: this@Album.originalDate)?.let { putLong("releaseDate", it) }
                         }
                     )
                     .build()
@@ -115,7 +117,7 @@ abstract class MediaModel
         val genres: List<Genre> = emptyList(),
         val imageId: String? = null,
         val imageUrl: String? = null,
-        val lastPlayedAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val lastPlayedAt: Long? = null,
         val mbz: String? = null,
         val name: String,
         val playCount: Double? = null,
@@ -289,7 +291,7 @@ abstract class MediaModel
         val comment: String? = null,
         val compilation: Boolean? = null,
         val container: String? = null,
-        val createdAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val createdAt: Long? = null,
         val discNumber: Int,
         val discSubtitle: String? = null,
         val durationMs: Int,
@@ -298,7 +300,7 @@ abstract class MediaModel
         val genres: List<Genre> = listOf(),
         val imageId: String? = null,
         val imageUrl: String? = null,
-        val lastPlayedAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val lastPlayedAt: Long? = null,
         val lyrics: String? = null,
         val mbzRecordingId: String? = null,
         val mbzTrackId: String? = null,
@@ -309,7 +311,7 @@ abstract class MediaModel
         val peak: GainInfo? = null,
         val playCount: Int? = null,
         val playlistItemId: String? = null,
-        val releaseDate: String? = null,
+        @Serializable(with = ReleaseDateSerializer::class) val releaseDate: Long? = null,
         val releaseYear: Int? = null,
         val sampleRate: Int? = null,
         val size: Int? = null,
@@ -317,7 +319,7 @@ abstract class MediaModel
         val tags: Map<String, List<String>>? = null,
         val trackNumber: Int,
         val trackSubtitle: String? = null,
-        val updatedAt: String? = null,
+        @Serializable(with = TimestampSerializer::class) val updatedAt: Long? = null,
         val userFavorite: Boolean? = null,
         val userRating: Int? = null,
         /** ID of the folder holding the song, when the provider gives it (Subsonic API). */
@@ -364,6 +366,7 @@ abstract class MediaModel
                             putString("albumId", this@Song.albumId)
                             putString("imageId", this@Song.imageId)
                             putString("format", this@Song.format)
+                            this@Song.releaseDate?.let { putLong("releaseDate", it) }
                             putLong("bitrate", this@Song.bitRate?.toLong() ?: 0)
                             putInt("bpm", this@Song.bpm ?: 0)
                             putInt("playCount", this@Song.playCount ?: 0)

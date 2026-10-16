@@ -1,6 +1,5 @@
 package com.craftworks.music.data.cache
 
-import com.craftworks.music.data.model.parseDateMillis
 import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 
@@ -24,9 +23,9 @@ object ListeningScore {
      * Every play is counted at the last play's date, as providers don't return the older ones.
      * An unknown date counts as one half-life ago.
      */
-    fun of(playCount: Number?, lastPlayedAt: String?, now: Long): Double {
+    fun of(playCount: Number?, lastPlayedAt: Long?, now: Long): Double {
         val count = playCount?.toDouble()?.takeIf { it > 0 } ?: return 0.0
-        val elapsed = parseDateMillis(lastPlayedAt)?.let { now - it } ?: HALF_LIFE_MS
+        val elapsed = lastPlayedAt?.let { now - it } ?: HALF_LIFE_MS
         return decay(count, elapsed)
     }
 }

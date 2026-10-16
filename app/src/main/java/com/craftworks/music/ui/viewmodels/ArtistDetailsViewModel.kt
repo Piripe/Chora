@@ -13,6 +13,7 @@ import com.craftworks.music.data.repository.SongRepository
 import com.craftworks.music.data.repository.StarredRepository
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.managers.settings.MiscSettingsManager
+import com.craftworks.music.utils.releaseDateMillis
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -83,11 +84,12 @@ class ArtistDetailsViewModel @Inject constructor(
 
                 // Offline, the artist may not be cached: keep the one shown while loading.
                 _selectedArtist.value = artistDetail?.artist ?: _selectedArtist.value
-                if (artistDetail?.albums.isNullOrEmpty()) {
-                    _artistAlbums.value = artistRepository.getArtistAlbums(artistId)
+                val albums = if (artistDetail?.albums.isNullOrEmpty()) {
+                    artistRepository.getArtistAlbums(artistId)
                 } else {
-                    _artistAlbums.value = artistDetail.albums.map { it.toMediaItem() }
+                    artistDetail.albums.map { it.toMediaItem() }
                 }
+                _artistAlbums.value = albums.sortedWith(releaseDateComparator)
 
                 _selectedArtist.value?.name?.let { artistName ->
                     launch { loadAppearances(artistId, artistName) }
@@ -122,9 +124,18 @@ class ArtistDetailsViewModel @Inject constructor(
                     && album.participants["albumartist"]?.any { it.id == artistId } != true
             }
             .distinctBy { it.id }
-            .sortedWith(compareByDescending<MediaModel.Album> { it.releaseYear ?: 0 }.thenBy { it.name.lowercase() })
             .map { it.toMediaItem() }
+            .sortedWith(releaseDateComparator)
     }
+
+    /**
+     * Newest albums first: by release year (the screens group the albums by it), then by release date,
+     * so albums of the same year are in release order, then by name.
+     */
+    private val releaseDateComparator =
+        compareByDescending<MediaItem> { it.mediaMetadata.recordingYear?.takeIf { year -> year != 0 } }
+            .thenByDescending { it.mediaMetadata.releaseDateMillis() }
+            .thenBy { it.mediaMetadata.title?.toString()?.lowercase() }
 
     suspend fun getAlbum(id: String): List<MediaItem> {
         return albumRepository.getAlbum(id) ?: emptyList()
