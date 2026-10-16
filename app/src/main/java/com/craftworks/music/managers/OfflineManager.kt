@@ -6,6 +6,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.SystemClock
 import android.util.Log
+import com.craftworks.music.data.cache.LibraryCache
 import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.data.providers.media.MediaProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,7 +37,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class OfflineManager @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val libraryCache: LibraryCache
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -99,7 +101,10 @@ class OfflineManager @Inject constructor(
         val provider = MediaProviderManager.currentProvider.value ?: return null
         if (!provider.requiresNetwork()) return online(provider)
 
-        if (shouldSkipNetwork()) return offline(provider.id)
+        if (shouldSkipNetwork()) {
+            libraryCache.awaitRestored()
+            return offline(provider.id)
+        }
 
         return try {
             online(provider).also {
@@ -111,6 +116,7 @@ class OfflineManager @Inject constructor(
         } catch (e: Exception) {
             Log.w("OfflineManager", "Request to provider failed, using cache", e)
             reportFailure(provider)
+            libraryCache.awaitRestored()
             offline(provider.id)
         }
     }

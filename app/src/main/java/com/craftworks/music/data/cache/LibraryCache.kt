@@ -9,6 +9,7 @@ import com.craftworks.music.data.model.MediaQuery
 import com.craftworks.music.data.model.SongListSort
 import com.craftworks.music.data.model.SortOrder
 import com.craftworks.music.data.model.parseDateMillis
+import kotlinx.coroutines.CompletableDeferred
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,6 +43,16 @@ class LibraryCache @Inject constructor() {
     private class PlayStats(val lastPlayedAt: Long?, val playCount: Double, val createdAt: Long?)
 
     private val caches = HashMap<String, ProviderCache>()
+
+    /** Completed once the [com.craftworks.music.managers.SmartCacheManager] has restored its content at startup. */
+    private val restored = CompletableDeferred<Unit>()
+
+    fun markRestored() {
+        restored.complete(Unit)
+    }
+
+    /** Waits for the startup content, so offline reads made right at launch aren't empty. */
+    suspend fun awaitRestored() = restored.await()
 
     private inline fun <T> withCache(providerId: String, block: ProviderCache.() -> T): T =
         synchronized(caches) { caches.getOrPut(providerId) { ProviderCache() }.block() }

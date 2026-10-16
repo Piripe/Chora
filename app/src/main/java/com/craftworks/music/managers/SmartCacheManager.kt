@@ -191,8 +191,12 @@ class SmartCacheManager @Inject constructor(
         initialized = true
 
         scope.launch {
-            mutex.withLock { load() }
-            loaded.complete(Unit)
+            try {
+                mutex.withLock { load() }
+            } finally {
+                loaded.complete(Unit)
+                libraryCache.markRestored()
+            }
 
             // Applies a new maximum size right away, without waiting for the next refresh.
             playbackSettingsManager.smartCacheMaxSizeGbFlow.distinctUntilChanged().collect { sizeGb ->
