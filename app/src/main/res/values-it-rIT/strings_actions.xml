@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">Imposta timer di spegnimento</string>
     <string name="action_download_song">Scarica brano</string>
     <string name="action_parent_folder">Cartella superiore</string>
+    <string name="action_select_folder">Seleziona cartella</string>
 </resources>

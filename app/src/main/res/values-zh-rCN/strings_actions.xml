@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">设置睡眠定时</string>
     <string name="action_download_song">下载歌曲</string>
     <string name="action_parent_folder">上一级</string>
+    <string name="action_select_folder">选择文件夹</string>
 </resources>

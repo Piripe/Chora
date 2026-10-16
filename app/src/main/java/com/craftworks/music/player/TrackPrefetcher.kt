@@ -235,8 +235,10 @@ class TrackPrefetcher(
             Log.w(TAG, "Can't resolve stream url for $uri", e)
             return DownloadResult.FAILED
         }
+        // Local files (content:// URIs) are already on the device and can't go through OkHttp.
+        val httpUrl = url.toHttpUrlOrNull() ?: return DownloadResult.FAILED
 
-        val call = httpClient.newCall(Request.Builder().url(url).build())
+        val call = httpClient.newCall(Request.Builder().url(httpUrl).build())
         return try {
             call.execute().use { response ->
                 val body = response.body ?: return DownloadResult.FAILED
@@ -295,7 +297,8 @@ class TrackPrefetcher(
     }
 
     private suspend fun downloadArtwork(url: String): ByteArray? {
-        val call = httpClient.newCall(Request.Builder().url(url).build())
+        val httpUrl = url.toHttpUrlOrNull() ?: return null
+        val call = httpClient.newCall(Request.Builder().url(httpUrl).build())
         return try {
             call.execute().use { response ->
                 val body = response.body ?: return null

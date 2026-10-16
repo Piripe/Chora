@@ -358,32 +358,6 @@ internal fun PlayPauseButton(player: Player, color: Color, modifier: Modifier = 
         if (state.showPlay) "play"
         else "pause"
 
-    if (LocalExpressiveDesign.current) {
-        // A tonal button, round while paused, morphing into a rounded square while playing.
-        val cornerPercent by animateIntAsState(
-            targetValue = if (state.showPlay) 50 else 30,
-            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-            label = "Play pause shape"
-        )
-        ActionTooltip(stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)) {
-            IconButton(
-                onClick = state::onClick,
-                enabled = state.isEnabled,
-                modifier = modifier
-                    .bounceClick(state.isEnabled)
-                    .clip(RoundedCornerShape(percent = cornerPercent))
-                    .background(color.copy(alpha = if (state.isEnabled) 0.16f else 0.08f))
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = contentDescription,
-                    tint = if (state.isEnabled) color else color.copy(0.5f),
-                    modifier = Modifier.fillMaxSize(0.6f)
-                )
-            }
-        }
-        return
-    }
     ActionTooltip(stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)) {
         IconButton(onClick = state::onClick, modifier = modifier.bounceClick(state.isEnabled), enabled = state.isEnabled) {
             Icon(icon, contentDescription = contentDescription, modifier = modifier, tint = if (state.isEnabled) color else color.copy(0.5f))

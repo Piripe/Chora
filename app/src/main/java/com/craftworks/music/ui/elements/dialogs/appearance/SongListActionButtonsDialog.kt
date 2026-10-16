@@ -162,6 +162,8 @@ fun SongListActionButtonsDialog(
             )
         }
     }
+    // The buttons the provider doesn't support are hidden here, but kept when saving
+    val incompatibleButtons = remember { actionButtons.filterNot { it.isCompatible(providerFeatures) } }
 
     // Drag state
     var draggedButtonId by remember { mutableStateOf<String?>(null) }
@@ -386,7 +388,7 @@ fun SongListActionButtonsDialog(
                     },
                     actions = {
                         TextButton(onClick = {
-                            onSet(buttons.map { it.second })
+                            onSet(buttons.map { it.second } + incompatibleButtons)
                             onDismissRequest()
                         }) {
                             Text(stringResource(R.string.action_save))
@@ -431,7 +433,7 @@ fun SongListActionButtonsDialog(
                                         expanded = showAddButtonMenu,
                                         onDismissRequest = { showAddButtonMenu = false }
                                     ) {
-                                        supportedButtonTypes.forEach { type ->
+                                        supportedButtonTypes.filter { ActionButton(it, true).isCompatible(providerFeatures) }.forEach { type ->
                                             val (icon, text) = getActionButtonIconText(type)
                                             DropdownMenuItem(
                                                 leadingIcon = { Icon(icon, contentDescription = text) },

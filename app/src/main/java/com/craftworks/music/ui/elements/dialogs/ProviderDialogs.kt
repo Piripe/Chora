@@ -1,7 +1,12 @@
 package com.craftworks.music.ui.elements.dialogs
 
 import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.util.Patterns
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -255,11 +260,24 @@ fun CreateMediaProviderDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     /* Directory */
+                    val folderPicker = rememberLauncherForActivityResult(
+                        ActivityResultContracts.OpenDocumentTree()
+                    ) { uri ->
+                        uri?.let { treeUriToPath(it) }?.let { dir = it }
+                    }
                     OutlinedTextField(
                         value = dir,
                         onValueChange = { dir = it },
                         label = { Text(stringResource(R.string.add_media_provider_local_directory)) },
-                        singleLine = true
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { folderPicker.launch(null) }) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(R.drawable.rounded_folder_24),
+                                    contentDescription = stringResource(R.string.action_select_folder)
+                                )
+                            }
+                        }
                     )
 
                     Button(
@@ -526,4 +544,19 @@ fun NoMediaProvidersDialog(setShowDialog: (Boolean) -> Unit, navController: NavH
             }
         }
     }
+}
+
+// The local provider matches songs whose path contains the folder, so the picked tree is turned back into a file path.
+private fun treeUriToPath(uri: Uri): String? {
+    val documentId = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull() ?: return null
+    if (documentId.startsWith("raw:")) return documentId.removePrefix("raw:")
+
+    val volume = documentId.substringBefore(':')
+    val relativePath = documentId.substringAfter(':', "")
+    val root = if (volume.equals("primary", ignoreCase = true))
+        Environment.getExternalStorageDirectory().path
+    else
+        "/storage/$volume"
+
+    return if (relativePath.isEmpty()) "$root/" else "$root/$relativePath/"
 }

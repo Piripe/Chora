@@ -101,4 +101,5 @@
     <string name="action_set_sleep_timer">Set Sleep Timer</string>
     <string name="action_download_song">Download Song</string>
     <string name="action_parent_folder">Go Up</string>
+    <string name="action_select_folder">Select Folder</string>
 </resources>

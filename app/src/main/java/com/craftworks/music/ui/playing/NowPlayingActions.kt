@@ -128,6 +128,22 @@ fun List<NowPlayingMenuItem>.withAllMenuActions(): List<NowPlayingMenuItem> {
     return known + missing
 }
 
+/** The provider feature this action needs, or null when every provider can do it. */
+val NowPlayingAction.requiredProviderFeature: ProviderFeature?
+    get() = when (this) {
+        NowPlayingAction.DOWNLOAD -> ProviderFeature.DOWNLOADS
+        NowPlayingAction.SHARE -> ProviderFeature.SHARING
+        NowPlayingAction.FAVORITE -> ProviderFeature.FAVORITES
+        NowPlayingAction.RATING -> ProviderFeature.RATINGS
+        NowPlayingAction.ADD_TO_PLAYLIST -> ProviderFeature.PLAYLISTS
+        NowPlayingAction.INSTANT_MIX -> ProviderFeature.RADIO
+        else -> null
+    }
+
+/** Whether a provider with these [features] can do this action. Without a provider, every action is supported. */
+fun NowPlayingAction.isSupportedBy(features: EnumSet<ProviderFeature>?): Boolean =
+    features == null || requiredProviderFeature?.let { it in features } ?: true
+
 /** What the current track supports, used to enable or hide the actions. */
 data class NowPlayingActionContext(
     val isRadio: Boolean = false,
@@ -154,6 +170,10 @@ data class NowPlayingActionContext(
         NowPlayingAction.MENU -> !isRadio
         else -> true
     }
+
+    /** The actions needing a provider feature are hidden instead of disabled when they can't be done. */
+    fun isHidden(action: NowPlayingAction): Boolean =
+        action.requiredProviderFeature != null && !isAvailable(action)
 }
 
 @Composable

@@ -270,7 +270,7 @@ fun HorizontalSongCard(
                 textAlign = TextAlign.End
             )
 
-            ActionTooltip(stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)) {
+            if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.FAVORITES) == true) ActionTooltip(stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)) {
                 IconButton(
                     modifier = Modifier,
                     onClick = { viewModel.toggleSongStar(song.mediaMetadata) },
@@ -333,19 +333,26 @@ fun HorizontalSongCard(
                             expanded = false
                         }
                     }
-                    HorizontalDivider()
-                    MenuSheetItem(
-                        ImageVector.vectorResource(if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24),
-                        stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
-                    ) {
-                        viewModel.toggleSongStar(song.mediaMetadata)
-                        expanded = false
+                    val canFavorite = features?.contains(ProviderFeature.FAVORITES) == true
+                    val canRatings = features?.contains(ProviderFeature.RATINGS) == true
+                    val canPlaylist = features?.contains(ProviderFeature.PLAYLISTS) == true
+                    if (canFavorite || canRatings || canPlaylist) HorizontalDivider()
+                    if (canFavorite) {
+                        MenuSheetItem(
+                            ImageVector.vectorResource(if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24),
+                            stringResource(if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites)
+                        ) {
+                            viewModel.toggleSongStar(song.mediaMetadata)
+                            expanded = false
+                        }
                     }
-                    MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_star_outline_24), stringResource(R.string.action_set_rating)) {
-                        showSongRatingDialog = true
-                        expanded = false
+                    if (canRatings) {
+                        MenuSheetItem(ImageVector.vectorResource(R.drawable.rounded_star_outline_24), stringResource(R.string.action_set_rating)) {
+                            showSongRatingDialog = true
+                            expanded = false
+                        }
                     }
-                    if (features?.contains(ProviderFeature.PLAYLISTS) == true) {
+                    if (canPlaylist) {
                         MenuSheetItem(Icons.Rounded.Add, stringResource(R.string.action_add_to_playlist)) {
                             showAddSongToPlaylistDialog = true
                             expanded = false

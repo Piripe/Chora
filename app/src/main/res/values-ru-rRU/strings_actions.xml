@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">Установить таймер сна</string>
     <string name="action_download_song">Скачать трек</string>
     <string name="action_parent_folder">На уровень выше</string>
+    <string name="action_select_folder">Выбрать папку</string>
 </resources>

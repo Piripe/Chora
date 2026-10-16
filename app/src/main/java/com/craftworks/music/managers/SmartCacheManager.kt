@@ -57,6 +57,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
@@ -712,7 +713,8 @@ class SmartCacheManager @Inject constructor(
 
     /** Downloads [url] into [target], returning its size, or null (and no file) if it failed. */
     private suspend fun download(url: String, target: File, image: Boolean): Long? {
-        val call = httpClient.newCall(Request.Builder().url(url).build())
+        val httpUrl = url.toHttpUrlOrNull() ?: return null
+        val call = httpClient.newCall(Request.Builder().url(httpUrl).build())
         val size = try {
             call.execute().use { response ->
                 val body = response.body ?: return@use null

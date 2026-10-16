@@ -188,6 +188,13 @@ fun PlayQueueContent(
         currentList.add(to.index, currentList.removeAt(from.index))
         dragCurrentIndex = to.index
     }
+
+    // The queue can only be saved to a playlist if one of its songs comes from a provider with playlists
+    val canSaveQueue = currentList.any {
+        it.mediaItem.mediaMetadata.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION &&
+            it.mediaItem.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) == true
+    }
+
     Column {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -197,12 +204,12 @@ fun PlayQueueContent(
             ActionTooltip(stringResource(R.string.action_add_to_playlist)) {
                 IconButton(onClick = {
                     showAddToPlaylistDialog = true
-                }, modifier = Modifier.size(40.dp).bounceClick()) {
+                }, enabled = canSaveQueue, modifier = Modifier.size(40.dp).bounceClick()) {
                     Icon(
                         ImageVector.vectorResource(R.drawable.save_24px),
                         contentDescription = stringResource(R.string.action_add_to_playlist),
                         modifier = Modifier.size(30.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (canSaveQueue) 1f else 0.38f)
                     )
                 }
             }
@@ -680,30 +687,38 @@ fun QueueItemMenu(
             }
             onDialogDismiss()
         }
+        val canPlaylist = !isRadio && providerFeatures?.contains(ProviderFeature.PLAYLISTS) == true
+        val canFavorite = !isRadio && providerFeatures?.contains(ProviderFeature.FAVORITES) == true
+        val canDownload = !isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true
+        val canShare = !isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true
         if (advancedMenu) {
             QueueMenuButton(R.drawable.vertical_align_bottom_24px, R.string.action_move_to_end) {
                 mediaController.moveMediaItem(queueIndex, mediaController.mediaItemCount-1)
                 onDialogDismiss()
             }
-            HorizontalDivider()
+            if (canPlaylist || canFavorite || canDownload || canShare) HorizontalDivider()
         }
-        QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
-            onAddToPlaylist()
-            onDialogDismiss()
+        if (canPlaylist) {
+            QueueMenuButton(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
+                onAddToPlaylist()
+                onDialogDismiss()
+            }
         }
-        QueueMenuButton(
-            if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
-            if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
-        ) {
-            viewModel.toggleSongStar(metadata)
-            onDialogDismiss()
+        if (canFavorite) {
+            QueueMenuButton(
+                if (isStarred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
+                if (isStarred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
+            ) {
+                viewModel.toggleSongStar(metadata)
+                onDialogDismiss()
+            }
         }
-        if (!isRadio && providerFeatures?.contains(ProviderFeature.DOWNLOADS) == true) {
+        if (canDownload) {
             QueueMenuButton(R.drawable.rounded_download_24, R.string.action_download) {
                 showDownloadDialog = true
             }
         }
-        if (!isRadio && providerFeatures?.contains(ProviderFeature.SHARING) == true) {
+        if (canShare) {
             QueueMenuButton(R.drawable.rounded_share_24, R.string.action_share) {
                 showShareDialog = true
             }

@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
+import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.appearance.BackgroundDialog
@@ -39,6 +40,7 @@ import com.craftworks.music.ui.elements.settingsGroupShape
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
 import com.craftworks.music.ui.playing.NowPlayingButtonSlot
+import com.craftworks.music.ui.playing.isSupportedBy
 import com.craftworks.music.ui.playing.NowPlayingGesture
 import com.craftworks.music.ui.playing.NowPlayingSeekBarStyle
 import com.craftworks.music.ui.playing.defaultNowPlayingButtons
@@ -74,6 +76,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
     val menuItems by appearanceSettingsManager.nowPlayingMenuItems.collectAsStateWithLifecycle(defaultNowPlayingMenuItems)
     val coverGestures by appearanceSettingsManager.nowPlayingCoverGestures.collectAsStateWithLifecycle(emptyMap())
     val disableScreenStandby by appearanceSettingsManager.disableScreenStandby.collectAsStateWithLifecycle(false)
+    val providerFeatures = MediaProviderManager.currentProvider.collectAsStateWithLifecycle().value?.featureFlags
 
     val backgroundTypeLabels = mapOf(
         NowPlayingBackground.PLAIN to R.string.background_style_plain,
@@ -153,7 +156,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                 ) {
                     // e.g. "Left Of Play/Pause: Shuffle, Previous · Right Of Play/Pause: Next, Repeat"
                     val buttonsSummary = NowPlayingButtonSlot.entries.mapNotNull { slot ->
-                        val actions = buttons.filter { it.slot == slot }
+                        val actions = buttons.filter { it.slot == slot && it.action.isSupportedBy(providerFeatures) }
                         if (actions.isEmpty()) null
                         else nowPlayingButtonSlotLabel(slot) + ": " +
                                 actions.map { nowPlayingActionLabel(it.action) }.joinToString(", ")
@@ -166,7 +169,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                         toggleEvent = { showButtonsDialog = true }
                     )
 
-                    val menuSummary = menuItems.filter { it.enabled }
+                    val menuSummary = menuItems.filter { it.enabled && it.action.isSupportedBy(providerFeatures) }
                         .map { nowPlayingActionLabel(it.action) }
                         .joinToString(", ")
                     SettingsDialogButton(
@@ -221,6 +224,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
         if (showButtonsDialog)
             NowPlayingButtonsDialog(
                 buttons = buttons,
+                providerFeatures = providerFeatures,
                 onSet = { coroutineScope.launch { appearanceSettingsManager.setNowPlayingButtons(it) } },
                 onDismissRequest = { showButtonsDialog = false }
             )
@@ -228,6 +232,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
         if (showMenuActionsDialog)
             NowPlayingMenuActionsDialog(
                 items = menuItems,
+                providerFeatures = providerFeatures,
                 onSet = { coroutineScope.launch { appearanceSettingsManager.setNowPlayingMenuItems(it) } },
                 onDismissRequest = { showMenuActionsDialog = false }
             )

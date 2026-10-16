@@ -197,22 +197,24 @@ fun SongDialog(
                             )
                         }
 
-                        ListItem(
-                            selected = false,
-                            headlineContent = {
-                                Text(
-                                    text = AnnotatedString.fromHtml(
-                                        stringResource(
-                                            R.string.add_to_playlist_title,
-                                            song.mediaMetadata.title.toString().htmlEncode()
+                        if (song.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) == true) {
+                            ListItem(
+                                selected = false,
+                                headlineContent = {
+                                    Text(
+                                        text = AnnotatedString.fromHtml(
+                                            stringResource(
+                                                R.string.add_to_playlist_title,
+                                                song.mediaMetadata.title.toString().htmlEncode()
+                                            )
                                         )
                                     )
-                                )
-                            },
-                            onClick = {
-                                dialogMenu = DialogMenu.ADD_TO_PLAYLIST
-                            }
-                        )
+                                },
+                                onClick = {
+                                    dialogMenu = DialogMenu.ADD_TO_PLAYLIST
+                                }
+                            )
+                        }
                     }
                     DialogMenu.ADD_TO_PLAYLIST -> {
                         AddSongToPlaylist(

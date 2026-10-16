@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">Programar temporizador</string>
     <string name="action_download_song">Descargar canción</string>
     <string name="action_parent_folder">Carpeta superior</string>
+    <string name="action_select_folder">Seleccionar carpeta</string>
 </resources>

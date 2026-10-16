@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">Sleep-Timer stellen</string>
     <string name="action_download_song">Titel herunterladen</string>
     <string name="action_parent_folder">Übergeordneter Ordner</string>
+    <string name="action_select_folder">Ordner auswählen</string>
 </resources>

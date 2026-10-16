@@ -220,6 +220,12 @@ fun AdvancedPlayQueueContent(
         dragCurrentIndex = to.index
     }
 
+    // The queue can only be saved to a playlist if one of its songs comes from a provider with playlists
+    val canSaveQueue = currentList.any {
+        it.mediaItem.mediaMetadata.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION &&
+            it.mediaItem.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) == true
+    }
+
     val selectedCount = if (groupDragItems.isNotEmpty()) groupDragItems.size else selectedIndices.size
 
     // The selected songs (not radios) whose provider supports [feature], in queue order
@@ -330,18 +336,22 @@ fun AdvancedPlayQueueContent(
                 },
                 onMoveToStart = { moveSelectionTo(0) },
                 onMoveToEnd = { moveSelectionTo(currentList.size - selectedIndices.size) },
+                canAddToPlaylist = { selectedSongsWith(ProviderFeature.PLAYLISTS).isNotEmpty() },
                 onAddToPlaylist = {
-                    addToPlaylistSongsOverride = selectedIndices.map { currentList[it].mediaItem }
+                    addToPlaylistSongsOverride = selectedIndices.map { currentList[it].mediaItem }.filter {
+                        it.mediaMetadata.mediaType != MediaMetadata.MEDIA_TYPE_RADIO_STATION &&
+                            it.mediaMetadata.getProvider()?.featureFlags?.contains(ProviderFeature.PLAYLISTS) == true
+                    }
                     showAddToPlaylistDialog = true
                 },
+                canFavorite = { selectedSongsWith(ProviderFeature.FAVORITES).isNotEmpty() },
                 isSelectionStarred = {
-                    selectedIndices.isNotEmpty() && selectedIndices.all {
-                        viewModel.isSongStarred(currentList[it].mediaItem.mediaMetadata)
-                    }
+                    val songs = selectedSongsWith(ProviderFeature.FAVORITES)
+                    songs.isNotEmpty() && songs.all { viewModel.isSongStarred(it) }
                 },
                 onSetStarred = { starred ->
                     viewModel.setSongsStarred(
-                        selectedIndices.map { currentList[it].mediaItem.mediaMetadata },
+                        selectedSongsWith(ProviderFeature.FAVORITES),
                         starred
                     )
                 },
@@ -413,12 +423,12 @@ fun AdvancedPlayQueueContent(
                 ActionTooltip(stringResource(R.string.action_add_to_playlist)) {
                     IconButton(onClick = {
                         showAddToPlaylistDialog = true
-                    }, modifier = Modifier.size(40.dp).bounceClick()) {
+                    }, enabled = canSaveQueue, modifier = Modifier.size(40.dp).bounceClick()) {
                         Icon(
                             ImageVector.vectorResource(R.drawable.save_24px),
                             contentDescription = stringResource(R.string.action_add_to_playlist),
                             modifier = Modifier.size(30.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (canSaveQueue) 1f else 0.38f)
                         )
                     }
                 }
@@ -763,7 +773,9 @@ private fun QueueSelectionTopBar(
     onMoveNext: () -> Unit,
     onMoveToStart: () -> Unit,
     onMoveToEnd: () -> Unit,
+    canAddToPlaylist: () -> Boolean,
     onAddToPlaylist: () -> Unit,
+    canFavorite: () -> Boolean,
     isSelectionStarred: () -> Boolean,
     onSetStarred: (Boolean) -> Unit,
     canDownload: () -> Boolean,
@@ -851,18 +863,22 @@ private fun QueueSelectionTopBar(
                     onRemove()
                     actionsMenuExpanded = false
                 }
-                HorizontalDivider()
-                QueueDropdownItem(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
-                    onAddToPlaylist()
-                    actionsMenuExpanded = false
+                if (canAddToPlaylist() || canFavorite() || canDownload() || canShare()) HorizontalDivider()
+                if (canAddToPlaylist()) {
+                    QueueDropdownItem(R.drawable.rounded_add_24, R.string.action_add_to_playlist) {
+                        onAddToPlaylist()
+                        actionsMenuExpanded = false
+                    }
                 }
-                val starred = isSelectionStarred()
-                QueueDropdownItem(
-                    if (starred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
-                    if (starred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
-                ) {
-                    onSetStarred(!starred)
-                    actionsMenuExpanded = false
+                if (canFavorite()) {
+                    val starred = isSelectionStarred()
+                    QueueDropdownItem(
+                        if (starred) R.drawable.round_favorite_24 else R.drawable.round_favorite_border_24,
+                        if (starred) R.string.action_remove_from_favorites else R.string.action_add_to_favorites
+                    ) {
+                        onSetStarred(!starred)
+                        actionsMenuExpanded = false
+                    }
                 }
                 if (canDownload()) {
                     QueueDropdownItem(R.drawable.rounded_download_24, R.string.action_download) {

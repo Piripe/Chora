@@ -238,8 +238,8 @@ fun NowPlayingControlsRow(
     onAction: (NowPlayingAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val start = buttons.filter { it.slot == NowPlayingButtonSlot.CONTROLS_START }.map { it.action }
-    val end = buttons.filter { it.slot == NowPlayingButtonSlot.CONTROLS_END }.map { it.action }
+    val start = buttons.filter { it.slot == NowPlayingButtonSlot.CONTROLS_START && !context.isHidden(it.action) }.map { it.action }
+    val end = buttons.filter { it.slot == NowPlayingButtonSlot.CONTROLS_END && !context.isHidden(it.action) }.map { it.action }
 
     BoxWithConstraints(modifier) {
         val availableWidth = maxWidth
@@ -302,7 +302,7 @@ fun NowPlayingBottomRow(
     excluded: Set<NowPlayingAction> = emptySet(),
 ) {
     val actions = buttons
-        .filter { it.slot == NowPlayingButtonSlot.BOTTOM && it.action !in excluded }
+        .filter { it.slot == NowPlayingButtonSlot.BOTTOM && it.action !in excluded && !context.isHidden(it.action) }
         .map { it.action }
     if (actions.isEmpty()) return
 
@@ -338,7 +338,7 @@ fun NowPlayingTitleButtons(
     excluded: Set<NowPlayingAction> = emptySet(),
 ) {
     buttons
-        .filter { it.slot == NowPlayingButtonSlot.TITLE && it.action !in excluded }
+        .filter { it.slot == NowPlayingButtonSlot.TITLE && it.action !in excluded && !context.isHidden(it.action) }
         .forEach { button ->
             key(button.action) {
                 NowPlayingActionButton(

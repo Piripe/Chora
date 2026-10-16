@@ -47,6 +47,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
+import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
@@ -477,6 +478,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     val albumDetailsButtons by appearanceSettingsManager.albumDetailsButtons.collectAsState(emptyList())
                     val artistDetailsButtons by appearanceSettingsManager.artistDetailsButtons.collectAsState(emptyList())
                     val playlistDetailsButtons by appearanceSettingsManager.playlistDetailsButtons.collectAsState(emptyList())
+                    val providerFeatures = MediaProviderManager.currentProvider.collectAsState().value?.featureFlags
 
                     val detailButtonsLocalizationMap = mapOf(
                         ActionButtonType.SEPARATOR to stringResource(R.string.label_separator),
@@ -492,7 +494,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
 
                     SettingsDialogButton(
                         stringResource(R.string.appearance_album_details_action_buttons),
-                        albumDetailsButtons.filter { !it.inMenu }
+                        albumDetailsButtons.filter { !it.inMenu && (providerFeatures == null || it.isCompatible(providerFeatures)) }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
@@ -503,7 +505,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
 
                     SettingsDialogButton(
                         stringResource(R.string.appearance_artist_details_action_buttons),
-                        artistDetailsButtons.filter { !it.inMenu }
+                        artistDetailsButtons.filter { !it.inMenu && (providerFeatures == null || it.isCompatible(providerFeatures)) }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),
@@ -514,7 +516,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
 
                     SettingsDialogButton(
                         stringResource(R.string.appearance_playlist_details_action_buttons),
-                        playlistDetailsButtons.filter { !it.inMenu }
+                        playlistDetailsButtons.filter { !it.inMenu && (providerFeatures == null || it.isCompatible(providerFeatures)) }
                             .joinToString(", ") { detailButtonsLocalizationMap[it.type].toString() },
                         ImageVector.vectorResource(R.drawable.rounded_smart_button_24),
                         settingsDescription = stringResource(R.string.appearance_details_action_buttons_description),

@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.craftworks.music.R
+import com.craftworks.music.data.model.ProviderFeature
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.playing.NowPlayingAction
 import com.craftworks.music.ui.playing.NowPlayingButton
@@ -71,6 +72,7 @@ import com.craftworks.music.ui.playing.SeekBar
 import com.craftworks.music.ui.playing.defaultNowPlayingButtons
 import com.craftworks.music.ui.playing.defaultNowPlayingCoverGestures
 import com.craftworks.music.ui.playing.defaultNowPlayingMenuItems
+import com.craftworks.music.ui.playing.isSupportedBy
 import com.craftworks.music.ui.playing.nowPlayingActionIcon
 import com.craftworks.music.ui.playing.nowPlayingActionLabel
 import com.craftworks.music.ui.playing.nowPlayingButtonActions
@@ -79,6 +81,7 @@ import com.craftworks.music.ui.playing.nowPlayingGestureLabel
 import com.craftworks.music.ui.playing.nowPlayingSeekBarStyleLabel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.util.EnumSet
 
 /** A row of the buttons editor: a slot header, followed by the buttons of that slot. */
 private sealed interface ButtonsEditorEntry {
@@ -120,10 +123,14 @@ private fun List<ButtonsEditorEntry>.toButtons(): List<NowPlayingButton>? {
 @Composable
 fun NowPlayingButtonsDialog(
     buttons: List<NowPlayingButton>,
+    providerFeatures: EnumSet<ProviderFeature>?,
     onSet: (List<NowPlayingButton>) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    val entries = remember { mutableStateListOf<ButtonsEditorEntry>().apply { addAll(buttons.toEditorEntries()) } }
+    // The buttons the current provider doesn't support are hidden, but kept in their slot when saving.
+    val (supportedButtons, unsupportedButtons) = remember { buttons.partition { it.action.isSupportedBy(providerFeatures) } }
+    var hiddenButtons by remember { mutableStateOf(unsupportedButtons) }
+    val entries = remember { mutableStateListOf<ButtonsEditorEntry>().apply { addAll(supportedButtons.toEditorEntries()) } }
     val editedButtons = entries.toButtons() ?: emptyList()
 
     val lazyListState = rememberLazyListState()
@@ -161,13 +168,19 @@ fun NowPlayingButtonsDialog(
                     },
                     actions = {
                         TextButton(onClick = {
+                            val (supported, unsupported) = defaultNowPlayingButtons.partition { it.action.isSupportedBy(providerFeatures) }
+                            hiddenButtons = unsupported
                             entries.clear()
-                            entries.addAll(defaultNowPlayingButtons.toEditorEntries())
+                            entries.addAll(supported.toEditorEntries())
                         }) {
                             Text(stringResource(R.string.action_reset))
                         }
                         TextButton(onClick = {
-                            entries.toButtons()?.let(onSet)
+                            entries.toButtons()?.let { visible ->
+                                onSet(NowPlayingButtonSlot.entries.flatMap { slot ->
+                                    (visible + hiddenButtons).filter { it.slot == slot }.distinctBy { it.action }.take(slot.maxButtons)
+                                })
+                            }
                             onDismissRequest()
                         }) {
                             Text(stringResource(R.string.action_save))
@@ -210,7 +223,7 @@ fun NowPlayingButtonsDialog(
                                         count = count,
                                         isEmpty = count == 0,
                                         addableActions = nowPlayingButtonActions.filter { action ->
-                                            editedButtons.none { it.action == action }
+                                            action.isSupportedBy(providerFeatures) && editedButtons.none { it.action == action }
                                         },
                                         onAdd = { action ->
                                             // Added at the end of the slot: before the next header.
@@ -421,10 +434,14 @@ private fun NowPlayingButtonsPreview(buttons: List<NowPlayingButton>) {
 @Composable
 fun NowPlayingMenuActionsDialog(
     items: List<NowPlayingMenuItem>,
+    providerFeatures: EnumSet<ProviderFeature>?,
     onSet: (List<NowPlayingMenuItem>) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    val editedItems = remember { mutableStateListOf<NowPlayingMenuItem>().apply { addAll(items) } }
+    // The actions the current provider doesn't support are hidden, but kept when saving.
+    val (supportedItems, unsupportedItems) = remember { items.partition { it.action.isSupportedBy(providerFeatures) } }
+    var hiddenItems by remember { mutableStateOf(unsupportedItems) }
+    val editedItems = remember { mutableStateListOf<NowPlayingMenuItem>().apply { addAll(supportedItems) } }
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -496,7 +513,7 @@ fun NowPlayingMenuActionsDialog(
         },
         confirmButton = {
             Button(onClick = {
-                onSet(editedItems.toList())
+                onSet(editedItems.toList() + hiddenItems)
                 onDismissRequest()
             }) {
                 Text(stringResource(R.string.action_save))
@@ -504,8 +521,10 @@ fun NowPlayingMenuActionsDialog(
         },
         dismissButton = {
             OutlinedButton(onClick = {
+                val (supported, unsupported) = defaultNowPlayingMenuItems.partition { it.action.isSupportedBy(providerFeatures) }
+                hiddenItems = unsupported
                 editedItems.clear()
-                editedItems.addAll(defaultNowPlayingMenuItems)
+                editedItems.addAll(supported)
             }) {
                 Text(stringResource(R.string.action_reset))
             }

@@ -97,4 +97,5 @@
     <string name="action_set_sleep_timer">Régler le minuteur de veille</string>
     <string name="action_download_song">Télécharger le titre</string>
     <string name="action_parent_folder">Dossier parent</string>
+    <string name="action_select_folder">Choisir un dossier</string>
 </resources>
