@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">Haupt-Tabs auswählen und anordnen</string>
     <string name="appearance_home_items">Bereiche der Startseite</string>
     <string name="appearance_home_items_description">Bereiche der Startseite auswählen und anordnen</string>
-    <string name="appearance_expressive_home">Expressive Startseite</string>
-    <string name="appearance_expressive_home_description">Eine lebendigere Startseite mit Karussell, Schnellaktionen und deinen Hörstatistiken</string>
+    <string name="appearance_expressive_design">Expressives Design</string>
+    <string name="appearance_expressive_design_description">Ein lebendigeres Material 3 Expressive-Design: markantere Formen, Animationen und Kopfbereiche auf jedem Bildschirm, eine Startseite mit Karussell, Schnellaktionen und deinen Hörstatistiken</string>
     <string name="appearance_advanced_queue">Erweiterte Warteschlange</string>
     <string name="appearance_advanced_queue_description">Mehrfachauswahl, Sortierung und Sammelaktionen in der Warteschlange</string>
     <string name="appearance_advanced_filter">Erweiterte Filter</string>

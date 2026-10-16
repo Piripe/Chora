@@ -14,11 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,11 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +52,10 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.craftworks.music.R
 import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.RemoveDownloadsDialog
+import com.craftworks.music.ui.elements.segmentedItemShape
 import com.craftworks.music.ui.viewmodels.DownloadSource
 import com.craftworks.music.ui.viewmodels.DownloadedContentViewModel
 import com.craftworks.music.ui.viewmodels.DownloadedItem
@@ -73,33 +73,11 @@ fun S_DownloadedContentScreen(
     val items by viewModel.items.collectAsStateWithLifecycle()
 
     var itemToRemove by remember { mutableStateOf<DownloadedItem?>(null) }
+    val expressive = LocalExpressiveDesign.current
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.downloads_browse)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = stringResource(R.string.action_back),
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.downloads_browse),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -154,10 +132,11 @@ fun S_DownloadedContentScreen(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    items(currentItems, key = { it.key }) { item ->
+                    itemsIndexed(currentItems, key = { _, item -> item.key }) { index, item ->
                         DownloadedItemRow(
                             item = item,
                             imageShape = if (type == DownloadedType.ARTISTS) CircleShape else RoundedCornerShape(8.dp),
+                            shape = if (expressive) segmentedItemShape(index, currentItems.size) else RoundedCornerShape(4.dp),
                             onRemove = { itemToRemove = item }
                         )
                     }
@@ -177,12 +156,12 @@ fun S_DownloadedContentScreen(
 }
 
 @Composable
-private fun DownloadedItemRow(item: DownloadedItem, imageShape: Shape, onRemove: () -> Unit) {
+private fun DownloadedItemRow(item: DownloadedItem, imageShape: Shape, shape: Shape, onRemove: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(4.dp))
+            .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceBright)
             .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp)
     ) {

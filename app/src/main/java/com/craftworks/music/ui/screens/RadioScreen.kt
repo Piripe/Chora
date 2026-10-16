@@ -16,10 +16,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -50,15 +52,20 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.ProviderType
 import com.craftworks.music.data.model.providerType
 import com.craftworks.music.player.SongHelper
+import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.RadioCard
 import com.craftworks.music.ui.elements.RippleEffect
+import com.craftworks.music.ui.elements.TopBarTitle
 import com.craftworks.music.ui.elements.dialogs.AddRadioDialog
 import com.craftworks.music.ui.elements.dialogs.ModifyRadioDialog
+import com.craftworks.music.ui.elements.gridVerticalSpacing
+import com.craftworks.music.ui.elements.topBarHeight
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.RadioScreenViewModel
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @ExperimentalFoundationApi
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -104,9 +111,25 @@ fun RadioScreen(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 TopAppBar(
-                    title = { Text(text = stringResource(R.string.nav_radios)) },
+                    title = { TopBarTitle(stringResource(R.string.nav_radios)) },
+                    expandedHeight = topBarHeight(),
                     actions = {
-                        Button(
+                        if (LocalExpressiveDesign.current) {
+                            ActionTooltip(stringResource(R.string.action_add_radio)) {
+                                FilledTonalIconButton(
+                                    onClick = { showRadioAddDialog = true },
+                                    shapes = IconButtonDefaults.shapes(),
+                                    modifier = Modifier
+                                        .padding(end = 8.dp)
+                                        .size(48.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.rounded_add_24),
+                                        contentDescription = stringResource(R.string.action_add_radio)
+                                    )
+                                }
+                            }
+                        } else Button(
                             onClick = { showRadioAddDialog = true },
                             shape = CircleShape,
                             modifier = Modifier.size(56.dp, 70.dp),
@@ -136,7 +159,7 @@ fun RadioScreen(
                     modifier = Modifier
                         .wrapContentWidth()
                         .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(12.dp)
                 ) {

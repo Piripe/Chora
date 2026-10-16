@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">Scegli e riordina le schede principali</string>
     <string name="appearance_home_items">Sezioni della Home</string>
     <string name="appearance_home_items_description">Scegli e riordina le sezioni della schermata Home</string>
-    <string name="appearance_expressive_home">Home espressiva</string>
-    <string name="appearance_expressive_home_description">Una schermata Home più vivace, con carosello, azioni rapide e le tue statistiche di ascolto</string>
+    <string name="appearance_expressive_design">Design espressivo</string>
+    <string name="appearance_expressive_design_description">Un design Material 3 Expressive più vivace: forme, animazioni e intestazioni più marcate in ogni schermata, e una Home con carosello, azioni rapide e le tue statistiche di ascolto</string>
     <string name="appearance_advanced_queue">Coda avanzata</string>
     <string name="appearance_advanced_queue_description">Selezione multipla, ordinamento e azioni di gruppo nella coda</string>
     <string name="appearance_advanced_filter">Filtri avanzati</string>

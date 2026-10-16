@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">Выбор и порядок основных вкладок</string>
     <string name="appearance_home_items">Разделы главного экрана</string>
     <string name="appearance_home_items_description">Выбор и порядок разделов главного экрана</string>
-    <string name="appearance_expressive_home">Выразительный главный экран</string>
-    <string name="appearance_expressive_home_description">Более живой главный экран с каруселью, быстрыми действиями и статистикой прослушиваний</string>
+    <string name="appearance_expressive_design">Выразительный дизайн</string>
+    <string name="appearance_expressive_design_description">Более живой дизайн Material 3 Expressive: выразительные формы, анимации и заголовки на каждом экране, главный экран с каруселью, быстрыми действиями и статистикой прослушиваний</string>
     <string name="appearance_advanced_queue">Расширенная очередь</string>
     <string name="appearance_advanced_queue_description">Множественный выбор, сортировка и групповые действия в очереди</string>
     <string name="appearance_advanced_filter">Расширенные фильтры</string>

@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -19,7 +18,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -135,6 +133,7 @@ import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.AlbumCardMenu
 import com.craftworks.music.ui.elements.RandomShapeRefreshIndicator
 import com.craftworks.music.ui.elements.RippleEffect
+import com.craftworks.music.ui.elements.pressScale
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.launch
@@ -159,7 +158,7 @@ private val exploreShapes = listOf(
 )
 
 /**
- * The Material 3 Expressive version of the Home screen, see [AppearanceSettingsManager.expressiveHomeFlow].
+ * The Material 3 Expressive version of the Home screen, see [AppearanceSettingsManager.expressiveDesignFlow].
  * Each section has its own layout: a carousel for recently played albums, ranked cards for the
  * most played ones and shaped covers to explore the library.
  */
@@ -1389,18 +1388,4 @@ private fun AlbumArtwork(album: MediaItem, modifier: Modifier = Modifier, size: 
         contentScale = ContentScale.Crop,
         modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)
     )
-}
-
-@Composable
-private fun Modifier.pressScale(interactionSource: MutableInteractionSource): Modifier {
-    val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.94f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "Press scale"
-    )
-    return this.graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-    }
 }

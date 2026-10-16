@@ -6,17 +6,21 @@ import android.util.Log
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -63,6 +68,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import com.craftworks.music.R
 import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.bounceClick
 import com.craftworks.music.utils.StringUtils
 import kotlinx.coroutines.delay
@@ -352,6 +358,32 @@ internal fun PlayPauseButton(player: Player, color: Color, modifier: Modifier = 
         if (state.showPlay) "play"
         else "pause"
 
+    if (LocalExpressiveDesign.current) {
+        // A tonal button, round while paused, morphing into a rounded square while playing.
+        val cornerPercent by animateIntAsState(
+            targetValue = if (state.showPlay) 50 else 30,
+            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+            label = "Play pause shape"
+        )
+        ActionTooltip(stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)) {
+            IconButton(
+                onClick = state::onClick,
+                enabled = state.isEnabled,
+                modifier = modifier
+                    .bounceClick(state.isEnabled)
+                    .clip(RoundedCornerShape(percent = cornerPercent))
+                    .background(color.copy(alpha = if (state.isEnabled) 0.16f else 0.08f))
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = contentDescription,
+                    tint = if (state.isEnabled) color else color.copy(0.5f),
+                    modifier = Modifier.fillMaxSize(0.6f)
+                )
+            }
+        }
+        return
+    }
     ActionTooltip(stringResource(if (state.showPlay) R.string.action_play else R.string.action_pause)) {
         IconButton(onClick = state::onClick, modifier = modifier.bounceClick(state.isEnabled), enabled = state.isEnabled) {
             Icon(icon, contentDescription = contentDescription, modifier = modifier, tint = if (state.isEnabled) color else color.copy(0.5f))

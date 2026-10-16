@@ -19,10 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -65,12 +66,17 @@ import com.craftworks.music.player.SongHelper
 import com.craftworks.music.player.rememberManagedMediaController
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.DetailsLoadingIndicator
+import com.craftworks.music.ui.elements.ExpressiveDetailsHeader
 import com.craftworks.music.ui.elements.HorizontalSongCard
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.MenuSheetItem
+import com.craftworks.music.ui.elements.SegmentedItemGap
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.segmentedItemShape
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import com.craftworks.music.utils.StringUtils
 import com.craftworks.music.utils.fadingEdge
@@ -109,6 +115,7 @@ fun PlaylistDetails(
     val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
+    val expressive = LocalExpressiveDesign.current
 
     println("artwork uri: ${playlistMetadata?.artworkUri}; artwork data: ${playlistMetadata?.artworkData}")
 
@@ -131,24 +138,7 @@ fun PlaylistDetails(
         enter = fadeIn(),
         exit = fadeOut()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 6.dp
-            )
-            Text(
-                text = "Loading",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        }
+        DetailsLoadingIndicator()
     }
 
     // Main Content
@@ -156,6 +146,52 @@ fun PlaylistDetails(
         visible = !isLoading && playlistSongs.isNotEmpty(),
         enter = fadeIn()
     ) {
+        val actionRow = @Composable {
+            // Play, shuffle and more buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+            ) {
+
+                val actions: Map<ActionButtonType, ()->Unit> = mapOf(
+                    ActionButtonType.SHUFFLE to {
+                        mediaController?.shuffleModeEnabled = true
+                        coroutineScope.launch {
+                            val random = playlistSongs.indices.random()
+                            SongHelper.play(playlistSongs, random, mediaController)
+                        }
+                    },
+                    ActionButtonType.ADD_TO_QUEUE to {
+                        coroutineScope.launch {
+                            SongHelper.enqueue(playlistSongs, mediaController)
+                        }
+                    },
+                    ActionButtonType.PLAY_NEXT to {
+                        coroutineScope.launch {
+                            SongHelper.playNext(playlistSongs, mediaController)
+                        }
+                    },
+                    ActionButtonType.DOWNLOAD to {
+                        showDownloadDialog = true
+                    },
+                    ActionButtonType.SHARE to {
+                        showShareDialog = true
+                    },
+                )
+
+                SongListActionButtons(
+                    buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
+                    providerFeatures = playlistMetadata?.getProvider()?.featureFlags,
+                    playAction = {
+                        coroutineScope.launch {
+                            SongHelper.play(playlistSongs, 0, mediaController)
+                        }
+                    }
+                )
+            }
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -165,127 +201,109 @@ fun PlaylistDetails(
             )
         ) {
             item {
-                Box(
-                    modifier = Modifier
-                        .height(320.dp)
-                        .fillMaxWidth()
-                ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(selectedPlaylistImage)
-                            .diskCacheKey(selectedPlaylistId)
-                            .diskCachePolicy(CachePolicy.READ_ONLY)
-                            .crossfade(true)
-                            .build(),
+                if (expressive) {
+                    ExpressiveDetailsHeader(
+                        imageData = selectedPlaylistImage,
+                        imageCacheKey = selectedPlaylistId,
+                        title = playlistMetadata?.title.toString(),
+                        onBack = { navHostController.popBackStack() },
                         fallback = painterResource(R.drawable.placeholder),
-                        contentScale = ContentScale.FillWidth,
-                        contentDescription = "Album Image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fadingEdge(imageFadingEdge)
-                            .blur(8.dp)
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(
-                                top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
-                                bottom = 12.dp
+                        subtitle = {
+                            Text(
+                                text = pluralStringResource(R.plurals.details_song_count, playlistSongs.size, playlistSongs.size) +
+                                        " • " + StringUtils.formatSeconds(playlistDuration / 1000),
+                                style = MaterialTheme.typography.titleMediumEmphasized,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            .padding(horizontal = 24.dp)
+                        },
+                        actions = actionRow
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .height(320.dp)
+                            .fillMaxWidth()
                     ) {
-                        // Back button
-                        ActionTooltip(stringResource(R.string.action_back)) {
-                            FilledTonalIconButton(
-                                onClick = { navHostController.popBackStack() },
-                                modifier = Modifier
-                                    .size(36.dp)
-                            ) {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = "back"
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.weight(1f))
-
-                        // Album Name and Artist
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(selectedPlaylistImage)
+                                .diskCacheKey(selectedPlaylistId)
+                                .diskCachePolicy(CachePolicy.READ_ONLY)
+                                .crossfade(true)
+                                .build(),
+                            fallback = painterResource(R.drawable.placeholder),
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = "Album Image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fadingEdge(imageFadingEdge)
+                                .blur(8.dp)
+                        )
                         Column(
                             modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                                .fillMaxSize()
+                                .padding(
+                                    top = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding(),
+                                    bottom = 12.dp
+                                )
+                                .padding(horizontal = 24.dp)
                         ) {
-                            Text(
-                                text = playlistMetadata?.title.toString(),
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.headlineMediumEmphasized,
-                                textAlign = TextAlign.Left,
-                            )
+                            // Back button
+                            ActionTooltip(stringResource(R.string.action_back)) {
+                                FilledTonalIconButton(
+                                    onClick = { navHostController.popBackStack() },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                ) {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = "back"
+                                    )
+                                }
+                            }
 
-                            Text(
-                                text = StringUtils.formatSeconds(playlistDuration / 1000),
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Left
-                            )
+                            Spacer(Modifier.weight(1f))
 
-                            Spacer(Modifier.height(6.dp))
-
-                            // Play, shuffle and more buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                            // Album Name and Artist
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-
-                                val actions: Map<ActionButtonType, ()->Unit> = mapOf(
-                                    ActionButtonType.SHUFFLE to {
-                                        mediaController?.shuffleModeEnabled = true
-                                        coroutineScope.launch {
-                                            val random = playlistSongs.indices.random()
-                                            SongHelper.play(playlistSongs, random, mediaController)
-                                        }
-                                    },
-                                    ActionButtonType.ADD_TO_QUEUE to {
-                                        coroutineScope.launch {
-                                            SongHelper.enqueue(playlistSongs, mediaController)
-                                        }
-                                    },
-                                    ActionButtonType.PLAY_NEXT to {
-                                        coroutineScope.launch {
-                                            SongHelper.playNext(playlistSongs, mediaController)
-                                        }
-                                    },
-                                    ActionButtonType.DOWNLOAD to {
-                                        showDownloadDialog = true
-                                    },
-                                    ActionButtonType.SHARE to {
-                                        showShareDialog = true
-                                    },
+                                Text(
+                                    text = playlistMetadata?.title.toString(),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style = MaterialTheme.typography.headlineMediumEmphasized,
+                                    textAlign = TextAlign.Left,
                                 )
 
-                                SongListActionButtons(
-                                    buttons = actionButtons.map { it.apply { this.onClick = actions[this.type]?:{}} },
-                                    providerFeatures = playlistMetadata?.getProvider()?.featureFlags,
-                                    playAction = {
-                                        coroutineScope.launch {
-                                            SongHelper.play(playlistSongs, 0, mediaController)
-                                        }
-                                    }
+                                Text(
+                                    text = StringUtils.formatSeconds(playlistDuration / 1000),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    textAlign = TextAlign.Left
                                 )
+
+                                Spacer(Modifier.height(6.dp))
+
+                                actionRow()
                             }
                         }
                     }
                 }
             }
 
-            items(playlistSongs) { song ->
+            itemsIndexed(playlistSongs) { index, song ->
                 HorizontalSongCard(
                     song = song,
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
+                        .padding(bottom = if (expressive) SegmentedItemGap else 0.dp)
                         .animateItem(),
+                    shape = if (expressive) segmentedItemShape(index, playlistSongs.size) else RoundedCornerShape(12.dp),
+                    containerColor = if (expressive) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
                     onClick = {
                         coroutineScope.launch {
                             SongHelper.play(

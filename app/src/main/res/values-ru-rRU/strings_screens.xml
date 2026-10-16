@@ -29,6 +29,12 @@
         <item quantity="many">%d треков прослушано</item>
         <item quantity="other">%d трека прослушано</item>
     </plurals>
+    <plurals name="details_song_count">
+        <item quantity="one">%d трек</item>
+        <item quantity="few">%d трека</item>
+        <item quantity="many">%d треков</item>
+        <item quantity="other">%d трека</item>
+    </plurals>
     <string name="home_period_week">Неделя</string>
     <string name="home_period_month">Месяц</string>
     <plurals name="home_listens">

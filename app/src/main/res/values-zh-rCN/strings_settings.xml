@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">选择主导航标签并调整顺序</string>
     <string name="appearance_home_items">首页栏目</string>
     <string name="appearance_home_items_description">选择首页栏目并调整顺序</string>
-    <string name="appearance_expressive_home">生动首页</string>
-    <string name="appearance_expressive_home_description">更生动的首页，包含轮播、快捷操作和收听统计</string>
+    <string name="appearance_expressive_design">生动设计</string>
+    <string name="appearance_expressive_design_description">更生动的 Material 3 Expressive 设计：每个界面都有更鲜明的形状、动效和标题，首页包含轮播、快捷操作和收听统计</string>
     <string name="appearance_advanced_queue">使用高级播放队列</string>
     <string name="appearance_advanced_queue_description">在播放队列中多选、排序和批量操作</string>
     <string name="appearance_advanced_filter">使用高级筛选</string>

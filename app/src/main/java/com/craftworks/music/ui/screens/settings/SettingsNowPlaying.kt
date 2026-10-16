@@ -6,20 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -41,13 +28,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
-import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.appearance.BackgroundDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingButtonsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingCoverGesturesDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingMenuActionsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NowPlayingSeekBarStyleDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.settingsGroupShape
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.NowPlayingBackground
 import com.craftworks.music.ui.playing.NowPlayingButtonSlot
@@ -93,32 +81,9 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
         NowPlayingBackground.ANIMATED_BLUR to R.string.background_style_anim,
     )
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.appearance_now_playing)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = "Back To Appearance",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.appearance_now_playing),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -135,7 +100,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
             ) {
                 // Look
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsDialogButton(
@@ -183,7 +148,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
 
                 // Controls
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     // e.g. "Left Of Play/Pause: Shuffle, Previous · Right Of Play/Pause: Next, Repeat"
@@ -225,7 +190,7 @@ fun S_NowPlayingScreen(navHostController: NavHostController = rememberNavControl
                 }
 
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsSwitch(

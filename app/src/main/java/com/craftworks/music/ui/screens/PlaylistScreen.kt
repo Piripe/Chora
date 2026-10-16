@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,8 +34,10 @@ import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.PlaylistGrid
 import com.craftworks.music.ui.elements.RippleEffect
+import com.craftworks.music.ui.elements.TopBarTitle
 import com.craftworks.music.ui.elements.dialogs.DeletePlaylist
 import com.craftworks.music.ui.elements.dialogs.showDeletePlaylistDialog
+import com.craftworks.music.ui.elements.topBarHeight
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.PlaylistScreenViewModel
 import kotlinx.coroutines.launch
@@ -86,7 +87,8 @@ fun PlaylistScreen(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 TopAppBar(
-                    title = { Text(text = stringResource(R.string.nav_playlists),) },
+                    title = { TopBarTitle(stringResource(R.string.nav_playlists)) },
+                    expandedHeight = topBarHeight(),
                     scrollBehavior = scrollBehavior
                 )
             },

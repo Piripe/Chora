@@ -6,20 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,7 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -45,11 +33,12 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.managers.MediaProviderManager
 import com.craftworks.music.managers.settings.PlaybackSettingsManager
-import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.TranscodingBitrateDialog
 import com.craftworks.music.ui.elements.dialogs.TranscodingFormatDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.elements.dialogs.equalizerPresetLabel
+import com.craftworks.music.ui.elements.settingsGroupShape
 import com.craftworks.music.ui.viewmodels.EqualizerViewModel
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.launch
@@ -82,32 +71,9 @@ fun S_PlaybackScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.settings_playback)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = stringResource(R.string.settings_playback),
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.settings_playback),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box (
             modifier = Modifier
@@ -124,7 +90,7 @@ fun S_PlaybackScreen(
             ) {
                 // Transcoding
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val transcodingBitrateWifi =
@@ -172,7 +138,7 @@ fun S_PlaybackScreen(
 
                 // Autoplay
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val autoPlay by PlaybackSettingsManager(context).autoPlayFlow.collectAsStateWithLifecycle(false)
@@ -191,7 +157,7 @@ fun S_PlaybackScreen(
 
                 // Crossfade
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val crossfadeSeconds by
@@ -216,7 +182,7 @@ fun S_PlaybackScreen(
 
                 // Equalizer
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsDialogButton(
@@ -238,7 +204,7 @@ fun S_PlaybackScreen(
 
                 // Scrobble Percent
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val sliderValue =
@@ -274,7 +240,7 @@ fun S_PlaybackScreen(
 
                 // Pre-fetching
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val prefetchMinutes by

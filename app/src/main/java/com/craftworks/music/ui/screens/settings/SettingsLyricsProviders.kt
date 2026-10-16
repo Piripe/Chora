@@ -14,16 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,8 +34,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.managers.settings.MediaProviderSettingsManager
-import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.LyricsProviderCard
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.EditLrcLibUrlDialog
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
@@ -66,32 +56,9 @@ fun S_LyricsProviderScreen(navHostController: NavHostController = rememberNavCon
 
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.settings_lyrics_providers)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = "Previous Song",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.settings_lyrics_providers),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box (
             modifier = Modifier

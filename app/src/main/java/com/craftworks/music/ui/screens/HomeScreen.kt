@@ -109,8 +109,8 @@ fun HomeScreen(
     val settingsManager = remember(context) { AppearanceSettingsManager(context) }
 
     // Nothing is drawn until the setting is read, so the other layout doesn't flash.
-    val expressiveHome by settingsManager.expressiveHomeFlow.collectAsStateWithLifecycle(null)
-    when (expressiveHome) {
+    val expressiveDesign by settingsManager.expressiveDesignFlow.collectAsStateWithLifecycle(null)
+    when (expressiveDesign) {
         null -> return
         true -> {
             ExpressiveHomeScreen(navHostController, mediaController, viewModel)

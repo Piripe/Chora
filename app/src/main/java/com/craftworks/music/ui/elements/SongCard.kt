@@ -20,11 +20,15 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -71,6 +76,7 @@ import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.ui.viewmodels.SongsScreenViewModel
 import com.craftworks.music.utils.StringUtils
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HorizontalSongCard(
     song: MediaItem,
@@ -82,8 +88,12 @@ fun HorizontalSongCard(
     mixViewModel: MediaCardMenuViewModel = hiltViewModel(),
     mediaController: MediaController?,
     /** A smaller row and cover, for dense lists. */
-    compact: Boolean = false
+    compact: Boolean = false,
+    /** The shape of the row, to draw a group of rows as one block, see [segmentedItemShape]. */
+    shape: Shape = RoundedCornerShape(12.dp),
+    containerColor: Color = Color.Transparent
 ) {
+    val expressive = LocalExpressiveDesign.current
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
 
@@ -97,15 +107,15 @@ fun HorizontalSongCard(
         .collectAsStateWithLifecycle(viewModel.isSongStarred(song.mediaMetadata))
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent,
+            containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onBackground,
             disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
             disabledContentColor = MaterialTheme.colorScheme.onTertiaryContainer
         ),
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shape)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = {
@@ -118,7 +128,25 @@ fun HorizontalSongCard(
             modifier = Modifier
                 .height(if (compact) 56.dp else 72.dp), verticalAlignment = Alignment.CenterVertically
         ) {
-            if (showTrackNumber) {
+            if (showTrackNumber && expressive) {
+                // The track number in a tonal badge.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(if (compact) 36.dp else 40.dp)
+                        .clip(MaterialShapes.Cookie9Sided.toShape())
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Text(
+                        text = song.mediaMetadata.trackNumber.toString(),
+                        style = MaterialTheme.typography.labelLargeEmphasized,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1
+                    )
+                }
+            }
+            else if (showTrackNumber) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -164,10 +192,17 @@ fun HorizontalSongCard(
                     onError = { if (artworkIndex < artworkIds.lastIndex) artworkIndex++ },
                     contentDescription = "Album Image",
                     contentScale = ContentScale.FillHeight,
-                    modifier = Modifier
-                        .size(if (compact) 48.dp else 64.dp)
-                        .padding(4.dp, 0.dp, 0.dp, 0.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                    modifier = (
+                        // A square cover inside the row's container.
+                        if (expressive) Modifier
+                            .padding(start = 8.dp)
+                            .size(if (compact) 40.dp else 56.dp)
+                            .clip(RoundedCornerShape(if (compact) 10.dp else 14.dp))
+                        else Modifier
+                            .size(if (compact) 48.dp else 64.dp)
+                            .padding(4.dp, 0.dp, 0.dp, 0.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                        )
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 )
             }
@@ -227,8 +262,8 @@ fun HorizontalSongCard(
             }
             Text(
                 text = formattedDuration,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = if (expressive) MaterialTheme.typography.labelLarge else MaterialTheme.typography.bodyMedium,
+                color = if (expressive) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(end = 12.dp),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.End
@@ -244,7 +279,8 @@ fun HorizontalSongCard(
                     ) {
                         if (it) Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.round_favorite_24),
-                            contentDescription = stringResource(R.string.action_remove_from_favorites)
+                            contentDescription = stringResource(R.string.action_remove_from_favorites),
+                            tint = if (expressive) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                         else
                             Icon(

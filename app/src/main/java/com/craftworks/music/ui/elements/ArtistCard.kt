@@ -3,6 +3,7 @@ package com.craftworks.music.ui.elements
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +11,16 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -48,6 +53,10 @@ fun MediaModel.Artist.cardImageUrl(): String? =
 @Stable
 @Composable
 fun ArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
+    if (LocalExpressiveDesign.current) {
+        ExpressiveArtistCard(artist, onClick)
+        return
+    }
     val haptics = LocalHapticFeedback.current
     var showMenu by remember { mutableStateOf(false) }
     Column(
@@ -102,6 +111,76 @@ fun ArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
         Text(
             text = artist.name,
             style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+        )
+
+        ArtistCardMenu(
+            artist = artist,
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        )
+    }
+}
+
+/** The artist card of the expressive design: the picture in a cookie shape, the name under it. */
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ExpressiveArtistCard(artist: MediaModel.Artist, onClick: () -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    var showMenu by remember { mutableStateOf(false) }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .widthIn(min = 96.dp, max = 256.dp)
+            .pressScale(interactionSource)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showMenu = true
+                }
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(MaterialShapes.Cookie9Sided.toShape())
+                .background(MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(artist.cardImageUrl())
+                    .crossfade(true)
+                    .diskCacheKey(artist.id)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .placeholderMemoryCacheKey(artist.id)
+                    .build(),
+                contentScale = ContentScale.Crop,
+                contentDescription = artist.name,
+                modifier = Modifier.fillMaxSize(),
+                error = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.rounded_artist_24),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(28.dp)
+                    )
+                },
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = artist.name,
+            style = MaterialTheme.typography.titleSmallEmphasized,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.fillMaxWidth(),
             maxLines = 1, overflow = TextOverflow.Ellipsis,

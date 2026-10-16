@@ -5,6 +5,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,8 +43,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,6 +56,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,6 +73,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -98,8 +103,13 @@ import com.craftworks.music.ui.elements.FolderCardMenu
 import com.craftworks.music.ui.elements.HorizontalSongCard
 import com.craftworks.music.ui.elements.LazyGridScrollbar
 import com.craftworks.music.ui.elements.LazyListScrollbar
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.RandomShapeRefreshIndicator
 import com.craftworks.music.ui.elements.RippleEffect
+import com.craftworks.music.ui.elements.SegmentedItemGap
+import com.craftworks.music.ui.elements.pressScale
+import com.craftworks.music.ui.elements.segmentedItemShape
+import com.craftworks.music.ui.elements.topBarHeight
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.FoldersScreenViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
@@ -126,6 +136,7 @@ fun FoldersScreen(
     val folderIconsOnly by remember { AppearanceSettingsManager(context).folderIconsOnly }.collectAsStateWithLifecycle(false)
     val viewMode by remember { AppearanceSettingsManager(context).folderViewMode }.collectAsStateWithLifecycle(FolderViewMode.LIST)
     val treeEntries by viewModel.treeEntries.collectAsStateWithLifecycle()
+    val expressive = LocalExpressiveDesign.current
 
     val coroutineScope = rememberCoroutineScope()
     val state = rememberPullToRefreshState()
@@ -257,6 +268,7 @@ fun FoldersScreen(
                             }
                         }
                     },
+                    expandedHeight = topBarHeight(),
                     scrollBehavior = scrollBehavior
                 )
             }
@@ -284,16 +296,22 @@ fun FoldersScreen(
                 when (viewMode) {
                     FolderViewMode.LIST, FolderViewMode.COMPACT -> {
                         val compact = viewMode == FolderViewMode.COMPACT
+                        // With the expressive design, the folders and songs are one block.
+                        val itemCount = folders.size + songs.size
                         LazyColumn(
                             state = listState,
                             contentPadding = PaddingValues(vertical = 12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = if (compact) 8.dp else 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(if (compact || expressive) SegmentedItemGap else 6.dp),
                         ) {
-                            items(folders, key = { "folder:" + it.id }) { folder ->
-                                FolderRow(folder, folderIconsOnly, menuViewModel, compact = compact) { viewModel.openFolder(folder) }
+                            itemsIndexed(folders, key = { _, folder -> "folder:" + folder.id }) { index, folder ->
+                                FolderRow(
+                                    folder, folderIconsOnly, menuViewModel, compact = compact,
+                                    shape = if (expressive) segmentedItemShape(index, itemCount) else RoundedCornerShape(12.dp),
+                                    containerColor = if (expressive) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent
+                                ) { viewModel.openFolder(folder) }
                             }
                             itemsIndexed(songs, key = { index, song -> "song:$index:${song.mediaId}" }) { index, song ->
                                 HorizontalSongCard(
@@ -302,7 +320,9 @@ fun FoldersScreen(
                                     viewModel = songsViewModel,
                                     mixViewModel = menuViewModel,
                                     mediaController = mediaController,
-                                    compact = compact
+                                    compact = compact,
+                                    shape = if (expressive) segmentedItemShape(folders.size + index, itemCount) else RoundedCornerShape(12.dp),
+                                    containerColor = if (expressive) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent
                                 )
                             }
                         }
@@ -334,7 +354,10 @@ fun FoldersScreen(
                                     onClick = { playSong(songs, index) },
                                     viewModel = songsViewModel,
                                     mixViewModel = menuViewModel,
-                                    mediaController = mediaController
+                                    mediaController = mediaController,
+                                    // Spaced like the tiles, each song is its own block with the expressive design.
+                                    shape = if (expressive) RoundedCornerShape(20.dp) else RoundedCornerShape(12.dp),
+                                    containerColor = if (expressive) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent
                                 )
                             }
                         }
@@ -403,8 +426,10 @@ fun FoldersScreen(
 }
 
 /** The folders from the root to the current one, tapping one opens it. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FolderBreadcrumbs(path: List<MediaModel.Folder>, rootName: String, onOpen: (index: Int) -> Unit) {
+    val expressive = LocalExpressiveDesign.current
     val listState = rememberLazyListState()
     // Keep the current folder visible.
     LaunchedEffect(path.size, path.lastOrNull()?.id) {
@@ -426,7 +451,14 @@ private fun FolderBreadcrumbs(path: List<MediaModel.Folder>, rootName: String, o
                     )
                 Text(
                     text = folder.name.takeIf { index > 0 && it.isNotBlank() } ?: rootName,
-                    fontWeight = if (isCurrent && path.count() > 1) FontWeight.Bold else FontWeight.Normal,
+                    // With the expressive design, the root alone is a title like the other screens'.
+                    style = when {
+                        !expressive -> LocalTextStyle.current
+                        path.size <= 1 -> MaterialTheme.typography.headlineMediumEmphasized
+                        isCurrent -> MaterialTheme.typography.titleLargeEmphasized
+                        else -> MaterialTheme.typography.titleMedium
+                    },
+                    fontWeight = if (!expressive && isCurrent && path.count() > 1) FontWeight.Bold else null,
                     color = if (isCurrent) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     modifier = Modifier
@@ -471,23 +503,26 @@ private fun FolderRow(
     modifier: Modifier = Modifier,
     /** Shown before the folder picture (the chevron of the tree view). */
     leading: (@Composable () -> Unit)? = null,
+    shape: Shape = RoundedCornerShape(12.dp),
+    containerColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     var showMenu by remember { mutableStateOf(false) }
+    val expressive = LocalExpressiveDesign.current
 
     val folderIcon = @Composable {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(if (expressive) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.rounded_folder_24),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = if (expressive) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -496,7 +531,8 @@ private fun FolderRow(
         modifier = modifier
             .fillMaxWidth()
             .height(if (compact) 56.dp else 72.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(shape)
+            .background(containerColor)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = {
@@ -509,9 +545,9 @@ private fun FolderRow(
         leading?.invoke()
         Box(
             modifier = Modifier
-                .padding(start = 4.dp)
+                .padding(start = if (expressive) 8.dp else 4.dp)
                 .size(if (compact) 44.dp else 60.dp)
-                .clip(RoundedCornerShape(if (compact) 8.dp else 12.dp))
+                .clip(RoundedCornerShape(if (compact) 8.dp else if (expressive) 14.dp else 12.dp))
         ) {
             if (iconOnly || folder.imageUrl == null)
                 folderIcon()
@@ -574,24 +610,26 @@ private fun TreeChevron(isExpanded: Boolean, isLoading: Boolean) {
 }
 
 /** A folder of the grid view: its picture, and its name below. */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FolderTile(folder: MediaModel.Folder, iconOnly: Boolean, menuViewModel: MediaCardMenuViewModel, onClick: () -> Unit) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     var showMenu by remember { mutableStateOf(false) }
+    val expressive = LocalExpressiveDesign.current
+    val interactionSource = remember { MutableInteractionSource() }
 
     val folderIcon = @Composable {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(if (expressive) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.rounded_folder_24),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (expressive) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(48.dp)
             )
         }
@@ -599,8 +637,14 @@ private fun FolderTile(folder: MediaModel.Folder, iconOnly: Boolean, menuViewMod
 
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .then(
+                if (expressive) Modifier.pressScale(interactionSource)
+                else Modifier.clip(RoundedCornerShape(12.dp))
+            )
             .combinedClickable(
+                interactionSource = interactionSource,
+                // The expressive tile shrinks when pressed instead.
+                indication = if (expressive) null else ripple(),
                 onClick = onClick,
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -612,7 +656,7 @@ private fun FolderTile(folder: MediaModel.Folder, iconOnly: Boolean, menuViewMod
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(if (expressive) MaterialTheme.shapes.extraLarge else RoundedCornerShape(12.dp))
         ) {
             if (iconOnly || folder.imageUrl == null)
                 folderIcon()
@@ -633,7 +677,7 @@ private fun FolderTile(folder: MediaModel.Folder, iconOnly: Boolean, menuViewMod
         }
         Text(
             text = folder.name,
-            style = MaterialTheme.typography.titleSmall,
+            style = if (expressive) MaterialTheme.typography.titleSmallEmphasized else MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,

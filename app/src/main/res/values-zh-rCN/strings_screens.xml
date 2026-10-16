@@ -23,6 +23,9 @@
     <plurals name="home_songs_played">
         <item quantity="other">已听 %d 首歌曲</item>
     </plurals>
+    <plurals name="details_song_count">
+        <item quantity="other">%d 首歌曲</item>
+    </plurals>
     <string name="home_period_week">周</string>
     <string name="home_period_month">月</string>
     <plurals name="home_listens">

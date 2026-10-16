@@ -60,7 +60,8 @@ class AppearanceSettingsManager @Inject constructor(
         private val NOW_PLAYING_LYRIC_BLUR_KEY = booleanPreferencesKey("now_playing_lyrics_blur")
         private val BOTTOM_NAV_ITEMS_KEY = stringPreferencesKey("bottom_nav_order")
         private val HOME_ITEMS_KEY = stringPreferencesKey("home_items_order")
-        private val EXPRESSIVE_HOME_KEY = booleanPreferencesKey("expressive_home")
+        // Was only the Home screen at first, hence the key.
+        private val EXPRESSIVE_DESIGN_KEY = booleanPreferencesKey("expressive_home")
         private val APP_THEME = stringPreferencesKey("theme")
 
         private val LYRICS_ANIMATION_SPEED = intPreferencesKey("lyrics_animation_speed")
@@ -182,14 +183,14 @@ class AppearanceSettingsManager @Inject constructor(
         }
     }
 
-    val expressiveHomeFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[EXPRESSIVE_HOME_KEY] ?: true
+    val expressiveDesignFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[EXPRESSIVE_DESIGN_KEY] ?: true
     }
 
-    suspend fun setExpressiveHome(enabled: Boolean) {
+    suspend fun setExpressiveDesign(enabled: Boolean) {
         withContext(NonCancellable) {
             context.dataStore.edit { preferences ->
-                preferences[EXPRESSIVE_HOME_KEY] = enabled
+                preferences[EXPRESSIVE_DESIGN_KEY] = enabled
             }
         }
     }

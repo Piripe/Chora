@@ -25,6 +25,10 @@
         <item quantity="one">%d song played</item>
         <item quantity="other">%d songs played</item>
     </plurals>
+    <plurals name="details_song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
     <string name="home_period_week">Week</string>
     <string name="home_period_month">Month</string>
     <plurals name="home_listens">

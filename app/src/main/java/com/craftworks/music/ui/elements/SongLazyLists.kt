@@ -19,11 +19,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
@@ -67,18 +71,22 @@ fun SongsHorizontalColumn(
             }
     }
 
+    val expressive = LocalExpressiveDesign.current
     LazyColumn(
         modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(horizontal = 12.dp),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(if (expressive) SegmentedItemGap else 6.dp),
+        contentPadding = PaddingValues(bottom = if (expressive) 12.dp else 0.dp),
     ) {
 
         itemsIndexed(songList) { index, song ->
             HorizontalSongCard(
                 song = song,
+                shape = if (expressive) segmentedItemShape(index, songList.size) else RoundedCornerShape(12.dp),
+                containerColor = if (expressive) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
                 onClick = {
                     println("Starting song at index: $index")
                     scope.launch {
@@ -91,6 +99,10 @@ fun SongsHorizontalColumn(
     }
 }
 //endregion
+
+/** Space between the rows of cards: more with the expressive design, as its titles are under the covers. */
+@Composable
+fun gridVerticalSpacing(): Dp = if (LocalExpressiveDesign.current) 16.dp else 6.dp
 
 //region Albums
 @ExperimentalFoundationApi
@@ -132,7 +144,7 @@ fun AlbumGrid(
             .wrapContentWidth()
             .fillMaxHeight(),
         state = gridState,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
@@ -177,7 +189,7 @@ fun AlbumGrid(
             .wrapContentWidth()
             .fillMaxHeight(),
         state = gridState,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
@@ -266,7 +278,7 @@ fun ArtistsGrid(
             .wrapContentWidth()
             .fillMaxHeight(),
         state = gridState,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {
@@ -291,7 +303,7 @@ fun PlaylistGrid(playlists: List<MediaItem>, onPlaylistSelected: (playlist: Medi
         modifier = Modifier
             .wrapContentWidth()
             .fillMaxHeight(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(12.dp)
     ) {

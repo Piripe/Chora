@@ -27,6 +27,11 @@
         <item quantity="many">%d brani ascoltati</item>
         <item quantity="other">%d brani ascoltati</item>
     </plurals>
+    <plurals name="details_song_count">
+        <item quantity="one">%d brano</item>
+        <item quantity="many">%d brani</item>
+        <item quantity="other">%d brani</item>
+    </plurals>
     <string name="home_period_week">Settimana</string>
     <string name="home_period_month">Mese</string>
     <plurals name="home_listens">

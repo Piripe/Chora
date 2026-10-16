@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">Elige y reordena las pestañas principales</string>
     <string name="appearance_home_items">Secciones de inicio</string>
     <string name="appearance_home_items_description">Elige y reordena las secciones de la pantalla de inicio</string>
-    <string name="appearance_expressive_home">Inicio expresivo</string>
-    <string name="appearance_expressive_home_description">Una pantalla de inicio más viva, con carrusel, acciones rápidas y tus estadísticas de escucha</string>
+    <string name="appearance_expressive_design">Diseño expresivo</string>
+    <string name="appearance_expressive_design_description">Un diseño Material 3 Expressive más vivo: formas, animaciones y encabezados más marcados en cada pantalla, y un inicio con carrusel, acciones rápidas y tus estadísticas de escucha</string>
     <string name="appearance_advanced_queue">Cola avanzada</string>
     <string name="appearance_advanced_queue_description">Selección múltiple, ordenación y acciones en bloque en la cola</string>
     <string name="appearance_advanced_filter">Filtros avanzados</string>

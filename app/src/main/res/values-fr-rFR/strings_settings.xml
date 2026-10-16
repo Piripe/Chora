@@ -18,8 +18,8 @@
     <string name="appearance_navbar_items_description">Choisissez et réorganisez les onglets principaux</string>
     <string name="appearance_home_items">Sections de l\'accueil</string>
     <string name="appearance_home_items_description">Choisissez et réorganisez les sections de l\'écran d\'accueil</string>
-    <string name="appearance_expressive_home">Accueil expressif</string>
-    <string name="appearance_expressive_home_description">Un écran d\'accueil plus vivant, avec un carrousel, des actions rapides et vos statistiques d\'écoute</string>
+    <string name="appearance_expressive_design">Design expressif</string>
+    <string name="appearance_expressive_design_description">Un design Material 3 Expressive plus vivant : formes, animations et en-têtes plus marqués sur chaque écran, et un accueil avec un carrousel, des actions rapides et vos statistiques d\'écoute</string>
     <string name="appearance_advanced_queue">File d\'attente avancée</string>
     <string name="appearance_advanced_queue_description">Sélection multiple, tri et actions groupées dans la file d\'attente</string>
     <string name="appearance_advanced_filter">Filtres avancés</string>

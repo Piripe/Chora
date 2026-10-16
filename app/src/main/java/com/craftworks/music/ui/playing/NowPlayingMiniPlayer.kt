@@ -44,6 +44,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.data.model.id
 import com.craftworks.music.player.ChoraMediaLibraryService
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 
 /** Radius of the top corners of the now playing sheet, which holds the mini player. */
 val MiniPlayerCornerRadius = 12.dp
@@ -59,6 +60,7 @@ fun NowPlayingMiniPlayer(
     onClick: () -> Unit = { }
 ) {
     val expanded by remember { derivedStateOf { scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded } }
+    val expressive = LocalExpressiveDesign.current
 
     val yTrans by animateIntAsState(
         targetValue = if (expanded) dpToPx(72) else 0,
@@ -90,7 +92,7 @@ fun NowPlayingMiniPlayer(
             alignment = Alignment.Center,
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(if (expressive) 14.dp else 6.dp))
         )
 
         // Title + Artist
@@ -101,7 +103,7 @@ fun NowPlayingMiniPlayer(
         ) {
             Text(
                 text = metadata?.title.toString(),
-                style = MaterialTheme.typography.titleMedium,
+                style = if (expressive) MaterialTheme.typography.titleMediumEmphasized else MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

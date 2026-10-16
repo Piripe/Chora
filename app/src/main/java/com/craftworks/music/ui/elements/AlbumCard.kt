@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,8 +19,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,6 +62,10 @@ fun AlbumCard(
     modifier: Modifier = Modifier
 ) {
     if (album.mediaMetadata.mediaType != MediaMetadata.MEDIA_TYPE_ALBUM) return
+    if (LocalExpressiveDesign.current) {
+        ExpressiveAlbumCard(album, onClick, onPlay, modifier)
+        return
+    }
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     var showMenu by remember { mutableStateOf(false) }
@@ -146,6 +154,98 @@ fun AlbumCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
+        )
+
+        AlbumCardMenu(
+            album = album,
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        )
+    }
+}
+
+/** The album card of the expressive design: a large rounded cover that shrinks when pressed, its title under it. */
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ExpressiveAlbumCard(
+    album: MediaItem,
+    onClick: () -> Unit,
+    onPlay: (album: MediaItem) -> Unit,
+    modifier: Modifier
+) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    val interactionSource = remember { MutableInteractionSource() }
+    var showMenu by remember { mutableStateOf(false) }
+    Column(
+        modifier = modifier
+            .width(128.dp)
+            .pressScale(interactionSource)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    showMenu = true
+                }
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+        ) {
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(album.mediaMetadata.artworkUri)
+                    .crossfade(true)
+                    .diskCacheKey(album.mediaMetadata.id)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .placeholderMemoryCacheKey(album.mediaMetadata.id)
+                    .build(),
+                contentDescription = album.mediaMetadata.albumTitle?.toString(),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            )
+
+            ActionTooltip(
+                text = stringResource(R.string.action_play_album),
+                modifier = Modifier.align(Alignment.BottomStart)
+            ) {
+                FilledIconButton(
+                    onClick = { onPlay(album) },
+                    shapes = IconButtonDefaults.shapes(),
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .size(36.dp)
+                ) {
+                    Icon(Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.action_play_album))
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = album.mediaMetadata.albumTitle.toString(),
+            style = MaterialTheme.typography.titleSmallEmphasized,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Text(
+            text = album.mediaMetadata.albumArtist.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
         )
 
         AlbumCardMenu(

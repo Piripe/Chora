@@ -5,17 +5,21 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import com.craftworks.music.R
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Stable
 @Composable
 fun RadioCard(
@@ -35,10 +39,19 @@ fun RadioCard(
     onClick: () -> Unit,
     onLongClick: (radio: MediaItem) -> Unit
 ) {
+    val expressive = LocalExpressiveDesign.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val coverShape = if (expressive) MaterialTheme.shapes.extraLarge else RoundedCornerShape(12.dp)
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .then(
+                if (expressive) Modifier.pressScale(interactionSource)
+                else Modifier.clip(RoundedCornerShape(12.dp))
+            )
             .combinedClickable(
+                interactionSource = interactionSource,
+                // The expressive card shrinks when pressed instead.
+                indication = if (expressive) null else ripple(),
                 onClick = { onClick(); Log.d("Play", "Clicked Radio: " + radio.mediaMetadata.station) },
                 onLongClick = {
                     onLongClick(radio)
@@ -55,13 +68,16 @@ fun RadioCard(
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp))
+                .clip(coverShape)
+                .background(
+                    if (expressive) MaterialTheme.colorScheme.secondaryContainer
+                    else MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                )
         )
 
         Text(
             text = radio.mediaMetadata.station.toString(),
-            style = MaterialTheme.typography.titleSmall,
+            style = if (expressive) MaterialTheme.typography.titleSmallEmphasized else MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier
                 .fillMaxSize()

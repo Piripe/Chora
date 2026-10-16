@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -23,10 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -56,12 +51,14 @@ import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.appearance.HomeItemsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NameDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.NavbarItemsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.SongListActionButtonsDialog
 import com.craftworks.music.ui.elements.dialogs.appearance.ThemeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.settingsGroupShape
 import com.craftworks.music.ui.playing.NowPlayingAlignment
 import com.craftworks.music.ui.playing.nowPlayingAlignmentIcon
 import com.craftworks.music.ui.playing.nowPlayingAlignmentLabel
@@ -96,32 +93,9 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
     val artistDetailsActionButtons by appearanceSettingsManager.artistDetailsButtons.collectAsState(emptyList())
     val playlistDetailsActionButtons by appearanceSettingsManager.playlistDetailsButtons.collectAsState(emptyList())
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.settings_appearance)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = "Previous Song",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.settings_appearance),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -176,7 +150,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp))
+                    modifier = Modifier.clip(settingsGroupShape())
                 ) {
                     //Username
                     val username by appearanceSettingsManager.usernameFlow.collectAsState("Username")
@@ -193,7 +167,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 }
 
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     //Theme
@@ -277,16 +251,16 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                         }
                     )
 
-                    //Expressive Home
-                    val expressiveHome by appearanceSettingsManager.expressiveHomeFlow.collectAsStateWithLifecycle(true)
+                    //Expressive Design
+                    val expressiveDesign by appearanceSettingsManager.expressiveDesignFlow.collectAsStateWithLifecycle(true)
                     SettingsSwitch(
-                        expressiveHome,
-                        stringResource(R.string.appearance_expressive_home),
-                        ImageVector.vectorResource(R.drawable.rounded_home_24),
-                        settingsDescription = stringResource(R.string.appearance_expressive_home_description),
+                        expressiveDesign,
+                        stringResource(R.string.appearance_expressive_design),
+                        ImageVector.vectorResource(R.drawable.s_a_palette),
+                        settingsDescription = stringResource(R.string.appearance_expressive_design_description),
                         toggleEvent = {
                             coroutineScope.launch {
-                                appearanceSettingsManager.setExpressiveHome(!expressiveHome)
+                                appearanceSettingsManager.setExpressiveDesign(!expressiveDesign)
                             }
                         }
                     )
@@ -339,7 +313,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 }
 
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsIconChoice(
@@ -433,7 +407,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                 }
 
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     //Show Navidrome Logo
@@ -497,7 +471,7 @@ fun S_AppearanceScreen(navHostController: NavHostController = rememberNavControl
                     )
                 }
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val albumDetailsButtons by appearanceSettingsManager.albumDetailsButtons.collectAsState(emptyList())

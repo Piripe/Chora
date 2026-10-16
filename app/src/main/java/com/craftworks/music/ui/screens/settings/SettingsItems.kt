@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -19,6 +21,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,6 +45,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.craftworks.music.R
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
+import com.craftworks.music.ui.elements.SettingsIcon
 
 @Composable
 fun SettingsSwitch(
@@ -64,14 +69,7 @@ fun SettingsSwitch(
                 enabled = enabled
             )
     ) {
-        Icon(
-            imageVector = settingsIcon,
-            contentDescription = "Settings Icon",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.5f),
-            modifier = Modifier
-                .padding(start = 20.dp, end = 16.dp)
-                .size(32.dp)
-        )
+        SettingsIcon(settingsIcon, enabled)
         SettingsLabel(
             name = settingsName,
             description = settingsDescription,
@@ -85,6 +83,16 @@ fun SettingsSwitch(
             checked = selected,
             onCheckedChange = { toggleEvent() },
             enabled = enabled,
+            // The expressive switch shows a check mark when on.
+            thumbContent = if (selected && LocalExpressiveDesign.current) {
+                {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                    )
+                }
+            } else null,
             modifier = Modifier.padding(start = 12.dp, end = 20.dp)
         )
     }
@@ -152,17 +160,7 @@ fun SettingsDialogButton(
             }
             .focusProperties { left = FocusRequester.Cancel }
     ) {
-        Icon(
-            imageVector = settingsIcon,
-            contentDescription = "Settings Icon",
-            tint = if (enabled == true)
-                MaterialTheme.colorScheme.onSurfaceVariant
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier
-                .padding(start = 20.dp, end = 16.dp)
-                .size(32.dp)
-        )
+        SettingsIcon(settingsIcon, enabled == true)
         SettingsLabel(
             name = settingsName,
             value = settingsSubtitle,
@@ -194,14 +192,7 @@ fun <T> SettingsIconChoice(
             .background(MaterialTheme.colorScheme.surfaceBright)
             .fillMaxWidth()
     ) {
-        Icon(
-            imageVector = settingsIcon,
-            contentDescription = "Settings Icon",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .padding(start = 20.dp, end = 16.dp)
-                .size(32.dp)
-        )
+        SettingsIcon(settingsIcon)
         SettingsLabel(
             name = settingsName,
             value = optionLabel(selected),

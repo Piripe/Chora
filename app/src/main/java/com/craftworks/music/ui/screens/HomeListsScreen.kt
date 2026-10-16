@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -21,6 +20,8 @@ import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
 import com.craftworks.music.data.model.id
 import com.craftworks.music.ui.elements.AlbumGrid
+import com.craftworks.music.ui.elements.TopBarTitle
+import com.craftworks.music.ui.elements.topBarHeight
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.runBlocking
 
@@ -48,7 +49,8 @@ fun HomeListsScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(titleRes),) },
+                title = { TopBarTitle(stringResource(titleRes)) },
+                expandedHeight = topBarHeight(),
                 scrollBehavior = scrollBehavior
             )
         },

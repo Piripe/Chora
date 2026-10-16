@@ -7,20 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -49,12 +37,13 @@ import com.craftworks.music.managers.SmartCacheState
 import com.craftworks.music.managers.downloadStatusText
 import com.craftworks.music.managers.settings.MiscSettingsManager
 import com.craftworks.music.managers.statusText
-import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.SettingsScaffold
 import com.craftworks.music.ui.elements.dialogs.DownloadTemplateDialog
 import com.craftworks.music.ui.elements.dialogs.RemoveDownloadsDialog
 import com.craftworks.music.ui.elements.dialogs.SmartCacheSizeDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
 import com.craftworks.music.ui.elements.dialogs.smartCacheSizeLabel
+import com.craftworks.music.ui.elements.settingsGroupShape
 import com.craftworks.music.ui.viewmodels.SmartCacheViewModel
 import kotlinx.coroutines.launch
 
@@ -79,32 +68,9 @@ fun S_DownloadsScreen(
     val isOffline by smartCacheViewModel.isOffline.collectAsStateWithLifecycle()
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.settings_downloads)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = stringResource(R.string.action_back),
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.settings_downloads),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -121,7 +87,7 @@ fun S_DownloadsScreen(
             ) {
                 // Downloaded in the app
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsDialogButton(
@@ -156,7 +122,7 @@ fun S_DownloadsScreen(
 
                 // Smart cache
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     SettingsDialogButton(
@@ -194,7 +160,7 @@ fun S_DownloadsScreen(
 
                 // Saved to the device
                 Column(
-                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
+                    modifier = Modifier.clip(settingsGroupShape()),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     val downloadTemplate by MiscSettingsManager(context).downloadTemplateFlow.collectAsState("{album}/{title} - {artist}.{ext}")

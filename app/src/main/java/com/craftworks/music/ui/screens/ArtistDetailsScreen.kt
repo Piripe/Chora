@@ -31,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -49,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -75,11 +75,17 @@ import com.craftworks.music.player.SongHelper
 import com.craftworks.music.ui.elements.ActionButtonType
 import com.craftworks.music.ui.elements.ActionTooltip
 import com.craftworks.music.ui.elements.AlbumCard
+import com.craftworks.music.ui.elements.DetailsLoadingIndicator
+import com.craftworks.music.ui.elements.ExpressiveDetailsHeader
+import com.craftworks.music.ui.elements.ExpressiveGroupTitle
+import com.craftworks.music.ui.elements.HeaderArtworkStyle
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.SongListActionButtons
 import com.craftworks.music.ui.elements.dialogs.AddToPlaylist
 import com.craftworks.music.ui.elements.dialogs.DownloadTargetDialog
 import com.craftworks.music.ui.elements.dialogs.ShareDialog
 import com.craftworks.music.ui.elements.dialogs.dialogFocusable
+import com.craftworks.music.ui.elements.gridVerticalSpacing
 import com.craftworks.music.ui.viewmodels.ArtistDetailsViewModel
 import com.craftworks.music.ui.viewmodels.MediaCardMenuViewModel
 import com.craftworks.music.utils.bleedHorizontal
@@ -115,6 +121,7 @@ fun ArtistDetails(
     var addToPlaylistSongs by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
 
     val coroutineScope = rememberCoroutineScope()
+    val expressive = LocalExpressiveDesign.current
 
     val getArtistSongs : suspend () -> List<MediaItem> = {
         artistAlbums.flatMap {
@@ -143,24 +150,7 @@ fun ArtistDetails(
         enter = fadeIn(),
         exit = fadeOut()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 6.dp
-            )
-            Text(
-                text = "Loading",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        }
+        DetailsLoadingIndicator()
     }
 
     // Main Content
@@ -170,12 +160,93 @@ fun ArtistDetails(
     ) {
         var isStarred by remember { mutableStateOf(artist?.userFavorite ?: false) }
 
+        val actionRow = @Composable {
+            // Play, shuffle and more buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+            ) {
+                val actions: Map<ActionButtonType, () -> Unit> = mapOf(
+                    ActionButtonType.SHUFFLE to {
+                        coroutineScope.launch {
+                            val allArtistSongsList = getArtistSongs()
+
+                            mediaController?.shuffleModeEnabled = true
+                            val random = allArtistSongsList.indices.random()
+                            SongHelper.play(
+                                allArtistSongsList,
+                                random,
+                                mediaController
+                            )
+                        }
+                    },
+                    ActionButtonType.FAVORITE to {
+                        coroutineScope.launch {
+                            artist?.id?.let {
+                                if (isStarred)
+                                    viewModel.unstarArtist(it)
+                                else
+                                    viewModel.starArtist(it)
+                            }
+                            viewModel.loadArtistDetails(selectedArtistId, force = true)
+                            isStarred = !isStarred
+                        }
+                    },
+                    ActionButtonType.ADD_TO_QUEUE to {
+                        coroutineScope.launch {
+                            SongHelper.enqueue(getArtistSongs(), mediaController)
+                        }
+                    },
+                    ActionButtonType.PLAY_NEXT to {
+                        coroutineScope.launch {
+                            SongHelper.playNext(getArtistSongs(), mediaController)
+                        }
+                    },
+                    ActionButtonType.ADD_TO_PLAYLIST to {
+                        coroutineScope.launch {
+                            addToPlaylistSongs = getArtistSongs()
+                            showAddToPlaylistDialog = true
+                        }
+                    },
+                    ActionButtonType.DOWNLOAD to {
+                        showDownloadDialog = true
+                    },
+                    ActionButtonType.SHARE to {
+                        showShareDialog = true
+                    },
+                    ActionButtonType.RADIO to {
+                        artist?.let { mixViewModel.playMix({ mixViewModel.getArtistRadio(it) }) { mediaController } }
+                    },
+                )
+
+                SongListActionButtons(
+                    buttons = actionButtons.map {
+                        it.apply {
+                            this.onClick = actions[this.type] ?: {}
+                        }
+                    },
+                    providerFeatures = artist?.getProvider()?.featureFlags,
+                    playAction = {
+                        coroutineScope.launch {
+                            SongHelper.play(
+                                getArtistSongs(),
+                                0,
+                                mediaController
+                            )
+                        }
+                    },
+                    isStarred = isStarred
+                )
+            }
+        }
+
         LazyVerticalGrid(
             modifier = Modifier
                 .fillMaxSize()
                 .dialogFocusable(),
             columns = GridCells.Adaptive(96.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(gridVerticalSpacing()),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(12.dp, 0.dp, 12.dp, 12.dp),
         ) {
@@ -186,163 +257,116 @@ fun ArtistDetails(
 
             // Header
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(
-                    modifier = Modifier
-                        .height(320.dp)
-                        .fillMaxWidth()
-                ) {
-                    //Image and Name
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(artist?.imageUrl)
-                            .diskCacheKey(selectedArtistId)
-                            .diskCachePolicy(CachePolicy.READ_ONLY)
-                            .placeholderMemoryCacheKey(selectedArtistId)
-                            .crossfade(true)
-                            .build(),
-                        contentScale = ContentScale.FillWidth,
-                        contentDescription = "Artist Image",
-                        modifier = Modifier
-                            .bleedHorizontal(12.dp)
-                            .fadingEdge(imageFadingEdge)
-                            .blur(12.dp)
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(
-                                top = WindowInsets.safeDrawing.asPaddingValues()
-                                    .calculateTopPadding(),
-                                bottom = 12.dp
-                            )
-                            .padding(horizontal = 12.dp)
-                    ) {
-                        // Back button
-                        ActionTooltip(stringResource(R.string.action_back)) {
-                            FilledTonalIconButton(
-                                onClick = { navHostController.popBackStack() },
-                                modifier = Modifier
-                                    .size(36.dp)
-                            ) {
-                                Icon(
-                                    Icons.AutoMirrored.Rounded.ArrowBack,
-                                    contentDescription = "back"
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.weight(1f))
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            // Album Name and Artist
-                            Text(
-                                text = artist?.name.toString(),
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.headlineMediumEmphasized,
-                                textAlign = TextAlign.Left,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-
-                            // Description
-                            artist?.biography?.let { biography ->
+                if (expressive) {
+                    ExpressiveDetailsHeader(
+                        imageData = artist?.imageUrl,
+                        imageCacheKey = selectedArtistId,
+                        title = artist?.name.toString(),
+                        onBack = { navHostController.popBackStack() },
+                        artworkStyle = HeaderArtworkStyle.PORTRAIT,
+                        // The header goes under the padding of the grid, up to the screen edges.
+                        modifier = Modifier.bleedHorizontal(12.dp),
+                        subtitle = {
+                            artist?.biography?.takeIf { it.isNotBlank() }?.let { biography ->
                                 Text(
                                     text = biography,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.Light,
-                                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                                    textAlign = TextAlign.Start,
-                                    maxLines = 2,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 3,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            showArtistBiographyDialog = true
-                                        }
-                                        .padding(6.dp)
+                                        .clip(MaterialTheme.shapes.large)
+                                        .clickable { showArtistBiographyDialog = true }
+                                        .padding(8.dp)
                                 )
                             }
+                        },
+                        actions = actionRow
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .height(320.dp)
+                            .fillMaxWidth()
+                    ) {
+                        //Image and Name
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(artist?.imageUrl)
+                                .diskCacheKey(selectedArtistId)
+                                .diskCachePolicy(CachePolicy.READ_ONLY)
+                                .placeholderMemoryCacheKey(selectedArtistId)
+                                .crossfade(true)
+                                .build(),
+                            contentScale = ContentScale.FillWidth,
+                            contentDescription = "Artist Image",
+                            modifier = Modifier
+                                .bleedHorizontal(12.dp)
+                                .fadingEdge(imageFadingEdge)
+                                .blur(12.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = WindowInsets.safeDrawing.asPaddingValues()
+                                        .calculateTopPadding(),
+                                    bottom = 12.dp
+                                )
+                                .padding(horizontal = 12.dp)
+                        ) {
+                            // Back button
+                            ActionTooltip(stringResource(R.string.action_back)) {
+                                FilledTonalIconButton(
+                                    onClick = { navHostController.popBackStack() },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                ) {
+                                    Icon(
+                                        Icons.AutoMirrored.Rounded.ArrowBack,
+                                        contentDescription = "back"
+                                    )
+                                }
+                            }
 
-                            // Play, shuffle and more buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                            Spacer(Modifier.weight(1f))
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                val actions: Map<ActionButtonType, () -> Unit> = mapOf(
-                                    ActionButtonType.SHUFFLE to {
-                                        coroutineScope.launch {
-                                            val allArtistSongsList = getArtistSongs()
+                                // Album Name and Artist
+                                Text(
+                                    text = artist?.name.toString(),
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style = MaterialTheme.typography.headlineMediumEmphasized,
+                                    textAlign = TextAlign.Left,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
 
-                                            mediaController?.shuffleModeEnabled = true
-                                            val random = allArtistSongsList.indices.random()
-                                            SongHelper.play(
-                                                allArtistSongsList,
-                                                random,
-                                                mediaController
-                                            )
-                                        }
-                                    },
-                                    ActionButtonType.FAVORITE to {
-                                        coroutineScope.launch {
-                                            artist?.id?.let {
-                                                if (isStarred)
-                                                    viewModel.unstarArtist(it)
-                                                else
-                                                    viewModel.starArtist(it)
+                                // Description
+                                artist?.biography?.let { biography ->
+                                    Text(
+                                        text = biography,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        fontWeight = FontWeight.Light,
+                                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                        textAlign = TextAlign.Start,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                showArtistBiographyDialog = true
                                             }
-                                            viewModel.loadArtistDetails(selectedArtistId, force = true)
-                                            isStarred = !isStarred
-                                        }
-                                    },
-                                    ActionButtonType.ADD_TO_QUEUE to {
-                                        coroutineScope.launch {
-                                            SongHelper.enqueue(getArtistSongs(), mediaController)
-                                        }
-                                    },
-                                    ActionButtonType.PLAY_NEXT to {
-                                        coroutineScope.launch {
-                                            SongHelper.playNext(getArtistSongs(), mediaController)
-                                        }
-                                    },
-                                    ActionButtonType.ADD_TO_PLAYLIST to {
-                                        coroutineScope.launch {
-                                            addToPlaylistSongs = getArtistSongs()
-                                            showAddToPlaylistDialog = true
-                                        }
-                                    },
-                                    ActionButtonType.DOWNLOAD to {
-                                        showDownloadDialog = true
-                                    },
-                                    ActionButtonType.SHARE to {
-                                        showShareDialog = true
-                                    },
-                                    ActionButtonType.RADIO to {
-                                        artist?.let { mixViewModel.playMix({ mixViewModel.getArtistRadio(it) }) { mediaController } }
-                                    },
-                                )
+                                            .padding(6.dp)
+                                    )
+                                }
 
-                                SongListActionButtons(
-                                    buttons = actionButtons.map {
-                                        it.apply {
-                                            this.onClick = actions[this.type] ?: {}
-                                        }
-                                    },
-                                    providerFeatures = artist?.getProvider()?.featureFlags,
-                                    playAction = {
-                                        coroutineScope.launch {
-                                            SongHelper.play(
-                                                getArtistSongs(),
-                                                0,
-                                                mediaController
-                                            )
-                                        }
-                                    },
-                                    isStarred = isStarred
-                                )
+                                actionRow()
                             }
                         }
                     }
@@ -351,19 +375,29 @@ fun ArtistDetails(
 
             /* Discography header */
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = stringResource(R.string.artist_details_discography),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
+                if (expressive)
+                    Text(
+                        text = stringResource(R.string.artist_details_discography),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.headlineSmallEmphasized,
+                        modifier = Modifier.padding(top = 12.dp, start = 4.dp)
+                    )
+                else
+                    Text(
+                        text = stringResource(R.string.artist_details_discography),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
             }
 
             groupedAlbums.forEach { (groupName, albumsInGroup) ->
                 // Albums without a year are listed last, without a header
                 if (groupName != null) item(span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
+                    if (expressive)
+                        ExpressiveGroupTitle(groupName.toString(), Modifier.padding(start = 4.dp))
+                    else Text(
                         text = groupName.toString(),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,

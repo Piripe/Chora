@@ -7,25 +7,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -36,7 +27,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.craftworks.music.R
 import com.craftworks.music.data.model.Screen
-import com.craftworks.music.ui.elements.ActionTooltip
+import com.craftworks.music.ui.elements.SettingsIcon
+import com.craftworks.music.ui.elements.SettingsScaffold
+import com.craftworks.music.ui.elements.settingsGroupShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(
@@ -47,32 +40,9 @@ import com.craftworks.music.ui.elements.ActionTooltip
 fun SettingScreen(
     navHostController: NavHostController = rememberNavController()
 ) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.home_settings)) },
-                navigationIcon = {
-                    ActionTooltip(stringResource(R.string.action_back)) {
-                        IconButton(
-                            onClick = {
-                                navHostController.popBackStack()
-                            },
-                            modifier = Modifier.size(56.dp, 70.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                contentDescription = "Previous Song",
-                                modifier = Modifier
-                                    .size(24.dp)
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        },
+    SettingsScaffold(
+        title = stringResource(R.string.home_settings),
+        onBack = { navHostController.popBackStack() }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -83,7 +53,7 @@ fun SettingScreen(
             Column(
                 modifier = Modifier
                     .padding(horizontal = 12.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(settingsGroupShape()),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 SettingsButton(
@@ -150,14 +120,7 @@ private fun SettingsButton(route: Screen, icon: ImageVector, text: Int, descript
         Row(
             verticalAlignment = Alignment.CenterVertically
         ){
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .padding(start = 20.dp, end = 16.dp)
-                    .size(32.dp)
-            )
+            SettingsIcon(icon, tint = MaterialTheme.colorScheme.onBackground)
             Column(
                 modifier = Modifier
                     .padding(vertical = 14.dp)

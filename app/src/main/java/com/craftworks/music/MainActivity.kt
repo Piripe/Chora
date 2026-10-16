@@ -48,6 +48,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -114,6 +115,7 @@ import com.craftworks.music.managers.OfflineManager
 import com.craftworks.music.managers.settings.AppTheme
 import com.craftworks.music.managers.settings.AppearanceSettingsManager
 import com.craftworks.music.player.rememberManagedMediaController
+import com.craftworks.music.ui.elements.LocalExpressiveDesign
 import com.craftworks.music.ui.elements.OfflineBannerHost
 import com.craftworks.music.ui.elements.dialogs.tv.OnboardingDialog
 import com.craftworks.music.ui.playing.NowPlayingContent
@@ -155,211 +157,218 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            // The TV screens keep their own design.
+            val expressiveDesign by AppearanceSettingsManager(this).expressiveDesignFlow.collectAsState(true)
+            val isTvMode = LocalConfiguration.current.uiMode and
+                    Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+
             MusicPlayerTheme (darkTheme) {
-                navController = rememberNavController()
+                CompositionLocalProvider(LocalExpressiveDesign provides (expressiveDesign && !isTvMode)) {
+                    navController = rememberNavController()
 
-                val mediaController by rememberManagedMediaController()
-                var metadata by remember { mutableStateOf<MediaMetadata?>(null) }
+                    val mediaController by rememberManagedMediaController()
+                    var metadata by remember { mutableStateOf<MediaMetadata?>(null) }
 
-                val coroutineScope = rememberCoroutineScope()
+                    val coroutineScope = rememberCoroutineScope()
 
-                // Update metadata from mediaController.
-                DisposableEffect(mediaController) {
-                    val listener = object : Player.Listener {
-                        override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) {
-                            metadata = mediaMetadata
-                            super.onPlaylistMetadataChanged(mediaMetadata)
-                        }
+                    // Update metadata from mediaController.
+                    DisposableEffect(mediaController) {
+                        val listener = object : Player.Listener {
+                            override fun onPlaylistMetadataChanged(mediaMetadata: MediaMetadata) {
+                                metadata = mediaMetadata
+                                super.onPlaylistMetadataChanged(mediaMetadata)
+                            }
 
-                        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                            metadata = mediaItem?.mediaMetadata
-                            super.onMediaItemTransition(mediaItem, reason)
-                        }
+                            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                                metadata = mediaItem?.mediaMetadata
+                                super.onMediaItemTransition(mediaItem, reason)
+                            }
 
-                        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                            metadata = mediaMetadata
-                            super.onMediaMetadataChanged(mediaMetadata)
-                        }
-                    }
-
-                    metadata = mediaController?.mediaMetadata
-                    mediaController?.addListener(listener)
-
-                    onDispose {
-                        mediaController?.removeListener(listener)
-                    }
-                }
-
-
-                val positionalThreshold = dpToPx(56).toFloat()
-                val velocityThreshold = dpToPx(125).toFloat()
-
-                val scaffoldState = remember {
-                    BottomSheetScaffoldState(
-                        bottomSheetState = SheetState(
-                            skipPartiallyExpanded = false,
-                            initialValue = SheetValue.PartiallyExpanded,
-                            skipHiddenState = true,
-                            velocityThreshold = { positionalThreshold },
-                            positionalThreshold = { velocityThreshold }
-                        ), snackbarHostState = SnackbarHostState()
-                    )
-                }
-                val peekHeight by animateDpAsState(
-                    targetValue = if (metadata?.title != null) 72.dp else 0.dp,
-                    animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
-                    label = "sheetPeekAnimation"
-                )
-
-                val isTv = LocalConfiguration.current.uiMode and
-                        Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
-
-                val isOffline by offlineManager.isOffline.collectAsStateWithLifecycle()
-
-                OfflineBannerHost(isOffline = isOffline, isTv = isTv) {
-                    if (isTv) {
-                        // Set background color to colorScheme.background
-                        window.decorView.setBackgroundColor(androidx.tv.material3.MaterialTheme.colorScheme.background.toArgb())
-
-                        SetupNavGraph(
-                            navController = navController,
-                            bottomPadding = 0.dp,
-                            mediaController = mediaController
-                        )
-                    } else {
-                        // Set background color to colorScheme.background
-                        window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
-
-                        val backCallback = object : OnBackPressedCallback(false) {
-                            override fun handleOnBackPressed() {
-                                coroutineScope.launch {
-                                    scaffoldState.bottomSheetState.partialExpand()
-                                }
+                            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                                metadata = mediaMetadata
+                                super.onMediaMetadataChanged(mediaMetadata)
                             }
                         }
 
-                        onBackPressedDispatcher.addCallback(this, backCallback)
+                        metadata = mediaController?.mediaMetadata
+                        mediaController?.addListener(listener)
 
-                        Scaffold(
-                            bottomBar = {
-                                AnimatedBottomNavBar(navController, scaffoldState)
-                            },
-                            contentColor = MaterialTheme.colorScheme.onBackground,
-                            containerColor = Color.Transparent,
-                            modifier = Modifier.fillMaxSize()
-                        ) { paddingValues ->
-                            if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
-                                val miniPlayerShape = RoundedCornerShape(MiniPlayerCornerRadius, MiniPlayerCornerRadius, 0.dp, 0.dp)
-                                BottomSheetScaffold(
-                                    sheetContainerColor = Color.Transparent,
-                                    containerColor = Color.Transparent,
-                                    sheetPeekHeight = peekHeight + 80.dp + WindowInsets.navigationBars.asPaddingValues()
-                                        .calculateBottomPadding(),
-                                    //sheetShadowElevation = 6.dp,
-                                    sheetShape = miniPlayerShape,
-                                    sheetDragHandle = { },
-                                    scaffoldState = scaffoldState,
-                                    sheetContent = {
-                                        val coroutineScope = rememberCoroutineScope()
+                        onDispose {
+                            mediaController?.removeListener(listener)
+                        }
+                    }
 
-                                        // Nothing in the sheet draws outside its rounded corners.
-                                        Box(Modifier.clip(miniPlayerShape)) {
-                                            NowPlayingMiniPlayer(
-                                                scaffoldState = scaffoldState,
-                                                metadata = metadata,
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        scaffoldState.bottomSheetState.expand()
+
+                    val positionalThreshold = dpToPx(56).toFloat()
+                    val velocityThreshold = dpToPx(125).toFloat()
+
+                    val scaffoldState = remember {
+                        BottomSheetScaffoldState(
+                            bottomSheetState = SheetState(
+                                skipPartiallyExpanded = false,
+                                initialValue = SheetValue.PartiallyExpanded,
+                                skipHiddenState = true,
+                                velocityThreshold = { positionalThreshold },
+                                positionalThreshold = { velocityThreshold }
+                            ), snackbarHostState = SnackbarHostState()
+                        )
+                    }
+                    val peekHeight by animateDpAsState(
+                        targetValue = if (metadata?.title != null) 72.dp else 0.dp,
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                        label = "sheetPeekAnimation"
+                    )
+
+                    val isTv = LocalConfiguration.current.uiMode and
+                            Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+
+                    val isOffline by offlineManager.isOffline.collectAsStateWithLifecycle()
+
+                    OfflineBannerHost(isOffline = isOffline, isTv = isTv) {
+                        if (isTv) {
+                            // Set background color to colorScheme.background
+                            window.decorView.setBackgroundColor(androidx.tv.material3.MaterialTheme.colorScheme.background.toArgb())
+
+                            SetupNavGraph(
+                                navController = navController,
+                                bottomPadding = 0.dp,
+                                mediaController = mediaController
+                            )
+                        } else {
+                            // Set background color to colorScheme.background
+                            window.decorView.setBackgroundColor(MaterialTheme.colorScheme.background.toArgb())
+
+                            val backCallback = object : OnBackPressedCallback(false) {
+                                override fun handleOnBackPressed() {
+                                    coroutineScope.launch {
+                                        scaffoldState.bottomSheetState.partialExpand()
+                                    }
+                                }
+                            }
+
+                            onBackPressedDispatcher.addCallback(this, backCallback)
+
+                            Scaffold(
+                                bottomBar = {
+                                    AnimatedBottomNavBar(navController, scaffoldState)
+                                },
+                                contentColor = MaterialTheme.colorScheme.onBackground,
+                                containerColor = Color.Transparent,
+                                modifier = Modifier.fillMaxSize()
+                            ) { paddingValues ->
+                                if (LocalWindowInfo.current.containerSize.width < dpToPx(640)) {
+                                    val miniPlayerShape = RoundedCornerShape(MiniPlayerCornerRadius, MiniPlayerCornerRadius, 0.dp, 0.dp)
+                                    BottomSheetScaffold(
+                                        sheetContainerColor = Color.Transparent,
+                                        containerColor = Color.Transparent,
+                                        sheetPeekHeight = peekHeight + 80.dp + WindowInsets.navigationBars.asPaddingValues()
+                                            .calculateBottomPadding(),
+                                        //sheetShadowElevation = 6.dp,
+                                        sheetShape = miniPlayerShape,
+                                        sheetDragHandle = { },
+                                        scaffoldState = scaffoldState,
+                                        sheetContent = {
+                                            val coroutineScope = rememberCoroutineScope()
+
+                                            // Nothing in the sheet draws outside its rounded corners.
+                                            Box(Modifier.clip(miniPlayerShape)) {
+                                                NowPlayingMiniPlayer(
+                                                    scaffoldState = scaffoldState,
+                                                    metadata = metadata,
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            scaffoldState.bottomSheetState.expand()
+                                                        }
+                                                    })
+
+                                                println("Recomposing sheetcontent")
+                                                NowPlayingContent(
+                                                    mediaController = mediaController,
+                                                    metadata = metadata,
+                                                    navController,
+                                                    onHide = {
+                                                        coroutineScope.launch {
+                                                            scaffoldState.bottomSheetState.partialExpand()
+                                                        }
                                                     }
-                                                })
+                                                )
+                                            }
 
-                                            println("Recomposing sheetcontent")
-                                            NowPlayingContent(
-                                                mediaController = mediaController,
-                                                metadata = metadata,
-                                                navController,
-                                                onHide = {
-                                                    coroutineScope.launch {
-                                                        scaffoldState.bottomSheetState.partialExpand()
-                                                    }
+                                            val currentView = LocalView.current
+                                            val disableScreenStandy by AppearanceSettingsManager(LocalContext.current).disableScreenStandby.collectAsStateWithLifecycle(true)
+                                            DisposableEffect(scaffoldState.bottomSheetState.targetValue) {
+                                                if (scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded) {
+                                                    if (disableScreenStandy)
+                                                        currentView.keepScreenOn = true
+
+                                                    backCallback.isEnabled  = true
+
+                                                    /* Restore nav bars.
+                                                    @Suppress("DEPRECATION")
+                                                    currentView.systemUiVisibility =
+                                                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                                                                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                                                                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                                                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                                                                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                                                                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                                    */
+
+                                                    Log.d("NOW-PLAYING", "KeepScreenOn: True")
+                                                } else {
+                                                    currentView.keepScreenOn = false
+                                                    backCallback.isEnabled = false
+
+                                                    /* Restore nav bars.
+                                                    @Suppress("DEPRECATION")
+                                                    currentView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                                    */
+                                                    Log.d("NOW-PLAYING", "KeepScreenOn: False")
                                                 }
-                                            )
-                                        }
 
-                                        val currentView = LocalView.current
-                                        val disableScreenStandy by AppearanceSettingsManager(LocalContext.current).disableScreenStandby.collectAsStateWithLifecycle(true)
-                                        DisposableEffect(scaffoldState.bottomSheetState.targetValue) {
-                                            if (scaffoldState.bottomSheetState.targetValue == SheetValue.Expanded) {
-                                                if (disableScreenStandy)
-                                                    currentView.keepScreenOn = true
-
-                                                backCallback.isEnabled  = true
-
-                                                /* Restore nav bars.
-                                                @Suppress("DEPRECATION")
-                                                currentView.systemUiVisibility =
-                                                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                                                            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                                                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                                                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                                                            View.SYSTEM_UI_FLAG_FULLSCREEN or
-                                                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                                                */
-
-                                                Log.d("NOW-PLAYING", "KeepScreenOn: True")
-                                            } else {
-                                                currentView.keepScreenOn = false
-                                                backCallback.isEnabled = false
-
-                                                /* Restore nav bars.
-                                                @Suppress("DEPRECATION")
-                                                currentView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                                */
-                                                Log.d("NOW-PLAYING", "KeepScreenOn: False")
+                                                onDispose {
+                                                    currentView.keepScreenOn = false
+                                                    backCallback.isEnabled = false
+                                                    Log.d("NOW-PLAYING", "KeepScreenOn: False")
+                                                }
                                             }
-
-                                            onDispose {
-                                                currentView.keepScreenOn = false
-                                                backCallback.isEnabled = false
-                                                Log.d("NOW-PLAYING", "KeepScreenOn: False")
-                                            }
-                                        }
-                                    }) {
-                                    // The screens go on under the rounded corners of the mini player, so their
-                                    // background shows there rather than the window background.
-                                    val miniPlayerOverlap = MiniPlayerCornerRadius * (peekHeight / 72.dp)
+                                        }) {
+                                        // The screens go on under the rounded corners of the mini player, so their
+                                        // background shows there rather than the window background.
+                                        val miniPlayerOverlap = MiniPlayerCornerRadius * (peekHeight / 72.dp)
+                                        SetupNavGraph(
+                                            navController,
+                                            peekHeight + paddingValues.calculateBottomPadding() - miniPlayerOverlap,
+                                            mediaController
+                                        )
+                                    }
+                                } else {
                                     SetupNavGraph(
                                         navController,
-                                        peekHeight + paddingValues.calculateBottomPadding() - miniPlayerOverlap,
+                                        0.dp,
                                         mediaController
                                     )
                                 }
-                            } else {
-                                SetupNavGraph(
-                                    navController,
-                                    0.dp,
-                                    mediaController
-                                )
                             }
                         }
                     }
-                }
 
-                var showNoProvidersDialog by rememberSaveable { mutableStateOf(false) }
+                    var showNoProvidersDialog by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(Unit) {
-                    showNoProvidersDialog = MediaProviderManager.allProviders.value.isEmpty()
-                }
+                    LaunchedEffect(Unit) {
+                        showNoProvidersDialog = MediaProviderManager.allProviders.value.isEmpty()
+                    }
 
-                if (showNoProvidersDialog) {
-                    if (isTv) {
-                        OnboardingDialog { showNoProvidersDialog = it }
-                    } else {
-                        com.craftworks.music.ui.elements.dialogs.OnboardingDialog() { showNoProvidersDialog = it }
-//                        NoMediaProvidersDialog(
-//                            setShowDialog = { showNoProvidersDialog = true },
-//                            navController
-//                        )
+                    if (showNoProvidersDialog) {
+                        if (isTv) {
+                            OnboardingDialog { showNoProvidersDialog = it }
+                        } else {
+                            com.craftworks.music.ui.elements.dialogs.OnboardingDialog() { showNoProvidersDialog = it }
+    //                        NoMediaProvidersDialog(
+    //                            setShowDialog = { showNoProvidersDialog = true },
+    //                            navController
+    //                        )
+                        }
                     }
                 }
             }

@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarValue
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberSearchBarState
@@ -86,7 +85,8 @@ fun TopBarWithSearch(
         }
 
     TopAppBar(
-        title = { Text(text = headerText) },
+        title = { TopBarTitle(headerText) },
+        expandedHeight = topBarHeight(),
         actions = {
             extraAction()
             AppBarWithSearch(
