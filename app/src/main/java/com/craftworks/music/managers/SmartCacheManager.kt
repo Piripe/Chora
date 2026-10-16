@@ -6,6 +6,7 @@ import android.net.Uri
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.core.content.edit
+import androidx.media3.common.MediaMetadata
 import com.craftworks.music.R
 import com.craftworks.music.data.cache.CachedArtist
 import com.craftworks.music.data.cache.CachedArtwork
@@ -15,6 +16,7 @@ import com.craftworks.music.data.cache.CachedSong
 import com.craftworks.music.data.cache.CachedSongFolders
 import com.craftworks.music.data.cache.LibraryCache
 import com.craftworks.music.data.cache.ListeningScore
+import com.craftworks.music.data.cache.PlayHistoryEntry
 import com.craftworks.music.data.cache.SmartCacheDatabase
 import com.craftworks.music.data.model.AlbumArtistInfo
 import com.craftworks.music.data.model.AlbumArtistListSort
@@ -236,6 +238,12 @@ class SmartCacheManager @Inject constructor(
         val playedAt = System.currentTimeMillis()
         libraryCache.recordAppPlay(providerId, songId, playedAt)
         scope.launch { database.recordAppPlay(providerId, songId, playedAt) }
+    }
+
+    /** Adds a song played in the app to the play history, for the listening stats of the Home screen. */
+    fun recordListen(providerId: String, metadata: MediaMetadata) {
+        val entry = PlayHistoryEntry.from(providerId, metadata, System.currentTimeMillis()) ?: return
+        scope.launch { database.addPlayHistory(entry) }
     }
 
     //region Refresh

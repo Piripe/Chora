@@ -16,7 +16,6 @@
     <string name="home_your_listening">您的收听</string>
     <string name="home_top_artist">最爱艺人</string>
     <string name="home_on_repeat">单曲循环中</string>
-    <string name="home_this_week">本周</string>
     <string name="home_see_all">查看全部</string>
     <plurals name="home_plays">
         <item quantity="other">播放 %d 次</item>
@@ -24,6 +23,16 @@
     <plurals name="home_songs_played">
         <item quantity="other">已听 %d 首歌曲</item>
     </plurals>
+    <string name="home_period_week">周</string>
+    <string name="home_period_month">月</string>
+    <plurals name="home_listens">
+        <item quantity="other">次播放</item>
+    </plurals>
+    <string name="home_trend_week">较上周 %s</string>
+    <string name="home_trend_month">较上月 %s</string>
+    <string name="home_duration_hours">%1$d 小时 %2$d 分钟</string>
+    <string name="home_duration_minutes">%d 分钟</string>
+    <string name="home_stats_empty">听几首歌即可在此查看统计</string>
 
     <!-- Artist Details -->
     <string name="artist_details_discography">作品集</string>

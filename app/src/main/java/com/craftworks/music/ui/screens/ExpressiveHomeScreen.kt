@@ -1,9 +1,19 @@
 package com.craftworks.music.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +51,7 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -53,6 +64,7 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -60,20 +72,25 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -85,9 +102,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,8 +121,10 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.craftworks.music.R
+import com.craftworks.music.data.cache.ListeningPeriod
+import com.craftworks.music.data.cache.ListeningStats
+import com.craftworks.music.data.cache.TopListen
 import com.craftworks.music.data.model.Screen
-import com.craftworks.music.data.model.artists
 import com.craftworks.music.data.model.id
 import com.craftworks.music.data.providers.media.MediaProvider
 import com.craftworks.music.data.providers.media.local.LocalMediaProvider
@@ -113,7 +138,11 @@ import com.craftworks.music.ui.elements.RippleEffect
 import com.craftworks.music.ui.playing.dpToPx
 import com.craftworks.music.ui.viewmodels.HomeScreenViewModel
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /** Shapes the covers of the "Explore" section cycle through. */
@@ -149,13 +178,16 @@ fun ExpressiveHomeScreen(
     val recentAlbums by viewModel.recentAlbums.collectAsStateWithLifecycle()
     val mostPlayedAlbums by viewModel.mostPlayedAlbums.collectAsStateWithLifecycle()
     val shuffledAlbums by viewModel.shuffledAlbums.collectAsStateWithLifecycle()
-    val songsPlayedThisWeek by viewModel.songsPlayedThisWeek.collectAsStateWithLifecycle()
+    val listeningStats by viewModel.listeningStats.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
 
     val currentProvider by MediaProviderManager.currentProvider.collectAsStateWithLifecycle()
     val username by settingsManager.usernameFlow.collectAsState("Username")
     val providerLogoEnabled by settingsManager.showNavidromeLogoFlow.collectAsStateWithLifecycle(true)
     val orderedHomeItems by settingsManager.homeItemsItemsFlow.collectAsState(initial = emptyList())
+
+    // The stats change with every song listened to, reload them each time the screen is shown.
+    LaunchedEffect(Unit) { viewModel.refreshListeningStats() }
 
     val pullState = rememberPullToRefreshState()
     var showRipple by remember { mutableIntStateOf(0) }
@@ -242,7 +274,7 @@ fun ExpressiveHomeScreen(
                                 shape = MaterialTheme.shapes.extraLarge,
                                 onClick = { openAlbum(album) },
                                 onPlay = { playAlbum(album) },
-                                badge = album.mediaMetadata.recordingYear?.toString()
+                                badge = album.mediaMetadata.recordingYear?.takeIf { it != 0 }?.toString()
                             )
                         }
                     }
@@ -267,7 +299,23 @@ fun ExpressiveHomeScreen(
                 }
             }
 
-            ListeningStatsCard(mostPlayedAlbums, songsPlayedThisWeek, navHostController, openAlbum)
+            ListeningStatsCard(
+                stats = listeningStats,
+                onOpenArtist = { artist ->
+                    artist.id?.let {
+                        navHostController.navigate(Screen.ArtistDetails(it, artist.imageUrl)) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onOpenAlbum = { album ->
+                    album.id?.let {
+                        navHostController.navigate(Screen.AlbumDetails(it, album.artworkUri ?: "")) {
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
         }
     }
 
@@ -418,33 +466,30 @@ private fun QuickActions(
 //region Listening stats
 
 /**
- * A small summary of what the user listens to: the top artist and album (from the server play
- * counts of the most played albums) and how many songs were played in the app this week.
- * Hidden when there is nothing to show.
+ * What the user listened to in the app during the last week or month, from the play history:
+ * the listens of each day, compared with the period before, and the top artist and album.
+ * Hidden until something was listened to.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ListeningStatsCard(
-    mostPlayedAlbums: List<MediaItem>,
-    songsPlayedThisWeek: Int?,
-    navHostController: NavHostController,
-    openAlbum: (MediaItem) -> Unit
+    stats: Map<ListeningPeriod, ListeningStats>,
+    onOpenArtist: (TopListen) -> Unit,
+    onOpenAlbum: (TopListen) -> Unit
 ) {
-    val playedAlbums = remember(mostPlayedAlbums) {
-        mostPlayedAlbums.filter { it.playCount > 0 }
+    val hasStats = stats.values.any { !it.isEmpty }
+    var period by rememberSaveable { mutableStateOf(ListeningPeriod.WEEK) }
+    // Nothing listened to this week but something this month: start on the month.
+    LaunchedEffect(hasStats) {
+        if (stats[period]?.isEmpty == true)
+            stats.entries.firstOrNull { !it.value.isEmpty }?.let { period = it.key }
     }
-    val topAlbum = playedAlbums.maxByOrNull { it.playCount }
-    val topArtist = remember(playedAlbums) {
-        playedAlbums
-            .groupBy { it.mediaMetadata.albumArtist?.toString() }
-            .filterKeys { !it.isNullOrBlank() }
-            .maxByOrNull { (_, albums) -> albums.sumOf { it.playCount } }
-            ?.let { (name, albums) -> TopArtist(name!!, albums.sumOf { it.playCount }.roundToInt(), albums.maxBy { it.playCount }) }
-    }
-    val weekCount = songsPlayedThisWeek?.takeIf { it > 0 }
+
+    val spatialSpec = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+    val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
 
     AnimatedVisibility(
-        visible = topArtist != null || topAlbum != null || weekCount != null,
+        visible = hasStats,
         enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
                 expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec())
     ) {
@@ -454,143 +499,483 @@ private fun ListeningStatsCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(32.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.home_your_listening),
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.home_your_listening),
+                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                ListeningPeriodToggle(period, onSelect = { period = it })
+            }
+            AnimatedContent(
+                targetState = period,
+                transitionSpec = {
+                    val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                    (slideInHorizontally(spatialSpec) { direction * it / 3 } + fadeIn(effectsSpec)) togetherWith
+                            (slideOutHorizontally(spatialSpec) { -direction * it / 3 } + fadeOut(effectsSpec)) using
+                            SizeTransform(clip = false)
+                },
+                label = "Listening period"
+            ) { shownPeriod ->
+                val periodStats = stats[shownPeriod]
+                if (periodStats != null) PeriodStats(periodStats, onOpenArtist, onOpenAlbum)
+            }
+        }
+    }
+}
+
+private val ListeningPeriod.label: Int
+    get() = when (this) {
+        ListeningPeriod.WEEK -> R.string.home_period_week
+        ListeningPeriod.MONTH -> R.string.home_period_month
+    }
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ListeningPeriodToggle(selected: ListeningPeriod, onSelect: (ListeningPeriod) -> Unit) {
+    val haptics = LocalHapticFeedback.current
+    val periods = ListeningPeriod.entries
+    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+        periods.forEachIndexed { index, period ->
+            ToggleButton(
+                checked = period == selected,
+                onCheckedChange = {
+                    if (period != selected) {
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                        onSelect(period)
+                    }
+                },
+                shapes = when (index) {
+                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    periods.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                },
+                contentPadding = ButtonDefaults.ExtraSmallContentPadding,
+                modifier = Modifier
+                    .height(ButtonDefaults.ExtraSmallContainerHeight)
+                    .semantics { role = Role.RadioButton }
+            ) {
+                Text(stringResource(period.label), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PeriodStats(
+    stats: ListeningStats,
+    onOpenArtist: (TopListen) -> Unit,
+    onOpenAlbum: (TopListen) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ListensHero(stats)
+        if (stats.topArtist != null || stats.topAlbum != null) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
             ) {
-                if (topArtist != null) {
+                stats.topArtist?.let { artist ->
                     TopArtistTile(
-                        topArtist = topArtist,
-                        onClick = {
-                            val artist = topArtist.album.mediaMetadata.artists?.firstOrNull()
-                            if (artist != null)
-                                navHostController.navigate(Screen.ArtistDetails(artist.id, artist.imageUrl)) {
-                                    launchSingleTop = true
-                                }
-                            else openAlbum(topArtist.album)
-                        },
+                        artist = artist,
+                        onClick = { onOpenArtist(artist) }.takeIf { artist.id != null },
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                     )
                 }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (topAlbum != null) {
-                        StatTile(
-                            label = stringResource(R.string.home_on_repeat),
-                            value = topAlbum.mediaMetadata.albumTitle?.toString() ?: "",
-                            detail = pluralStringResource(R.plurals.home_plays, topAlbum.playCount.roundToInt(), topAlbum.playCount.roundToInt()),
-                            container = MaterialTheme.colorScheme.primaryContainer,
-                            content = MaterialTheme.colorScheme.onPrimaryContainer,
-                            onClick = { openAlbum(topAlbum) }
-                        )
-                    }
-                    if (weekCount != null) {
-                        StatTile(
-                            label = stringResource(R.string.home_this_week),
-                            value = pluralStringResource(R.plurals.home_songs_played, weekCount, weekCount),
-                            container = MaterialTheme.colorScheme.tertiaryContainer,
-                            content = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    }
+                stats.topAlbum?.let { album ->
+                    TopAlbumTile(
+                        album = album,
+                        onClick = { onOpenAlbum(album) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    )
                 }
             }
         }
     }
 }
 
-private data class TopArtist(val name: String, val plays: Int, val album: MediaItem)
-
-private val MediaItem.playCount: Double
-    get() = mediaMetadata.extras?.getDouble("playCount", 0.0) ?: 0.0
-
+/** The listen count counting up, how it compares with the period before, and a bar per day. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun TopArtistTile(topArtist: TopArtist, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ListensHero(stats: ListeningStats) {
+    val content = MaterialTheme.colorScheme.onPrimaryContainer
+    val count = remember { Animatable(0f) }
+    LaunchedEffect(stats.listens) {
+        count.animateTo(stats.listens.toFloat(), tween(durationMillis = 900, easing = FastOutSlowInEasing))
+    }
+    // The burst in the corner swings into place.
+    val swing = remember { Animatable(-70f) }
+    val swingSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(Unit) { swing.animateTo(0f, swingSpec) }
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 12.dp, bottomEnd = 12.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 40.dp, y = (-48).dp)
+                .size(160.dp)
+                .graphicsLayer { rotationZ = swing.value }
+                .clip(MaterialShapes.SoftBurst.toShape())
+                .background(content.copy(alpha = 0.08f))
+        )
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = numberFormat.format(count.value.roundToInt()),
+                    style = MaterialTheme.typography.displayLargeEmphasized,
+                    color = content,
+                    maxLines = 1
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = pluralStringResource(R.plurals.home_listens, stats.listens),
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                    color = content.copy(alpha = 0.8f),
+                    maxLines = 1,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+            }
+            ListeningTrend(stats, content)
+            val details = listOfNotNull(
+                stats.listenedMs.takeIf { it >= 60_000 }?.let { formatListeningTime(it) },
+                pluralStringResource(R.plurals.home_songs_played, stats.songs, stats.songs).takeIf { stats.songs > 0 }
+            )
+            if (details.isNotEmpty()) {
+                Text(
+                    text = details.joinToString(" · "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = content.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            if (stats.isEmpty) {
+                Text(
+                    text = stringResource(R.string.home_stats_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = content
+                )
+            } else {
+                val showDays = stats.period == ListeningPeriod.WEEK
+                DailyListensChart(
+                    daily = stats.daily,
+                    showDayLabels = showDays,
+                    color = content,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (showDays) 104.dp else 84.dp)
+                )
+            }
+        }
+    }
+}
+
+/** "↑ 12% vs last week", or nothing when nothing was listened to in the period before. */
+@Composable
+private fun ListeningTrend(stats: ListeningStats, content: Color) {
+    if (stats.previousListens == 0 || stats.isEmpty) return
+    val percent = ((stats.listens - stats.previousListens) * 100.0 / stats.previousListens).roundToInt()
+    val change = (if (percent >= 0) "↑ " else "↓ ") + "${abs(percent)}%"
+    val text = when (stats.period) {
+        ListeningPeriod.WEEK -> stringResource(R.string.home_trend_week, change)
+        ListeningPeriod.MONTH -> stringResource(R.string.home_trend_month, change)
+    }
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (percent >= 0) MaterialTheme.colorScheme.onPrimary else content,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(if (percent >= 0) MaterialTheme.colorScheme.primary else content.copy(alpha = 0.12f))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    )
+}
+
+@Composable
+private fun formatListeningTime(ms: Long): String {
+    val minutes = (ms / 60_000).toInt()
+    return if (minutes >= 60) stringResource(R.string.home_duration_hours, minutes / 60, minutes % 60)
+    else stringResource(R.string.home_duration_minutes, minutes)
+}
+
+/**
+ * A bar per day, today last, growing in when shown. The busiest day is highlighted with its
+ * listen count above it, and with [showDayLabels] each bar has the initial of its day below it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DailyListensChart(daily: List<Int>, showDayLabels: Boolean, color: Color, modifier: Modifier = Modifier) {
+    val grow = remember { Animatable(0f) }
+    val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(Unit) { grow.animateTo(1f, growSpec) }
+
+    val textMeasurer = rememberTextMeasurer()
+    val labelStyle = MaterialTheme.typography.labelMedium
+    val countStyle = MaterialTheme.typography.labelLargeEmphasized
+    val dayLabels = remember(daily.size, showDayLabels) {
+        if (!showDayLabels) return@remember emptyList()
+        val format = SimpleDateFormat("EEEEE", Locale.getDefault())
+        val calendar = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -(daily.size - 1)) }
+        List(daily.size) { format.format(calendar.time).also { calendar.add(Calendar.DAY_OF_YEAR, 1) } }
+    }
+    val max = daily.maxOrNull()?.coerceAtLeast(1) ?: 1
+    val busiest = daily.indexOf(max)
+
+    Canvas(modifier) {
+        val labelHeight = if (dayLabels.isEmpty()) 0f else 20.dp.toPx()
+        val countHeight = 20.dp.toPx()
+        val chartBottom = size.height - labelHeight
+        val chartHeight = chartBottom - countHeight
+        val gap = (if (daily.size > 10) 3.dp else 8.dp).toPx()
+        val barWidth = (size.width - gap * (daily.size - 1)) / daily.size
+        val radius = CornerRadius(minOf(barWidth / 2, 10.dp.toPx()))
+        val minHeight = minOf(barWidth, 4.dp.toPx())
+
+        daily.forEachIndexed { i, listens ->
+            val x = i * (barWidth + gap)
+            val barHeight = maxOf(minHeight, chartHeight * listens / max * grow.value)
+            val alpha = when {
+                i == busiest -> 1f
+                listens > 0 -> 0.4f
+                else -> 0.12f
+            }
+            drawRoundRect(
+                color = color.copy(alpha = alpha),
+                topLeft = Offset(x, chartBottom - barHeight),
+                size = Size(barWidth, barHeight),
+                cornerRadius = radius
+            )
+            if (i == busiest) {
+                val count = textMeasurer.measure(listens.toString(), countStyle)
+                drawText(
+                    textLayoutResult = count,
+                    color = color.copy(alpha = grow.value),
+                    topLeft = Offset(
+                        (x + (barWidth - count.size.width) / 2).coerceIn(0f, size.width - count.size.width),
+                        chartBottom - barHeight - count.size.height - 2.dp.toPx()
+                    )
+                )
+            }
+            if (dayLabels.isNotEmpty()) {
+                val label = textMeasurer.measure(dayLabels[i], labelStyle)
+                drawText(
+                    textLayoutResult = label,
+                    // Today's initial stands out.
+                    color = color.copy(alpha = if (i == daily.lastIndex) 1f else 0.6f),
+                    topLeft = Offset(
+                        x + (barWidth - label.size.width) / 2,
+                        chartBottom + (labelHeight - label.size.height) / 2 + 2.dp.toPx()
+                    )
+                )
+            }
+        }
+    }
+}
+
+/** The top artist's picture in a cookie shape that spins into place, upright inside it. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TopArtistTile(artist: TopListen, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val interactionSource = remember { MutableInteractionSource() }
+    val spin = remember { Animatable(-120f) }
+    val spinSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(Unit) { spin.animateTo(0f, spinSpec) }
+    val content = MaterialTheme.colorScheme.onSecondaryContainer
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
         modifier = modifier
             .pressScale(interactionSource)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 28.dp, bottomEnd = 12.dp))
             .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable(interactionSource, ripple(), onClick = onClick)
+            .then(if (onClick != null) Modifier.clickable(interactionSource, ripple(), onClick = onClick) else Modifier)
             .padding(12.dp)
     ) {
-        AlbumArtwork(
-            album = topArtist.album,
-            modifier = Modifier
-                .size(88.dp)
-                .clip(MaterialShapes.Cookie9Sided.toShape())
-        )
-        Spacer(Modifier.height(8.dp))
+        Box(
+            Modifier
+                .size(96.dp)
+                .graphicsLayer { rotationZ = spin.value }
+                .clip(MaterialShapes.Cookie12Sided.toShape())
+        ) {
+            StatsArtwork(
+                url = artist.imageUrl ?: artist.artworkUri,
+                contentDescription = artist.name,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationZ = -spin.value }
+            )
+        }
+        Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.home_top_artist),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+            color = content.copy(alpha = 0.8f)
         )
         Text(
-            text = topArtist.name,
+            text = artist.name,
             style = MaterialTheme.typography.titleMediumEmphasized,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            color = content,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
+        Spacer(Modifier.weight(1f))
         Text(
-            text = pluralStringResource(R.plurals.home_plays, topArtist.plays, topArtist.plays),
+            text = pluralStringResource(R.plurals.home_plays, artist.plays, artist.plays),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+            color = content.copy(alpha = 0.8f)
         )
     }
 }
 
+/** The top album's cover, with a record sliding out of it and spinning. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun StatTile(
-    label: String,
-    value: String,
-    container: Color,
-    content: Color,
-    detail: String? = null,
-    onClick: (() -> Unit)? = null
-) {
+private fun TopAlbumTile(album: TopListen, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interactionSource = remember { MutableInteractionSource() }
+    val slide = remember { Animatable(0f) }
+    val slideSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(Unit) { slide.animateTo(1f, slideSpec) }
+    val content = MaterialTheme.colorScheme.onTertiaryContainer
+
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .pressScale(interactionSource)
-            .clip(RoundedCornerShape(24.dp))
-            .background(container)
-            .then(if (onClick != null) Modifier.clickable(interactionSource, ripple(), onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 28.dp))
+            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .clickable(interactionSource, ripple(), onClick = onClick)
+            .padding(12.dp)
     ) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = content.copy(alpha = 0.8f))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(96.dp)
+        ) {
+            VinylRecord(
+                artworkUri = album.artworkUri,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .size(88.dp)
+                    .graphicsLayer {
+                        translationX = slide.value * 32.dp.toPx()
+                        rotationZ = slide.value * 200f
+                    }
+            )
+            StatsArtwork(
+                url = album.artworkUri,
+                contentDescription = album.name,
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
+        }
+        Spacer(Modifier.height(10.dp))
         Text(
-            value,
+            text = stringResource(R.string.home_on_repeat),
+            style = MaterialTheme.typography.labelMedium,
+            color = content.copy(alpha = 0.8f)
+        )
+        Text(
+            text = album.name,
             style = MaterialTheme.typography.titleMediumEmphasized,
             color = content,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
-        if (detail != null)
-            Text(detail, style = MaterialTheme.typography.bodySmall, color = content.copy(alpha = 0.8f))
+        if (!album.subtitle.isNullOrBlank()) {
+            Text(
+                text = album.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = content.copy(alpha = 0.8f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        Text(
+            text = pluralStringResource(R.plurals.home_plays, album.plays, album.plays),
+            style = MaterialTheme.typography.bodySmall,
+            color = content.copy(alpha = 0.8f)
+        )
     }
 }
+
+/** A black record with grooves, a light reflection and the cover as its label. */
+@Composable
+private fun VinylRecord(artworkUri: String?, modifier: Modifier = Modifier) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
+        Canvas(Modifier.fillMaxSize()) {
+            val radius = size.minDimension / 2
+            drawCircle(Color(0xFF121212), radius)
+            listOf(0.92f, 0.84f, 0.76f, 0.68f, 0.6f, 0.52f).forEach { fraction ->
+                drawCircle(Color.White.copy(alpha = 0.07f), radius * fraction, style = Stroke(1.dp.toPx()))
+            }
+            // The reflection shows the record turning.
+            drawArc(
+                color = Color.White.copy(alpha = 0.12f),
+                startAngle = -70f,
+                sweepAngle = 40f,
+                useCenter = false,
+                topLeft = Offset(radius * 0.28f, radius * 0.28f),
+                size = Size(radius * 1.44f, radius * 1.44f),
+                style = Stroke(radius * 0.36f)
+            )
+        }
+        StatsArtwork(
+            url = artworkUri,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize(0.36f)
+                .clip(CircleShape)
+        )
+        Box(
+            Modifier
+                .size(5.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF121212))
+        )
+    }
+}
+
+@Composable
+private fun StatsArtwork(url: String?, contentDescription: String?, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    AsyncImage(
+        model = remember(url) {
+            ImageRequest.Builder(context)
+                .data(url)
+                .crossfade(true)
+                .size(300)
+                .build()
+        },
+        contentDescription = contentDescription,
+        contentScale = ContentScale.Crop,
+        modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+    )
+}
+
+private val MediaItem.playCount: Double
+    get() = mediaMetadata.extras?.getDouble("playCount", 0.0) ?: 0.0
 
 //endregion
 

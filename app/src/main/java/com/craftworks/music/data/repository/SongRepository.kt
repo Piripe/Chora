@@ -89,8 +89,17 @@ class SongRepository @Inject constructor(
         )?.map { it.toMediaItem() } ?: listOf()
     }
 
-    suspend fun scrobbleSong(songId: String, position: Int, playbackRate: Float, event: ScrobbleEvent?, submission: Boolean) {
+    /** [metadata] is the song's, to add a submission to the play history. */
+    suspend fun scrobbleSong(
+        songId: String,
+        position: Int,
+        playbackRate: Float,
+        event: ScrobbleEvent?,
+        submission: Boolean,
+        metadata: MediaMetadata? = null
+    ) {
         val provider = MediaProviderManager.currentProvider.value ?: return
+        if (submission && metadata != null) smartCacheManager.recordListen(metadata.providerId ?: provider.id, metadata)
         val tracked = submission && provider.requiresNetwork()
         // The smart cache downloads the songs played the most in the app.
         if (tracked) smartCacheManager.recordPlay(provider.id, songId)

@@ -544,7 +544,7 @@ class ChoraMediaLibraryService : MediaLibraryService() {
         if (mediaItem.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_RADIO_STATION) return
         serviceIOScope.launch {
             songRepository.scrobbleSong(mediaItem.mediaMetadata.id ?: "", positionMs.toInt(), 1f,
-                ScrobbleEvent.START , true)
+                ScrobbleEvent.START , true, mediaItem.mediaMetadata)
         }
     }
 

@@ -16,7 +16,6 @@
     <string name="home_your_listening">Your Listening</string>
     <string name="home_top_artist">Top Artist</string>
     <string name="home_on_repeat">On Repeat</string>
-    <string name="home_this_week">This Week</string>
     <string name="home_see_all">See All</string>
     <plurals name="home_plays">
         <item quantity="one">%d play</item>
@@ -26,6 +25,17 @@
         <item quantity="one">%d song played</item>
         <item quantity="other">%d songs played</item>
     </plurals>
+    <string name="home_period_week">Week</string>
+    <string name="home_period_month">Month</string>
+    <plurals name="home_listens">
+        <item quantity="one">listen</item>
+        <item quantity="other">listens</item>
+    </plurals>
+    <string name="home_trend_week">%s vs last week</string>
+    <string name="home_trend_month">%s vs last month</string>
+    <string name="home_duration_hours">%1$d h %2$d min</string>
+    <string name="home_duration_minutes">%d min</string>
+    <string name="home_stats_empty">Listen to a few songs to see your stats here</string>
 
     // Artist Details
     <string name="artist_details_discography">Discography</string>

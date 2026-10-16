@@ -3,6 +3,9 @@ package com.craftworks.music.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import com.craftworks.music.data.cache.ListeningPeriod
+import com.craftworks.music.data.cache.ListeningStats
+import com.craftworks.music.data.cache.ListeningWindow
 import com.craftworks.music.data.cache.SmartCacheDatabase
 import com.craftworks.music.data.model.AlbumListSort
 import com.craftworks.music.data.model.MediaQuery
@@ -44,9 +47,9 @@ class HomeScreenViewModel @Inject constructor(
     private val _shuffledAlbums = MutableStateFlow<List<MediaItem>>(emptyList())
     val shuffledAlbums: StateFlow<List<MediaItem>> = _shuffledAlbums.asStateFlow()
 
-    private val _songsPlayedThisWeek = MutableStateFlow<Int?>(null)
-    /** How many different songs were played in the app on the current provider in the last 7 days. */
-    val songsPlayedThisWeek: StateFlow<Int?> = _songsPlayedThisWeek.asStateFlow()
+    private val _listeningStats = MutableStateFlow<Map<ListeningPeriod, ListeningStats>>(emptyMap())
+    /** What was listened to in the app on the current provider, for each [ListeningPeriod]. */
+    val listeningStats: StateFlow<Map<ListeningPeriod, ListeningStats>> = _listeningStats.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -69,7 +72,7 @@ class HomeScreenViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             coroutineScope {
-                launch { loadListeningStats() }
+                launch { refreshListeningStats() }
                 HOME_SECTIONS.map { key -> async { loadSection(key) } }.forEach { it.await() }
             }
             _isLoading.value = false
@@ -108,15 +111,19 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadListeningStats() {
+    /** Reloads [listeningStats], from the play history. They change with every song listened to. */
+    suspend fun refreshListeningStats() {
         val providerId = MediaProviderManager.currentProvider.value?.id
-        _songsPlayedThisWeek.value = providerId?.let {
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    smartCacheDatabase.countSongsPlayedSince(it, System.currentTimeMillis() - WEEK_MS)
-                }.getOrNull()
-            }
+        if (providerId == null) {
+            _listeningStats.value = emptyMap()
+            return
         }
+        val windows = ListeningPeriod.entries.map { ListeningWindow(it, System.currentTimeMillis()) }
+        val history = withContext(Dispatchers.IO) {
+            runCatching { smartCacheDatabase.getPlayHistory(providerId, windows.minOf { it.previousSince }) }
+                .getOrDefault(emptyList())
+        }
+        _listeningStats.value = windows.associate { it.period to ListeningStats.from(history, it) }
     }
 
     suspend fun getAlbumSongs(albumId: String): List<MediaItem> {
@@ -147,6 +154,5 @@ class HomeScreenViewModel @Inject constructor(
     companion object {
         val HOME_SECTIONS = listOf("recently_played", "recently_added", "most_played", "random_songs")
         private const val SHUFFLE_SIZE = 100
-        private const val WEEK_MS = 7L * 24 * 60 * 60 * 1000
     }
 }

@@ -16,7 +16,6 @@
     <string name="home_your_listening">Ваша статистика</string>
     <string name="home_top_artist">Топ-исполнитель</string>
     <string name="home_on_repeat">На повторе</string>
-    <string name="home_this_week">На этой неделе</string>
     <string name="home_see_all">Показать все</string>
     <plurals name="home_plays">
         <item quantity="one">%d прослушивание</item>
@@ -30,6 +29,19 @@
         <item quantity="many">%d треков прослушано</item>
         <item quantity="other">%d трека прослушано</item>
     </plurals>
+    <string name="home_period_week">Неделя</string>
+    <string name="home_period_month">Месяц</string>
+    <plurals name="home_listens">
+        <item quantity="one">прослушивание</item>
+        <item quantity="few">прослушивания</item>
+        <item quantity="many">прослушиваний</item>
+        <item quantity="other">прослушивания</item>
+    </plurals>
+    <string name="home_trend_week">%s к прошлой неделе</string>
+    <string name="home_trend_month">%s к прошлому месяцу</string>
+    <string name="home_duration_hours">%1$d ч %2$d мин</string>
+    <string name="home_duration_minutes">%d мин</string>
+    <string name="home_stats_empty">Послушайте несколько треков, чтобы увидеть здесь статистику</string>
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Дискография</string>

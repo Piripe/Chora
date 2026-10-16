@@ -16,7 +16,6 @@
     <string name="home_your_listening">Deine Hörgewohnheiten</string>
     <string name="home_top_artist">Top-Künstler</string>
     <string name="home_on_repeat">In Dauerschleife</string>
-    <string name="home_this_week">Diese Woche</string>
     <string name="home_see_all">Alle anzeigen</string>
     <plurals name="home_plays">
         <item quantity="one">%d Wiedergabe</item>
@@ -26,6 +25,17 @@
         <item quantity="one">%d Titel gehört</item>
         <item quantity="other">%d Titel gehört</item>
     </plurals>
+    <string name="home_period_week">Woche</string>
+    <string name="home_period_month">Monat</string>
+    <plurals name="home_listens">
+        <item quantity="one">Wiedergabe</item>
+        <item quantity="other">Wiedergaben</item>
+    </plurals>
+    <string name="home_trend_week">%s ggü. letzter Woche</string>
+    <string name="home_trend_month">%s ggü. letztem Monat</string>
+    <string name="home_duration_hours">%1$d Std. %2$d Min.</string>
+    <string name="home_duration_minutes">%d Min.</string>
+    <string name="home_stats_empty">Hör ein paar Titel, um hier deine Statistiken zu sehen</string>
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Diskografie</string>

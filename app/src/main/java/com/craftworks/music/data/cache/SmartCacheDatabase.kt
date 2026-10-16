@@ -75,7 +75,7 @@ data class PendingScrobble(val id: Long, val providerId: String, val songId: Str
 
 /**
  * Stores the smart cache and downloads metadata (cached songs, their artists, playlists and folders, and covers), how many times each song was played
- * in the app, and the scrobbles waiting to be sent to the provider.
+ * in the app and when (the play history), and the scrobbles waiting to be sent to the provider.
  */
 @Singleton
 class SmartCacheDatabase @Inject constructor(
@@ -122,6 +122,7 @@ class SmartCacheDatabase @Inject constructor(
 
         createLibraryTables(db)
         createSongFoldersTable(db)
+        createPlayHistoryTable(db)
 
         db.execSQL(
             """
@@ -158,6 +159,7 @@ class SmartCacheDatabase @Inject constructor(
         if (oldVersion < 3) createLibraryTables(db)
         if (oldVersion < 4) db.execSQL("ALTER TABLE cached_songs ADD COLUMN manual INTEGER NOT NULL DEFAULT 0")
         if (oldVersion < 5) createSongFoldersTable(db)
+        if (oldVersion < 6) createPlayHistoryTable(db)
     }
 
     private fun createLibraryTables(db: SQLiteDatabase) {
@@ -197,6 +199,28 @@ class SmartCacheDatabase @Inject constructor(
             )
             """.trimIndent()
         )
+    }
+
+    private fun createPlayHistoryTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE play_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                provider_id TEXT NOT NULL,
+                song_id TEXT NOT NULL,
+                album_id TEXT,
+                album TEXT,
+                album_artist TEXT,
+                artist_id TEXT,
+                artist TEXT,
+                artist_image TEXT,
+                artwork_uri TEXT,
+                duration_ms INTEGER NOT NULL DEFAULT 0,
+                played_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX play_history_time ON play_history(provider_id, played_at)")
     }
 
     //region Cached songs
@@ -430,11 +454,57 @@ class SmartCacheDatabase @Inject constructor(
             }
         }
 
-    /** How many different songs were last played in the app on [providerId] at or after [since]. */
-    fun countSongsPlayedSince(providerId: String, since: Long): Int =
-        readableDatabase.rawQuery(
-            "SELECT COUNT(*) FROM app_plays WHERE provider_id = ? AND last_played_at >= ?", arrayOf(providerId, since.toString())
-        ).use { cursor -> if (cursor.moveToFirst()) cursor.getInt(0) else 0 }
+    //endregion
+
+    //region Play history
+
+    /** Adds a play to the history, and forgets the plays older than [PLAY_HISTORY_MAX_AGE_MS]. */
+    fun addPlayHistory(entry: PlayHistoryEntry) = transaction {
+        insert("play_history", null, ContentValues().apply {
+            put("provider_id", entry.providerId)
+            put("song_id", entry.songId)
+            put("album_id", entry.albumId)
+            put("album", entry.album)
+            put("album_artist", entry.albumArtist)
+            put("artist_id", entry.artistId)
+            put("artist", entry.artist)
+            put("artist_image", entry.artistImage)
+            put("artwork_uri", entry.artworkUri)
+            put("duration_ms", entry.durationMs)
+            put("played_at", entry.playedAt)
+        })
+        delete("play_history", "played_at < ?", arrayOf((entry.playedAt - PLAY_HISTORY_MAX_AGE_MS).toString()))
+    }
+
+    /** The plays on [providerId] at or after [since], oldest first. */
+    fun getPlayHistory(providerId: String, since: Long): List<PlayHistoryEntry> =
+        readableDatabase.query(
+            "play_history", null, "provider_id = ? AND played_at >= ?", arrayOf(providerId, since.toString()),
+            null, null, "played_at ASC"
+        ).use { cursor ->
+            fun string(column: String) = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(column))
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(
+                        PlayHistoryEntry(
+                            providerId = providerId,
+                            songId = string("song_id") ?: continue,
+                            albumId = string("album_id"),
+                            album = string("album"),
+                            albumArtist = string("album_artist"),
+                            artistId = string("artist_id"),
+                            artist = string("artist"),
+                            artistImage = string("artist_image"),
+                            artworkUri = string("artwork_uri"),
+                            durationMs = cursor.getLong(cursor.getColumnIndexOrThrow("duration_ms")),
+                            playedAt = cursor.getLong(cursor.getColumnIndexOrThrow("played_at")),
+                        )
+                    )
+                }
+            }
+        }
+
+    private fun Cursor.getStringOrNull(index: Int): String? = if (isNull(index)) null else getString(index)
 
     //endregion
 
@@ -537,7 +607,9 @@ class SmartCacheDatabase @Inject constructor(
     companion object {
         private const val TAG = "SmartCacheDatabase"
         private const val DATABASE_NAME = "smart_cache.db"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
+        /** How long the plays are kept in the play history. */
+        private const val PLAY_HISTORY_MAX_AGE_MS = 400L * 24 * 60 * 60 * 1000
 
         private val stringList = ListSerializer(String.serializer())
         private val folderList = ListSerializer(CachedFolder.serializer())

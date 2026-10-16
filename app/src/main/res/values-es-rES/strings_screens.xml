@@ -16,7 +16,6 @@
     <string name="home_your_listening">Tus escuchas</string>
     <string name="home_top_artist">Artista top</string>
     <string name="home_on_repeat">En bucle</string>
-    <string name="home_this_week">Esta semana</string>
     <string name="home_see_all">Ver todo</string>
     <plurals name="home_plays">
         <item quantity="one">%d reproducción</item>
@@ -28,6 +27,18 @@
         <item quantity="many">%d canciones escuchadas</item>
         <item quantity="other">%d canciones escuchadas</item>
     </plurals>
+    <string name="home_period_week">Semana</string>
+    <string name="home_period_month">Mes</string>
+    <plurals name="home_listens">
+        <item quantity="one">reproducción</item>
+        <item quantity="many">reproducciones</item>
+        <item quantity="other">reproducciones</item>
+    </plurals>
+    <string name="home_trend_week">%s vs. la semana pasada</string>
+    <string name="home_trend_month">%s vs. el mes pasado</string>
+    <string name="home_duration_hours">%1$d h %2$d min</string>
+    <string name="home_duration_minutes">%d min</string>
+    <string name="home_stats_empty">Escucha algunas canciones para ver tus estadísticas aquí</string>
 
     <!-- Artist Details -->
     <string name="artist_details_discography">Discografía</string>
